@@ -1,9 +1,8 @@
 
-import { StyledComponentsRegistry } from '../lib/registry'
 import './global.css'
-import { BaseStyles, Box, ThemeProvider } from '@primer/react'
 import styles from './styles.module.css'
 import Header from './header'
+import { AntdRegistry } from '@ant-design/nextjs-registry'
 
 export default function Layout({ children }: {
     children: React.ReactNode
@@ -11,25 +10,20 @@ export default function Layout({ children }: {
     return (
         <html lang="ru" suppressHydrationWarning>
             <body>
-                
-                <StyledComponentsRegistry><ThemeProvider colorMode="auto">
-                    <BaseStyles>
+                <AntdRegistry>
                     <div>
-                        <Box className = {styles.header} bg="pageHeaderBg">
+                        <div className={styles.header}>
                             <Header>
 
                             </Header>
-                        </Box>
+                        </div>
 
-                        <div className= {styles.content}>
-                     {children}
-</div>
+                        <div className={styles.content}>
+                            {children}
+                        </div>
                     </div>
-                    </BaseStyles>
-                </ThemeProvider>
-                
+                </AntdRegistry>
 
-                </StyledComponentsRegistry>
             </body>
         </html>
     )
