@@ -13,9 +13,7 @@ export default function Layout({ children }: {
                 <AntdRegistry>
                     <div>
                         <div className={styles.header}>
-                            <Header>
-
-                            </Header>
+                            <Header/>
                         </div>
 
                         <div className={styles.content}>

@@ -3,6 +3,4 @@
 @tailwind utilities;
 
 body {
-  color: var(--fgColor-default);
-  background-color: var(--bgColor-default);
 }
