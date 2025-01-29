@@ -8,6 +8,7 @@
   "dependencies": {
     "@ant-design/icons": "^5.6.0",
     "@ant-design/nextjs-registry": "^1.0.2",
+    "@ant-design/v5-patch-for-react-19": "^1.0.3",
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",
     "antd": "^5.23.3",
