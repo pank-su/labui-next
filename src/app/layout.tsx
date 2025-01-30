@@ -1,7 +1,7 @@
 
 import './global.css'
 import styles from './styles.module.css'
-import Header from './header'
+import Header from './components/header'
 import { AntdRegistry } from '@ant-design/nextjs-registry'
 import { ConfigProvider } from 'antd'
 import ruRU from 'antd/locale/ru_RU';
