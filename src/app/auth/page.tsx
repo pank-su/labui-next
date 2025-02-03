@@ -4,18 +4,20 @@ import { LockOutlined, MailOutlined } from "@ant-design/icons";
 import { Button, Card, Flex, Form, Input, notification } from "antd";
 import { useEffect, useState } from "react";
 import { signInAction } from "./actions";
+import { useRouter } from "next/navigation";
 
 
 function LoginForm() {
     const [loading, setLoading] = useState(false)
     const [api, contextHolder] = notification.useNotification();
+    const router = useRouter()
 
 
     const onFinish = async (formData: FormInput) => {
         setLoading(true)
         const actionResult = await signInAction(formData)
         if (actionResult.success) {
-            // TODO: redirect to home
+            router.replace("/")
         } else {
             api.error({ message: "Ошибка при входе", description: "Неверный логин или пароль" })
         }
