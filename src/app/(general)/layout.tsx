@@ -1,6 +1,7 @@
 "use client"
 
-import './global.css'
+import styles from './styles.module.css'
+import Header from '../components/header'
 import { AntdRegistry } from '@ant-design/nextjs-registry'
 import { ConfigProvider, theme } from 'antd'
 import ruRU from 'antd/locale/ru_RU';
@@ -22,7 +23,17 @@ export default function Layout({ children }: {
             <body>
                 <AntdRegistry>
                     <ConfigProvider locale={ruRU}>
-                        {children}
+                        <div>
+                            <div className={styles.header} style={{
+                                backgroundColor: token.colorBgBase
+                            }}>
+                                <Header />
+                            </div>
+
+                            <div className={styles.content}>
+                                {children}
+                            </div>
+                        </div>
                     </ConfigProvider>
                 </AntdRegistry>
             </body>

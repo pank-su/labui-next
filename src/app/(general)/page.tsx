@@ -1,7 +1,7 @@
 "use client"
 
 import { Table } from "antd"
-import { createClient } from "../utils/supabase/client"
+import { createClient } from "../../utils/supabase/client"
 
 const addKey = <T extends { id: number | null }>(obj: T): T & { key: number | null } => {
     return Object.defineProperty(obj, "key", {
@@ -15,13 +15,11 @@ const addKey = <T extends { id: number | null }>(obj: T): T & { key: number | nu
 
 
 
-
-
 /**
  * Страница коллекции
  * 
  */
-export default async function Page() {
+export default async function CollectionTable() {
     const supabase = createClient()
     const { data } = (await supabase.from("basic_view").select())
     // const { width, height } = useWindowSize();

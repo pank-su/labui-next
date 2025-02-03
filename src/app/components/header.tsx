@@ -9,7 +9,9 @@ const testImage = "https://images.dog.ceo/breeds/akita/An_Akita_Inu_resting.jpg"
 
 export default function Header() {
     return <div className="w-full h-full px-8 flex justify-between items-center">
-        <Avatar></Avatar>
+        <Avatar>
+            
+        </Avatar>
         <Navigation />
         <Search />
         <Avatar.Group size={"small"}>
