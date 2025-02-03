@@ -2,9 +2,8 @@
 
 import styles from './styles.module.css'
 import Header from '../components/header'
-import { AntdRegistry } from '@ant-design/nextjs-registry'
-import { ConfigProvider, theme } from 'antd'
-import ruRU from 'antd/locale/ru_RU';
+import { theme } from 'antd'
+
 import '@ant-design/v5-patch-for-react-19';
 
 
@@ -19,25 +18,18 @@ export default function Layout({ children }: {
 
 
     return (
-        <html lang="ru">
-            <body>
-                <AntdRegistry>
-                    <ConfigProvider locale={ruRU}>
-                        <div>
-                            <div className={styles.header} style={{
-                                backgroundColor: token.colorBgBase
-                            }}>
-                                <Header />
-                            </div>
 
-                            <div className={styles.content}>
-                                {children}
-                            </div>
-                        </div>
-                    </ConfigProvider>
-                </AntdRegistry>
-            </body>
-        </html>
+        <div>
+            <div className={styles.header} style={{
+                backgroundColor: token.colorBgBase
+            }}>
+                <Header />
+            </div>
+
+            <div className={styles.content}>
+                {children}
+            </div>
+        </div>
     )
 }
 
