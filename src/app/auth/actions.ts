@@ -7,14 +7,21 @@ import { redirect } from "next/navigation"
 
 
 
-export async function signInAction(formData: FormData) {
+
+export async function signInAction(formData: FormInput): Promise<SignInResult> {
     const supabase = await createClient()
     const { error } = await supabase.auth.signInWithPassword({ email: formData.email, password: formData.password })
 
     if (error) {
-        return encodedRedirect("error", "/auth", error.message);
+        return {
+            success: false,
+            error: error.message
+        }
     }
 
-    return redirect("/protected");
+    return {
+        success: true,
+        error: null
+    };
 
 }
