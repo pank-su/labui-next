@@ -16,7 +16,7 @@ function LoginForm() {
     const values = Form.useWatch([], form);
 
     useEffect(() => {
-        form.validateFields().then(() => setIsValid(true)).catch(() => setIsValid(false))
+        form.validateFields({ validateOnly: true }).then(() => setIsValid(true)).catch(() => setIsValid(false))
     }, [form, values])
 
     return (
@@ -30,7 +30,7 @@ function LoginForm() {
                         {
                             type: 'email',
                             message: 'Введите корректную почту!',
-                        }, 
+                        },
                         {
                             required: true,
                             message: 'Введите почту!',
@@ -45,6 +45,10 @@ function LoginForm() {
                             required: true,
                             message: 'Пожалуйста введите свой пароль!',
                         },
+                        {
+                            min: 6,
+                            message: "Пароль должен быть больше 6 символов"
+                        }
                     ]}
                     hasFeedback
                 >
