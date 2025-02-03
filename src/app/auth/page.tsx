@@ -8,7 +8,6 @@ import { signInAction } from "./actions";
 
 function LoginForm() {
     const [loading, setLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
     const [api, contextHolder] = notification.useNotification();
 
 
@@ -19,7 +18,6 @@ function LoginForm() {
             // TODO: redirect to home
         } else {
             api.error({ message: "Ошибка при входе", description: "Неверный логин или пароль" })
-            setError(actionResult.error)
         }
         setLoading(false)
     };
