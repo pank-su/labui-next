@@ -2,6 +2,8 @@
 
 import { Empty, Table } from "antd"
 import { createClient } from "../../utils/supabase/client"
+import { useEffect, useState } from "react";
+import { Tables } from "@/src/utils/supabase/gen-types";
 
 const addKey = <T extends { id: number | null }>(obj: T): T & { key: number | null } => {
     return Object.defineProperty(obj, "key", {
@@ -14,38 +16,52 @@ const addKey = <T extends { id: number | null }>(obj: T): T & { key: number | nu
 };
 
 
+interface Column {
+    title: string,
+    dataIndex: string,
+    key: string
+}
+
 
 /**
  *  Таблица коллекции
  * 
  */
-async function CollectionTable() {
-    const supabase = createClient()
-    const { data } = (await supabase.from("basic_view").select())
-    // const { width, height } = useWindowSize();
+export default function CollectionTable() {
+    const [loading, setLoading] = useState(true)
 
-    // Если есть данные, создаём колонки на основе ключей первого объекта
-    const columns = (data ?? []).length > 0
-        ? Object.keys(data![0]).map((key) => ({
-            title: key,      // Заголовок колонки
-            dataIndex: key,  // Поле данных для колонки
-            key: key         // Уникальный ключ колонки
-        }))
-        : []; // TODO: переделать колонки во что-то более адекватное
+    const [data, setData] = useState<(Tables<"basic_view"> & { key: number|null })[] | null>(null)
+    const [columns, setColumns] = useState<Column[]>()
+
+    useEffect(() => {
+        async function loadCollection() {
+
+            const supabase = await createClient()
+            const { data } = (await supabase.from("basic_view").select())
+            setColumns((data!.length > 0
+                ? Object.keys(data![0]).map((key) => ({
+                    title: key,      // Заголовок колонки
+                    dataIndex: key,  // Поле данных для колонки
+                    key: key         // Уникальный ключ колонки
+                } as Column))
+                : []));
 
 
-    // Добавляем ключ для каждого ряда
-    const keyedData = data?.map((row) => addKey(row)) ?? [];
-    
+
+            // Добавляем ключ для каждого ряда
+            setData((data ?? []).map((row) => addKey(row)))
+            setLoading(false)
+        }
+        loadCollection()
+    }, [])
 
 
 
-    return <Table virtual size="small" dataSource={keyedData}  pagination={false} columns={columns}>
+
+
+    return <Table virtual size="small" scroll={{x: 1500, y: 1000}} loading={loading} dataSource={data!} pagination={false} columns={columns}>
 
     </Table>
 }
 
 
-export default function EmptyData(){
-    return <Empty/>
-}
