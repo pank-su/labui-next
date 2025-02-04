@@ -4,6 +4,7 @@ import { Empty, Table } from "antd"
 import { createClient } from "../../utils/supabase/client"
 import { useEffect, useState } from "react";
 import { Tables } from "@/src/utils/supabase/gen-types";
+import useWindowSize from "@/src/utils/useWindowSize";
 
 const addKey = <T extends { id: number | null }>(obj: T): T & { key: number | null } => {
     return Object.defineProperty(obj, "key", {
@@ -28,9 +29,10 @@ interface Column {
  * 
  */
 export default function CollectionTable() {
+    const windowSize = useWindowSize()
     const [loading, setLoading] = useState(true)
 
-    const [data, setData] = useState<(Tables<"basic_view"> & { key: number|null })[] | null>(null)
+    const [data, setData] = useState<(Tables<"basic_view"> & { key: number | null })[] | null>(null)
     const [columns, setColumns] = useState<Column[]>()
 
     useEffect(() => {
@@ -59,7 +61,7 @@ export default function CollectionTable() {
 
 
 
-    return <Table virtual size="small" scroll={{x: 1500, y: 1000}} loading={loading} dataSource={data!} pagination={false} columns={columns}>
+    return <Table virtual size="small" scroll={{ x: 1500, y: windowSize.height - 140 }} loading={loading} dataSource={data!} pagination={false} columns={columns}>
 
     </Table>
 }
