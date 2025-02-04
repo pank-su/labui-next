@@ -5,13 +5,14 @@ import { Avatar, Dropdown, Skeleton } from "antd";
 import { MenuProps } from "antd/lib";
 import { data } from "autoprefixer";
 import { useEffect, useState } from "react";
+import { singOutAction } from "../auth/actions";
 
 
 const items: MenuProps['items'] = [
     {
         key: '2',
         danger: true,
-        label: "Выйти"
+        label: (<form><button formAction={singOutAction}>Выйти</button></form>)
     }
 ]
 
@@ -28,7 +29,7 @@ export default function ProfileAvatar() {
             const supabase = await createClient()
             const { data } = await supabase.from('profiles').select()
 
-            setAvatarUrl(data![0].avatar ?? "https://api.dicebear.com/9.x/lorelei/svg?backgroundColor=b6e3f4&seed=" + data![0].id)
+            setAvatarUrl(data![0].avatar ?? "https://api.dicebear.com/9.x/lorelei/svg?backgroundColor=b6e3f4&seed=" + data![0].id) // Если аватарки нет, то генерируем по идентификатору пользователя
             // if data![0].avatar)
         }
         fetchProfile()

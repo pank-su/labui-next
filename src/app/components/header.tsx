@@ -19,7 +19,6 @@ export default function Header() {
             <Avatar />
             <Avatar />
 
-
         </Avatar.Group>
     </div>
 }
