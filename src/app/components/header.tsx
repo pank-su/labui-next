@@ -1,10 +1,11 @@
 import { Avatar, Skeleton } from "antd";
 import Navigation from "./navigation";
 import { Search } from "./search";
-import { Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@/src/utils/supabase/client";
 import AuthBtn from "./auth-btn";
 import { User } from "@supabase/supabase-js";
+import ProfileAvatar from "./profile-avatar";
 
 
 export default function Header() {
@@ -49,5 +50,6 @@ function AuthOrAvatar() {
     if (!user) {
         return <AuthBtn />;
     }
-    return <Avatar />
+
+    return <ProfileAvatar />
 }

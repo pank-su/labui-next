@@ -3435,6 +3435,27 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          avatar: string | null
+          first_name: string
+          id: string
+          last_name: string
+        }
+        Insert: {
+          avatar?: string | null
+          first_name?: string
+          id: string
+          last_name?: string
+        }
+        Update: {
+          avatar?: string | null
+          first_name?: string
+          id?: string
+          last_name?: string
+        }
+        Relationships: []
+      }
       region: {
         Row: {
           country_id: number
