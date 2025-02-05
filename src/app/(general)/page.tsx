@@ -61,9 +61,7 @@ export default function CollectionTable() {
 
 
 
-    return <Table virtual size="small" scroll={{ x: 1500, y: windowSize.height - 140 }} loading={loading} dataSource={data!} pagination={false} columns={columns}>
-
-    </Table>
+    return <Table virtual size="small" scroll={{ x: 2500, y: windowSize.height - 140 }} loading={loading} dataSource={data ?? []} pagination={false} columns={columns}></Table>
 }
 
 
