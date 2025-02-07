@@ -3191,63 +3191,54 @@ export type Database = {
       collection: {
         Row: {
           age_id: number | null
-          CatalogueNumber: string | null
           collect_id: string | null
           comment: string | null
           day: number | null
-          file_url: string | null
           gen_bank_id: string | null
           geo_comment: string | null
           id: number
           kind_id: number
           month: number | null
           point: unknown | null
-          rna: boolean
+          region_id: number
           sex_id: number | null
-          subregion_id: number
           vouch_id: string | null
           vouch_inst_id: number | null
-          year: number
+          year: number | null
         }
         Insert: {
           age_id?: number | null
-          CatalogueNumber?: string | null
           collect_id?: string | null
           comment?: string | null
           day?: number | null
-          file_url?: string | null
           gen_bank_id?: string | null
           geo_comment?: string | null
           id?: number
           kind_id: number
           month?: number | null
           point?: unknown | null
-          rna?: boolean
+          region_id: number
           sex_id?: number | null
-          subregion_id: number
           vouch_id?: string | null
           vouch_inst_id?: number | null
-          year: number
+          year?: number | null
         }
         Update: {
           age_id?: number | null
-          CatalogueNumber?: string | null
           collect_id?: string | null
           comment?: string | null
           day?: number | null
-          file_url?: string | null
           gen_bank_id?: string | null
           geo_comment?: string | null
           id?: number
           kind_id?: number
           month?: number | null
           point?: unknown | null
-          rna?: boolean
+          region_id?: number
           sex_id?: number | null
-          subregion_id?: number
           vouch_id?: string | null
           vouch_inst_id?: number | null
-          year?: number
+          year?: number | null
         }
         Relationships: [
           {
@@ -3263,15 +3254,15 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "collection_sex_id_fk"
-            columns: ["sex_id"]
-            referencedRelation: "sex"
+            foreignKeyName: "collection_region_fk"
+            columns: ["region_id"]
+            referencedRelation: "region"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "collection_subregion_null_fk"
-            columns: ["subregion_id"]
-            referencedRelation: "subregion"
+            foreignKeyName: "collection_sex_id_fk"
+            columns: ["sex_id"]
+            referencedRelation: "sex"
             referencedColumns: ["id"]
           },
           {
@@ -3496,27 +3487,54 @@ export type Database = {
         }
         Relationships: []
       }
-      subregion: {
+      tags: {
         Row: {
+          description: string | null
           id: number
-          name: string | null
-          region_id: number
+          name: string
         }
         Insert: {
+          description?: string | null
           id?: number
-          name?: string | null
-          region_id: number
+          name: string
         }
         Update: {
+          description?: string | null
           id?: number
-          name?: string | null
-          region_id?: number
+          name?: string
+        }
+        Relationships: []
+      }
+      tags_to_collection: {
+        Row: {
+          col_id: number
+          tag_id: number
+        }
+        Insert: {
+          col_id: number
+          tag_id: number
+        }
+        Update: {
+          col_id?: number
+          tag_id?: number
         }
         Relationships: [
           {
-            foreignKeyName: "subregion_region_null_fk"
-            columns: ["region_id"]
-            referencedRelation: "region"
+            foreignKeyName: "tags_to_collection_col_id_fkey"
+            columns: ["col_id"]
+            referencedRelation: "basic_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tags_to_collection_col_id_fkey"
+            columns: ["col_id"]
+            referencedRelation: "collection"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tags_to_collection_tag_id_fkey"
+            columns: ["tag_id"]
+            referencedRelation: "tags"
             referencedColumns: ["id"]
           },
         ]
@@ -3540,28 +3558,27 @@ export type Database = {
     Views: {
       basic_view: {
         Row: {
-          CatalogueNumber: string | null
+          age: string | null
           collect_id: string | null
+          collectors: Json | null
+          comment: string | null
+          country: string | null
+          day: number | null
+          family: string | null
+          genus: string | null
+          geo_comment: string | null
           id: number | null
+          kind: string | null
           latitude: number | null
           longtitude: number | null
-          rna: boolean | null
-          "Вауч. институт": string | null
-          "Ваучерный ID": string | null
-          Вид: string | null
-          Возраст: string | null
-          Геокомментарий: string | null
-          Дата: string | null
-          Коллекторы: string | null
-          Комментарий: string | null
-          Отряд: string | null
-          Пол: string | null
-          Регион: string | null
-          Род: string | null
-          Семейство: string | null
-          Страна: string | null
-          Субрегион: string | null
-          Файл: boolean | null
+          month: number | null
+          order: string | null
+          region: string | null
+          sex: string | null
+          tags: Json[] | null
+          voucher_id: string | null
+          voucher_institute: string | null
+          year: number | null
         }
         Relationships: []
       }
