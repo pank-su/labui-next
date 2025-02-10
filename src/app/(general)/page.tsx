@@ -1,12 +1,49 @@
 "use client"
 
-import { Empty, Table, TableColumnsType, Tag } from "antd"
+import { Table, TableColumnsType, Tag, Tooltip } from "antd"
 import { createClient } from "../../utils/supabase/client"
 import { useEffect, useState } from "react";
 import { Tables } from "@/src/utils/supabase/gen-types";
 import useWindowSize from "@/src/utils/useWindowSize";
 import { TableProps } from "antd/lib";
+import { formatDate } from "@/src/utils/formatDate";
 
+
+/**
+ * Форматирует строку возраста в сокращенную форму
+ * @param age - Строка возраста для форматирования, может быть null
+ * @returns Отформатированная строка возраста:
+ * - "ad" для "adult" (взрослый)
+ * - "juv" для "juvenile" (молодой)
+ * - "sad" для "subadult" (полувзрослый)
+ * - Исходная строка или пустая строка если null
+ */
+function formatAge(age: string | null): string {
+    switch (age) {
+        case "adult": return "ad"
+        case "juvenile": return "juv"
+        case "subadult": return "sad"
+        default: return age ?? ""
+    }
+}
+
+/**
+ * Форматирует строку пола в сокращенную форму
+ * @param sex - Строка пола для форматирования, может быть null
+ * @returns Отформатированная строка:
+ * - Возвращает пустую строку если входное значение null
+ * - Возвращает первый символ строки пола
+ * - Если пол не доконца определён то сохраняем знак вопроса
+ */
+
+function formatSex(sex: string | null): string {
+    if (sex == null) return ""
+    let result = sex[0]
+    if (sex.endsWith("?")) {
+        result += "?"
+    }
+    return result
+}
 
 
 /**
@@ -14,7 +51,7 @@ import { TableProps } from "antd/lib";
  * @param obj Объект
  * @returns Объект с ключом
  */
-const addKey = <T extends { id: number | null }>(obj: T): T & { key: number | null } => {
+const addKey = async <T extends { id: number | null }>(obj: T): Promise<T & { key: number | null }> => {
     return {
         ...obj,
         key: obj.id
@@ -30,54 +67,31 @@ interface Tag {
     name: string;
 }
 
-/**
- * Форматирует дату из отдельных nullable полей
- * @param year Год
- * @param month Месяц
- * @param day День
- * @returns Отформатированная строка даты или '-' если все поля null
- */
-const formatDate = (year: number | null, month: number | null, day: number | null): string => {
-    const parts: string[] = [];
+// Захардкоженные значения пола для фильтрации/добавления
+const sexes: Tables<"sex">[] = [{
+    id: 1,
+    name: "female"
+}, { id: 2, name: "male" }, { id: 3, name: "male?" }]
 
-    if (day !== null) {
-        parts.push(day.toString().padStart(2, '0'));
-    }
-
-    if (month !== null) {
-        parts.push(month.toString().padStart(2, '0'));
-    }
-
-    if (year !== null) {
-        parts.push(year.toString());
-    }
-
-    return parts.length > 0 ? parts.join('.') : '-';
-};
-
-
+const ages: Tables<"age">[] = [{ id: 3, name: "adult" }, { id: 1, name: "juvenile" }, { id: 2, name: "subadult" }, { id: 4, name: "subadult or adult" }]
 
 function getColumns(data: BasicViewWithKey[]): Columns {
+    // hard-coded values
 
-    const idFilters = data.map(item => ({
-        text: item.id!.toString(),
-        value: item.id!
-    }));
+
     const columns: TableColumnsType<BasicViewWithKey> = [
         {
             title: "ID",
             dataIndex: "id",
             render: (text) => <a>{text}</a>,
-            filters: idFilters,
-            onFilter: (value, record) => record.id === value,
-            filtered: true,
-            filterSearch: true,
-            filterMode: "menu",
+            // onFilter: (value, record) => record.id === value,
+            // filtered: true,
+            // filterSearch: true,
             fixed: 'left',
             width: 65,
         },
         {
-            title: "collect id",
+            title: "collect id", 
             dataIndex: "collect_id",
             width: 100,
         },
@@ -86,7 +100,7 @@ function getColumns(data: BasicViewWithKey[]): Columns {
             children: [
                 {
                     title: "Отряд",
-                    dataIndex: "order",
+                    dataIndex: "order", 
                     width: 100,
                 },
                 {
@@ -109,22 +123,25 @@ function getColumns(data: BasicViewWithKey[]): Columns {
         {
             title: "Дата",
             key: "collection_date",
-
             width: 100,
             render: (_, record) => formatDate(record.year, record.month, record.day)
         },
         {
             title: "Возраст",
             dataIndex: "age",
-            width: 80,
+            width: 90,
+            filters: ages.map((age => ({ text: age.name!, value: age.name! }))),
+            onFilter: (value, record) => record.age === value,
+            render: (_, { age }) => <><Tooltip title={age}>{formatAge(age)} </Tooltip></>
         },
         {
             title: "Пол",
             dataIndex: "sex",
-            width: 50,
-            render: (_, {sex}) => <>{(sex ?? " ")[0] }</> 
+            width: 70,
+            filters: sexes.map((sex => ({ text: sex.name, value: sex.name }))),
+            onFilter: (value, record) => record.sex === value,
+            render: (_, { sex }) => <><Tooltip title={sex}>{formatSex(sex)}</Tooltip></>
         },
-
         {
             title: "Гео данные",
             children: [
@@ -155,6 +172,7 @@ function getColumns(data: BasicViewWithKey[]): Columns {
                 {
                     title: "Геокомментарий",
                     dataIndex: "geo_comment",
+                    ellipsis: true,
                     width: 300
                 },
             ]
@@ -183,7 +201,7 @@ function getColumns(data: BasicViewWithKey[]): Columns {
                 const tagF = tags as unknown as Tag[]
                 return <>{tagF.map(tag => <Tag color="blue" key={tag.id}>{tag.name}</Tag>)}</>
             }
-        
+
 
         },
 
@@ -226,7 +244,7 @@ export default function CollectionTable() {
 
             const supabase = await createClient()
             const { data } = (await supabase.from("basic_view").select())
-            const keyedData = (data ?? []).map((row) => addKey(row))
+            const keyedData = await Promise.all((data ?? []).map((row) => addKey(row)))
             // Добавляем ключ для каждого ряда
             setData(keyedData)
             setColumns(getColumns(keyedData))
