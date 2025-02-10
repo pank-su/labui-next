@@ -1,13 +1,21 @@
 "use client"
 
-import { Table, TableColumnsType, Tag, Tooltip } from "antd"
+import { Button, DatePicker, Space, Table, TableColumnsType, Tag, Tooltip } from "antd"
 import { createClient } from "../../utils/supabase/client"
 import { useEffect, useState } from "react";
 import { Tables } from "@/src/utils/supabase/gen-types";
 import useWindowSize from "@/src/utils/useWindowSize";
-import { TableProps } from "antd/lib";
-import { formatDate } from "@/src/utils/formatDate";
+import { TableProps, TableColumnType } from "antd/lib";
+import { badDateToDate, formatDate } from "@/src/utils/formatDate";
+import { SearchOutlined } from "@ant-design/icons";
+import dayjs, { Dayjs } from "dayjs";
+import isSameOrAfter from "dayjs/plugin/isSameOrAfter"
+import isSameOrBefore from "dayjs/plugin/isSameOrBefore"
 
+dayjs.extend(isSameOrAfter)
+dayjs.extend(isSameOrBefore)
+
+const { RangePicker } = DatePicker;
 
 /**
  * Форматирует строку возраста в сокращенную форму
@@ -51,14 +59,16 @@ function formatSex(sex: string | null): string {
  * @param obj Объект
  * @returns Объект с ключом
  */
-const addKey = async <T extends { id: number | null }>(obj: T): Promise<T & { key: number | null }> => {
+const formatData = async <T extends { id: number | null, day: number | null, month: number | null, year: number | null }>(obj: T): Promise<T & { key: number | null, date: Dayjs | null }> => {
+    const date = badDateToDate(obj.year, obj.month, obj.day)
     return {
         ...obj,
-        key: obj.id
+        key: obj.id,
+        date: date != null ? dayjs(date) : null
     };
 };
 
-type BasicViewWithKey = Tables<"basic_view"> & { key: number | null };
+type BasicViewWithKey = Tables<"basic_view"> & { key: number | null, date: Dayjs | null };
 type Columns = TableColumnsType<BasicViewWithKey>
 
 
@@ -76,8 +86,78 @@ const sexes: Tables<"sex">[] = [{
 const ages: Tables<"age">[] = [{ id: 3, name: "adult" }, { id: 1, name: "juvenile" }, { id: 2, name: "subadult" }, { id: 4, name: "subadult or adult" }]
 
 function getColumns(data: BasicViewWithKey[]): Columns {
-    // hard-coded values
 
+    const dateColumn: TableColumnType<BasicViewWithKey> = {
+        title: "Дата",
+        dataIndex: "collection_date",
+        width: 100,
+        filterDropdown: ({
+            setSelectedKeys,
+            selectedKeys,
+            confirm,
+            clearFilters
+        }) => {
+            // selectedKeys[0] обычно будет [startDayjs, endDayjs]
+            const rangeValue = (selectedKeys[0] as unknown as [Dayjs?, Dayjs?]) || [];
+            const start = rangeValue[0];
+            const end = rangeValue[1];
+
+            return (
+                <div style={{ padding: 8 }}>
+                    <RangePicker
+                        style={{ marginBottom: 8, display: "block" }}
+                        value={[start, end]}
+                        onChange={(dates) => {
+                            // При изменении диапазона устанавливаем его во внутренний state фильтра
+                            setSelectedKeys(dates ? [dates as unknown as React.Key] : []);
+                        }}
+                    />
+                    <Space>
+                        <Button
+                            type="primary"
+                            onClick={() => confirm()}
+                            icon={<SearchOutlined />}
+                            size="small"
+                            style={{ width: 90 }}
+                        >
+                            OK
+                        </Button>
+                        <Button
+                            onClick={() => {
+                                clearFilters && clearFilters();
+                                confirm();
+                            }}
+                            size="small"
+                            style={{ width: 90 }}
+                        >
+                            Сброс
+                        </Button>
+                    </Space>
+                </div>
+            );
+        },
+        // Иконка фильтра (лупа). Можно кастомизировать по желанию.
+        filterIcon: (filtered: boolean) => (
+            <SearchOutlined style={{ color: filtered ? "#1890ff" : undefined }} />
+        ),
+        // Логика сравнения даты записи с выбранным диапазоном
+        onFilter: (value: unknown, record) => {
+            const dateRange = value as [Dayjs, Dayjs];
+            if (!dateRange || !Array.isArray(dateRange) || dateRange.length < 2) return true;
+            const [start, end] = dateRange;
+
+            if (!start || !end) return true;
+            if (!record.date) return false;
+
+            // Сравниваем record.collectionDate со стартом и концом
+            return record.date.isSameOrAfter(start.startOf('day'))
+                && record.date.isSameOrBefore(end.endOf('day'));
+        },
+        render: (_, record) => {
+            // Отображаем так, как и раньше - при помощи formatDate
+            return formatDate(record.year, record.month, record.day);
+        }
+    };
 
     const columns: TableColumnsType<BasicViewWithKey> = [
         {
@@ -91,7 +171,7 @@ function getColumns(data: BasicViewWithKey[]): Columns {
             width: 65,
         },
         {
-            title: "collect id", 
+            title: "collect id",
             dataIndex: "collect_id",
             width: 100,
         },
@@ -100,7 +180,7 @@ function getColumns(data: BasicViewWithKey[]): Columns {
             children: [
                 {
                     title: "Отряд",
-                    dataIndex: "order", 
+                    dataIndex: "order",
                     width: 100,
                 },
                 {
@@ -120,12 +200,7 @@ function getColumns(data: BasicViewWithKey[]): Columns {
                 },
             ]
         },
-        {
-            title: "Дата",
-            key: "collection_date",
-            width: 100,
-            render: (_, record) => formatDate(record.year, record.month, record.day)
-        },
+        dateColumn,
         {
             title: "Возраст",
             dataIndex: "age",
@@ -244,10 +319,10 @@ export default function CollectionTable() {
 
             const supabase = await createClient()
             const { data } = (await supabase.from("basic_view").select())
-            const keyedData = await Promise.all((data ?? []).map((row) => addKey(row)))
+            const formattedData = await Promise.all((data ?? []).map((row) => formatData(row)))
             // Добавляем ключ для каждого ряда
-            setData(keyedData)
-            setColumns(getColumns(keyedData))
+            setData(formattedData)
+            setColumns(getColumns(formattedData))
 
             setLoading(false)
         }

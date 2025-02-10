@@ -22,3 +22,18 @@ export function formatDate(year: number | null, month: number | null, day: numbe
 
     return parts.length > 0 ? parts.join('.') : '-';
 };
+
+
+export function badDateToDate(year: number | null, month: number | null, day: number | null): Date | null {
+    if (year === null) {
+        return null;
+    }
+
+    if (month === null){
+        return new Date(year, 0);
+    }
+    if (day === null){
+        return new Date(year, month - 1);
+    }
+    return new Date(year, month - 1, day);
+}
