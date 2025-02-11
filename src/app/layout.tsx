@@ -25,7 +25,7 @@ export default function Layout({ children }: {
             <body>
                 <AntdRegistry>
                     <ConfigProvider locale={ruRU}>
-                        {children}
+                            {children}
                     </ConfigProvider>
                 </AntdRegistry>
             </body>
