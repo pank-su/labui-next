@@ -11,6 +11,7 @@
     "@ant-design/v5-patch-for-react-19": "^1.0.3",
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",
+    "@tanstack/react-table": "^8.20.6",
     "antd": "^5.23.3",
     "autoprefixer": "10.4.20",
     "class-variance-authority": "^0.7.0",
