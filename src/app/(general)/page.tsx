@@ -330,7 +330,6 @@ export default function CollectionTable() {
     const [data, setData] = useState<BasicViewWithKey[] | null>(null)
     const [columns, setColumns] = useState<Columns>()
     const height = useMemo(() => {
-        console.log("height", windowSize.height)
         return windowSize.height - 170}, [windowSize.height])
 
 
