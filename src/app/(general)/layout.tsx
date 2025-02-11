@@ -19,7 +19,7 @@ export default function Layout({ children }: {
 
     return (
 
-        <div>
+        <div className="flex flex-col h-screen">
             <div className={styles.header} style={{
                 backgroundColor: token.colorBgBase
             }}>

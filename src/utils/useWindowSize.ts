@@ -32,7 +32,7 @@ function useWindowSize() {
 
     // Убираем слушатель при размонтировании компонента
     return () => window.removeEventListener('resize', handleResize);
-  }, []); // Пустой массив зависимостей означает, что эффект выполнится только на клиенте
+  }, []); 
 
   return windowSize;
 }

@@ -1,13 +1,13 @@
 "use client"
 
-import { Button, DatePicker, Space, Table, TableColumnsType, Tag, Tooltip } from "antd"
+import { Button, DatePicker, FloatButton, Space, Table, TableColumnsType, Tag, Tooltip } from "antd"
 import { createClient } from "../../utils/supabase/client"
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Tables } from "@/src/utils/supabase/gen-types";
 import useWindowSize from "@/src/utils/useWindowSize";
 import { TableProps, TableColumnType } from "antd/lib";
 import { badDateToDate, formatDate } from "@/src/utils/formatDate";
-import { SearchOutlined } from "@ant-design/icons";
+import { CalendarOutlined, MoreOutlined, PlusOutlined, SearchOutlined, VerticalAlignBottomOutlined } from "@ant-design/icons";
 import dayjs, { Dayjs } from "dayjs";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter"
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore"
@@ -41,7 +41,7 @@ function formatAge(age: string | null): string {
  * @returns Отформатированная строка:
  * - Возвращает пустую строку если входное значение null
  * - Возвращает первый символ строки пола
- * - Если пол не доконца определён то сохраняем знак вопроса
+ * - Если пол не до конца определён то сохраняем знак вопроса
  */
 
 function formatSex(sex: string | null): string {
@@ -68,10 +68,17 @@ const formatData = async <T extends { id: number | null, day: number | null, mon
     };
 };
 
+
 type BasicViewWithKey = Tables<"basic_view"> & { key: number | null, date: Dayjs | null };
 type Columns = TableColumnsType<BasicViewWithKey>
 
 
+/**
+ * Интерфейс для представления тега.
+ * @interface
+ * @property {number} id - Уникальный идентификатор тега
+ * @property {string} name - Название тега
+ */
 interface Tag {
     id: number;
     name: string;
@@ -85,8 +92,9 @@ const sexes: Tables<"sex">[] = [{
 
 const ages: Tables<"age">[] = [{ id: 3, name: "adult" }, { id: 1, name: "juvenile" }, { id: 2, name: "subadult" }, { id: 4, name: "subadult or adult" }]
 
-function getColumns(data: BasicViewWithKey[]): Columns {
+function getColumns(): Columns {
 
+    // фильтр для даты с диапазоном
     const dateColumn: TableColumnType<BasicViewWithKey> = {
         title: "Дата",
         dataIndex: "collection_date",
@@ -97,6 +105,7 @@ function getColumns(data: BasicViewWithKey[]): Columns {
             confirm,
             clearFilters
         }) => {
+            console.log("wtf")
             // selectedKeys[0] обычно будет [startDayjs, endDayjs]
             const rangeValue = (selectedKeys[0] as unknown as [Dayjs?, Dayjs?]) || [];
             const start = rangeValue[0];
@@ -138,7 +147,7 @@ function getColumns(data: BasicViewWithKey[]): Columns {
         },
         // Иконка фильтра (лупа). Можно кастомизировать по желанию.
         filterIcon: (filtered: boolean) => (
-            <SearchOutlined style={{ color: filtered ? "#1890ff" : undefined }} />
+            <CalendarOutlined style={{ color: filtered ? "#1890ff" : undefined }} />
         ),
         // Логика сравнения даты записи с выбранным диапазоном
         onFilter: (value: unknown, record) => {
@@ -205,16 +214,16 @@ function getColumns(data: BasicViewWithKey[]): Columns {
             title: "Возраст",
             dataIndex: "age",
             width: 90,
-            filters: ages.map((age => ({ text: age.name!, value: age.name! }))),
-            onFilter: (value, record) => record.age === value,
+            filters: [...ages.map((age => ({ text: age.name!, value: age.name! }))), { text: "Нет значения", value: "" }],
+            onFilter: (value, record) => record.age === value || (value === "" && record.age === null),
             render: (_, { age }) => <><Tooltip title={age}>{formatAge(age)} </Tooltip></>
         },
         {
             title: "Пол",
             dataIndex: "sex",
             width: 70,
-            filters: sexes.map((sex => ({ text: sex.name, value: sex.name }))),
-            onFilter: (value, record) => record.sex === value,
+            filters: [...sexes.map((sex => ({ text: sex.name, value: sex.name }))), { text: "Нет значения", value: "" }],
+            onFilter: (value, record) => record.sex === value || (value === "" && record.sex === null),
             render: (_, { sex }) => <><Tooltip title={sex}>{formatSex(sex)}</Tooltip></>
         },
         {
@@ -276,12 +285,10 @@ function getColumns(data: BasicViewWithKey[]): Columns {
                 const tagF = tags as unknown as Tag[]
                 return <>{tagF.map(tag => <Tag color="blue" key={tag.id}>{tag.name}</Tag>)}</>
             }
-
-
         },
 
         {
-            title: "Описание",
+            title: "Комментарий",
             dataIndex: "comment",
             width: 400
         }
@@ -304,15 +311,30 @@ const rowSelection: TableProps<BasicViewWithKey>['rowSelection'] = {
 
 
 /**
+ * Кнопка для скролла вверх или вниз
+ */
+function BottomOrTopButton() {
+
+}
+
+
+/**
  *  Таблица коллекции
  * 
  */
 export default function CollectionTable() {
+    const tableRef = useRef<any>(null);
     const windowSize = useWindowSize()
     const [loading, setLoading] = useState(true)
 
     const [data, setData] = useState<BasicViewWithKey[] | null>(null)
     const [columns, setColumns] = useState<Columns>()
+    const height = useMemo(() => {
+        console.log("height", windowSize.height)
+        return windowSize.height - 170}, [windowSize.height])
+
+
+
 
     useEffect(() => {
         async function loadCollection() {
@@ -322,16 +344,35 @@ export default function CollectionTable() {
             const formattedData = await Promise.all((data ?? []).map((row) => formatData(row)))
             // Добавляем ключ для каждого ряда
             setData(formattedData)
-            setColumns(getColumns(formattedData))
+            setColumns(getColumns())
 
             setLoading(false)
+            /* setTimeout(() => {
+                // it worked
+                const el = (tableRef.current as Element)
+                el.scrollTo({ top: 4000, behavior: "smooth" })
+
+            }
+                , 1000)
+ */
         }
         loadCollection()
+
     }, [])
 
 
 
-    return <Table bordered rowSelection={{ ...rowSelection }} virtual size="small" scroll={{ x: 2500, y: windowSize.height - 170 }} loading={loading} columns={columns} dataSource={data ?? []} pagination={false}></Table>
+
+    return <div className="h-full">
+        <Table ref={tableRef} bordered rowSelection={{ ...rowSelection }} virtual size="small"
+            scroll={{ x: 2500, y: height }}
+            loading={loading} columns={columns} dataSource={data ?? []} pagination={false} />
+        <FloatButton.Group shape="square" trigger="hover" icon={<MoreOutlined />}>
+            <FloatButton icon={<VerticalAlignBottomOutlined />} />
+            <FloatButton icon={<PlusOutlined />} />
+
+        </FloatButton.Group>
+    </div>
 }
 
 

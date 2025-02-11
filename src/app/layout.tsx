@@ -19,6 +19,9 @@ export default function Layout({ children }: {
 
     return (
         <html lang="ru">
+            <head>
+
+            </head>
             <body>
                 <AntdRegistry>
                     <ConfigProvider locale={ruRU}>
