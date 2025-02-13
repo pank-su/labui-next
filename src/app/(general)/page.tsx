@@ -1,8 +1,8 @@
 "use client"
 "use no memo"
 
-import { FloatButton, } from "antd"
-import { createClient } from "../../utils/supabase/client"
+import { FloatButton, Skeleton, } from "antd"
+import { useClient } from "../../utils/supabase/client"
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Tables } from "@/src/utils/supabase/gen-types";
 import useWindowSize from "@/src/utils/useWindowSize";
@@ -14,6 +14,8 @@ import isSameOrBefore from "dayjs/plugin/isSameOrBefore"
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { TableBody } from "../components/table/table-body";
 import { FormattedBasicView } from "../components/table/models";
+import { useQuery } from "@tanstack/react-query";
+import { getCollection } from "./queries";
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
@@ -55,19 +57,6 @@ function formatSex(sex: string | null): string {
 }
 
 
-/**
- * Добавляет ключ к объекту
- * @param obj Объект
- * @returns Объект с ключом
- */
-const formatData = async <T extends { id: number | null, day: number | null, month: number | null, year: number | null }>(obj: T): Promise<T & { key: number | null, date: Dayjs | null }> => {
-    const date = badDateToDate(obj.year, obj.month, obj.day)
-    return {
-        ...obj,
-        key: obj.id,
-        date: date != null ? dayjs(date) : null
-    };
-};
 
 
 
@@ -134,10 +123,9 @@ const columns = [
 ]
 
 
-/**
- * Кнопка для скролла вверх или вниз
- */
-function BottomOrTopButton() {
+
+interface CollectionTableProps {
+    data: FormattedBasicView[]
 
 }
 
@@ -147,53 +135,28 @@ function BottomOrTopButton() {
  *  Таблица коллекции
  * 
  */
-function CollectionTable() {
+function CollectionTable({ data }: CollectionTableProps) {
 
     const windowSize = useWindowSize()
-    const [loading, setLoading] = useState(true)
     const tableContainerRef = useRef<HTMLDivElement>(null)
 
-
-    const [data, setData] = useState<FormattedBasicView[] | null>(null)
-    // const [columns, setColumns] = useState<any>()
     const height = useMemo(() => {
-        return windowSize.height - 170
+        return windowSize.height - 60
     }, [windowSize.height])
-
-
-
-
-    useEffect(() => {
-        async function loadCollection() {
-            const supabase = await createClient()
-            const { data } = (await supabase.from("basic_view").select())
-            const formattedData = await Promise.all((data ?? []).map((row) => formatData(row)))
-            // Добавляем ключ для каждого ряда
-            setData(formattedData)
-
-            setLoading(false)
-
-        }
-        loadCollection()
-
-    }, [])
 
 
     const table = useReactTable({
         columns: columns,
-        data: data ?? [],
+        data: data,
         getCoreRowModel: getCoreRowModel(),
         debugTable: true,
     })
 
-
-
-
-
     return <>
-        <div ref={tableContainerRef} className="h-full" style={{
+        <div ref={tableContainerRef} style={{
             overflow: 'auto', //our scrollable table container
-            position: 'relative', //needed for sticky header
+            position: 'relative', //needed for sticky header,
+            height: height
         }}>
             <table style={{ display: 'grid' }} className="min-w-full table-fixed">
                 <thead
@@ -250,8 +213,19 @@ function CollectionTable() {
  * Отображение страницы коллекции 
  */
 export default function CollectionPage() {
+    const supabase = useClient()
+
+    const { data, isPending } = useQuery({
+        queryKey: ['collection'], queryFn: () =>
+            getCollection(supabase)
+    })
+
+    if (isPending) {
+        return <Skeleton active />
+    }
+
     return <div className="h-full">
-        <CollectionTable />
+        <CollectionTable data={data ?? []} />
         <FloatButton.Group shape="square" trigger="hover" icon={<MoreOutlined />}>
             <FloatButton icon={<VerticalAlignBottomOutlined />} />
             <FloatButton icon={<PlusOutlined />} />

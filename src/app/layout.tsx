@@ -5,6 +5,7 @@ import { AntdRegistry } from '@ant-design/nextjs-registry'
 import { ConfigProvider, theme } from 'antd'
 import ruRU from 'antd/locale/ru_RU';
 import '@ant-design/v5-patch-for-react-19';
+import { ReactQueryClientProvider } from './components/query-provider';
 
 
 const { useToken } = theme;
@@ -18,18 +19,22 @@ export default function Layout({ children }: {
 
 
     return (
-        <html lang="ru">
-            <head>
+        <ReactQueryClientProvider>
+            <html lang="ru">
+                <head>
 
-            </head>
-            <body>
-                <AntdRegistry>
-                    <ConfigProvider locale={ruRU}>
+                </head>
+                <body>
+                    <AntdRegistry>
+                        <ConfigProvider locale={ruRU}>
+
                             {children}
-                    </ConfigProvider>
-                </AntdRegistry>
-            </body>
-        </html>
+
+                        </ConfigProvider>
+                    </AntdRegistry>
+                </body>
+            </html>
+        </ReactQueryClientProvider>
     )
 }
 
