@@ -1,7 +1,7 @@
 "use client"
 
 import { flexRender, Row, Table } from "@tanstack/react-table"
-import { FormattedBasicView } from "./models"
+import { FormattedBasicView } from "../models"
 import { useVirtualizer, VirtualItem, Virtualizer } from "@tanstack/react-virtual"
 
 interface TableBodyProps {

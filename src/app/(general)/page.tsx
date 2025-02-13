@@ -1,7 +1,7 @@
 "use client"
 "use no memo"
 
-import { FloatButton, Skeleton, } from "antd"
+import { FloatButton, Skeleton, Tag, } from "antd"
 import { useClient } from "../../utils/supabase/client"
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Tables } from "@/src/utils/supabase/gen-types";
@@ -12,10 +12,12 @@ import dayjs, { Dayjs } from "dayjs";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter"
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore"
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
-import { TableBody } from "../components/table/table-body";
-import { FormattedBasicView } from "../components/table/models";
+import { TableBody } from "./table/table-body";
+import { FormattedBasicView } from "./models";
 import { useQuery } from "@tanstack/react-query";
 import { getCollection } from "./queries";
+import { info } from "console";
+import ExpandableText from "../components/expand-text";
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
@@ -58,9 +60,6 @@ function formatSex(sex: string | null): string {
 
 
 
-
-
-
 /**
  * Интерфейс для представления тега.
  * @interface
@@ -89,37 +88,107 @@ const ages: Tables<"age">[] = [
 
 const columnHelper = createColumnHelper<FormattedBasicView>()
 
+
+
+
 const columns = [
     columnHelper.accessor('id', {
         cell: info => <>{info.getValue()}</>,
-        header: "id",
+        header: "ID",
         size: 60
     }),
+
+    columnHelper.accessor('collect_id', {
+        cell: info => <>{info.getValue()}</>,
+        header: "collect id",
+        size: 120
+    }),
+
     columnHelper.group({
         header: "Топология",
         columns: [
             columnHelper.accessor('order', {
                 cell: info => <>{info.getValue()}</>,
-                header: "order",
-                size: 100
+                header: "Отряд",
+                size: 120
             }),
             columnHelper.accessor('family', {
                 cell: info => <>{info.getValue()}</>,
-                header: "family",
-                size: 110
+                header: "Семейство",
+                size: 120
             }),
             columnHelper.accessor('genus', {
                 cell: info => <>{info.getValue()}</>,
-                header: "genus",
-                size: 120
+                header: "Род",
+                size: 130
             }),
             columnHelper.accessor('kind', {
                 cell: info => <>{info.getValue()}</>,
-                header: "kind",
-                size: 90
+                header: "Вид",
+                size: 120
             }),
         ]
+    }),
+    columnHelper.accessor(row => formatDate(row.year, row.month, row.day), {
+        id: "date",
+        header: "Дата"
+    }),
+    columnHelper.accessor("age", {
+        cell: info => <>{formatAge(info.getValue())}</>,
+        header: "Возраст"
+    }),
+    columnHelper.accessor("sex", {
+        cell: info => <>{formatSex(info.getValue())}</>,
+        header: "Пол"
+    }),
+    columnHelper.group({
+        header: "Позиция",
+        columns: [columnHelper.group({
+            header: "Точка",
+            columns: [
+                columnHelper.accessor("latitude", {
+                    header: "Широта"
+                }),
+                columnHelper.accessor("longtitude", {
+                    header: "Долгота"
+                })
+            ],
+        },),
+        columnHelper.accessor("country", { header: "Страна" }),
+        columnHelper.accessor("region", { header: "Регион", size: 250 }),
+        columnHelper.accessor("geo_comment", {
+            header: "Геокомментарий",
+            size: 270,
+            cell: info => <ExpandableText>{info.getValue()}</ExpandableText> // TODO
+        }),
+        ]
+    },),
+    columnHelper.group({
+        header: "Ваучер",
+        columns: [
+            columnHelper.accessor("voucher_institute", {
+                header: "Институт"
+            }),
+            columnHelper.accessor("voucher_id", {
+                header: "ID"
+            })
+        ]
+    }),
+    columnHelper.accessor("tags", {
+        header: "Тэги",
+        cell: info => {
+            let tags = info.getValue()
+            return <> {tags?.map((tag) => <Tag color="blue" key={(tag as unknown as Tag).id}>{(tag as unknown as Tag).name}</Tag>)}
+            </>
+        }
+    }),
+    columnHelper.accessor("comment", {
+        header: "Комментарий",
+        cell: info => <>{info.getValue()}</>
     })
+
+
+
 ]
 
 
@@ -150,6 +219,10 @@ function CollectionTable({ data }: CollectionTableProps) {
         data: data,
         getCoreRowModel: getCoreRowModel(),
         debugTable: true,
+        defaultColumn: {
+            minSize: 60,
+            maxSize: 800,
+        },
     })
 
     return <>

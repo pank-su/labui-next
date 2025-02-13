@@ -1,5 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import { FormattedBasicView } from "../components/table/models";
+import { FormattedBasicView } from "./models";
 import { TypedSupabaseClient } from "@/src/utils/supabase/typed";
 import { badDateToDate } from "@/src/utils/formatDate";
 import dayjs, { Dayjs } from "dayjs";
