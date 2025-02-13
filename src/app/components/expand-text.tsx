@@ -5,7 +5,7 @@ export default function ExpandableText({ children }: { children: any }){
 
     return (
         <div
-            onClick={() => setExpanded(true)}
+            onClick={() => setExpanded(!expanded)}
             className={`cursor-pointer ${expanded ? '' : 'truncate'}`}
         >
             {children}
