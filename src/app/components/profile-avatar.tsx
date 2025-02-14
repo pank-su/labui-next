@@ -5,7 +5,7 @@ import { MenuProps } from "antd/lib";
 import { data } from "autoprefixer";
 import { useEffect, useState } from "react";
 import { singOutAction } from "../auth/actions";
-import { useClient } from "@/src/utils/supabase/client";
+import { useClient } from "@/utils/supabase/client";
 
 
 const items: MenuProps['items'] = [

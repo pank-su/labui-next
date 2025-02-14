@@ -1,4 +1,4 @@
-import { Database } from "@/src/utils/supabase/gen-types";
+import { Database } from "@/utils/supabase/gen-types";
 import { createBrowserClient } from "@supabase/ssr";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { useMemo } from "react";

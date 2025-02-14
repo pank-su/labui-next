@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import AuthBtn from "./auth-btn";
 import { User } from "@supabase/supabase-js";
 import ProfileAvatar from "./profile-avatar";
-import { useClient } from "@/src/utils/supabase/client";
+import { useClient } from "@/utils/supabase/client";
 
 
 export default function Header() {
