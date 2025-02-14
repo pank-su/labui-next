@@ -20,7 +20,7 @@ export function formatDate(year: number | null, month: number | null, day: numbe
         parts.push(year.toString());
     }
 
-    return parts.length > 0 ? parts.join('.') : '-';
+    return parts.length > 0 ? parts.join('.') : '';
 };
 
 

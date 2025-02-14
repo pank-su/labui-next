@@ -1,4 +1,3 @@
-import { createClient } from "@/src/utils/supabase/client";
 import { UserOutlined } from "@ant-design/icons";
 import { User } from "@supabase/supabase-js";
 import { Avatar, Dropdown, Skeleton } from "antd";
@@ -6,6 +5,7 @@ import { MenuProps } from "antd/lib";
 import { data } from "autoprefixer";
 import { useEffect, useState } from "react";
 import { singOutAction } from "../auth/actions";
+import { useClient } from "@/utils/supabase/client";
 
 
 const items: MenuProps['items'] = [
@@ -23,10 +23,10 @@ const items: MenuProps['items'] = [
 export default function ProfileAvatar() {
 
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+    const supabase = useClient()
 
     useEffect(() => {
         async function fetchProfile() {
-            const supabase = await createClient()
             const { data } = await supabase.from('profiles').select()
 
             setAvatarUrl(data![0].avatar ?? "https://api.dicebear.com/9.x/lorelei/svg?backgroundColor=b6e3f4&seed=" + data![0].id) // Если аватарки нет, то генерируем по идентификатору пользователя
