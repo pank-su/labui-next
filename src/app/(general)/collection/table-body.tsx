@@ -3,13 +3,14 @@
 import { flexRender, Row, Table } from "@tanstack/react-table"
 import { FormattedBasicView } from "../models"
 import { useVirtualizer, VirtualItem, Virtualizer } from "@tanstack/react-virtual"
+import { TableCell, TableRow } from "@/app/components/ui/table"
 
-interface TableBodyProps {
+interface VirtualTableBodyProps {
     table: Table<FormattedBasicView>
     tableContainerRef: React.RefObject<HTMLDivElement | null>
 }
 
-export function TableBody({ table, tableContainerRef }: TableBodyProps) {
+export function VirtualTableBody({ table, tableContainerRef }: VirtualTableBodyProps) {
     const { rows } = table.getRowModel()
 
     // Important: Keep the row virtualizer in the lowest component possible to avoid unnecessary re-renders.
@@ -37,7 +38,7 @@ export function TableBody({ table, tableContainerRef }: TableBodyProps) {
             {rowVirtualizer.getVirtualItems().map(virtualRow => {
                 const row = rows[virtualRow.index] as Row<FormattedBasicView>
                 return (
-                    <TableBodyRow
+                    <VirtualTableBodyRow
                         key={row.id}
                         row={row}
                         virtualRow={virtualRow}
@@ -49,15 +50,15 @@ export function TableBody({ table, tableContainerRef }: TableBodyProps) {
     )
 }
 
-interface TableBodyRowProps {
+interface VirtualTableBodyRowProps {
     row: Row<FormattedBasicView>
     virtualRow: VirtualItem
     rowVirtualizer: Virtualizer<HTMLDivElement, HTMLTableRowElement>
 }
 
-export function TableBodyRow({ row, virtualRow, rowVirtualizer }: TableBodyRowProps) {
+export function VirtualTableBodyRow({ row, virtualRow, rowVirtualizer }: VirtualTableBodyRowProps) {
     return (
-        <tr
+        <TableRow
             data-index={virtualRow.index} //needed for dynamic row height measurement
             ref={node => rowVirtualizer.measureElement(node)} //measure dynamic row height
             key={row.id}
@@ -70,7 +71,7 @@ export function TableBodyRow({ row, virtualRow, rowVirtualizer }: TableBodyRowPr
         >
             {row.getVisibleCells().map(cell => {
                 return (
-                    <td
+                    <TableCell
                         key={cell.id}
                         style={{
                             display: 'flex',
@@ -78,9 +79,9 @@ export function TableBodyRow({ row, virtualRow, rowVirtualizer }: TableBodyRowPr
                         }}
                     >
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
+                    </TableCell>
                 )
             })}
-        </tr>
+        </TableRow>
     )
 }

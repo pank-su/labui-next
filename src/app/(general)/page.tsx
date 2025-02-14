@@ -12,7 +12,7 @@ import dayjs, { Dayjs } from "dayjs";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter"
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore"
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
-import { TableBody } from "./collection/table-body";
+import { VirtualTableBody } from "./collection/table-body";
 import { FormattedBasicView } from "./models";
 import { useQuery } from "@tanstack/react-query";
 import { getCollection } from "./queries";
@@ -75,7 +75,7 @@ function CollectionTable({ data }: CollectionTableProps) {
     })
 
     return <>
-        <div ref={tableContainerRef} style={{
+        <div ref={tableContainerRef} className="rounded-md border" style={{
             overflow: 'auto', //our scrollable table container
             position: 'relative', //needed for sticky header,
             height: height
@@ -122,7 +122,7 @@ function CollectionTable({ data }: CollectionTableProps) {
                         </tr>
                     ))}
                 </thead>
-                <TableBody table={table} tableContainerRef={tableContainerRef} />
+                <VirtualTableBody table={table} tableContainerRef={tableContainerRef} />
 
             </table>
 

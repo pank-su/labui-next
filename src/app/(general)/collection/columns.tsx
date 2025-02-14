@@ -131,7 +131,8 @@ export const columns = [
         header: "Ваучер",
         columns: [
             columnHelper.accessor("voucher_institute", {
-                header: "Институт"
+                header: "Институт",
+                cell: info => <ExpandableText>{info.getValue()}</ExpandableText>
             }),
             columnHelper.accessor("voucher_id", {
                 header: "ID"
