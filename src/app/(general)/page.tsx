@@ -11,7 +11,7 @@ import { CalendarOutlined, MoreOutlined, PlusOutlined, SearchOutlined, VerticalA
 import dayjs, { Dayjs } from "dayjs";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter"
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore"
-import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { createColumnHelper, flexRender, getCoreRowModel, getSortedRowModel, useReactTable } from "@tanstack/react-table";
 import { VirtualTableBody } from "./collection/table-body";
 import { FormattedBasicView } from "./models";
 import { useQuery } from "@tanstack/react-query";
@@ -20,6 +20,7 @@ import { info } from "console";
 import ExpandableText from "../components/expand-text";
 import { columns } from "./collection/columns";
 import { Table, TableHead, TableHeader, TableRow } from "../components/ui/table";
+import { SortedIcon } from "../components/sorted-filter";
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
@@ -40,14 +41,10 @@ const ages: Tables<"age">[] = [
 ]
 
 
-
-
-
 interface CollectionTableProps {
     data: FormattedBasicView[]
 
 }
-
 
 
 /**
@@ -68,11 +65,8 @@ function CollectionTable({ data }: CollectionTableProps) {
         columns: columns,
         data: data,
         getCoreRowModel: getCoreRowModel(),
+        getSortedRowModel: getSortedRowModel(),
         debugTable: true,
-        defaultColumn: {
-            minSize: 60,
-            maxSize: 800,
-        },
     })
 
     return <>
@@ -101,9 +95,24 @@ function CollectionTable({ data }: CollectionTableProps) {
                                 >
                                     {header.isPlaceholder
                                         ? null
-                                        : flexRender(
-                                            header.column.columnDef.header,
-                                            header.getContext()
+                                        : (
+                                            <div
+                                                className={"flow w-full justify-between " +
+                                                    (header.column.getCanSort()
+                                                        ? 'cursor-pointer select-none'
+                                                        : '')
+                                                }
+                                                onClick={header.column.getToggleSortingHandler()}
+                                            >
+
+                                                {flexRender(
+                                                    header.column.columnDef.header,
+                                                    header.getContext())}
+                                                {
+                                                    header.column.getCanSort() ? <SortedIcon isSorted={header.column.getIsSorted()} /> : <></>
+                                                }
+                                            </div>
+
                                         )}
                                 </TableHead>
                             ))}

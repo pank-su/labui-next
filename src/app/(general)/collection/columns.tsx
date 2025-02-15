@@ -1,8 +1,9 @@
-import { createColumnHelper } from "@tanstack/react-table"
+import { createColumnHelper, SortDirection } from "@tanstack/react-table"
 import { FormattedBasicView } from "../models"
 import { formatDate } from "@/utils/formatDate"
 import ExpandableText from "@/app/components/expand-text"
-import { Tag } from "antd"
+import { Checkbox, Tag } from "antd"
+import { SortAscendingOutlined, SortDescendingOutlined } from "@ant-design/icons"
 
 const columnHelper = createColumnHelper<FormattedBasicView>()
 
@@ -55,7 +56,31 @@ function formatSex(sex: string | null): string {
 
 
 
+
+
+
+
 export const columns = [
+    columnHelper.display({
+        id: 'select-col',
+        size: 33,
+        header: ({ table }) => (
+            <Checkbox
+                checked={table.getIsAllRowsSelected()}
+                indeterminate={table.getIsSomeRowsSelected()}
+                onChange={table.getToggleAllRowsSelectedHandler()}
+            />
+        ),
+        cell: ({ row }) => (
+            <Checkbox
+                checked={row.getIsSelected()}
+                disabled={!row.getCanSelect()}
+                onChange={row.getToggleSelectedHandler()}
+            />
+        )
+    }),
+
+
     columnHelper.accessor('id', {
         cell: info => <>{info.getValue()}</>,
         header: "ID",
@@ -115,7 +140,12 @@ export const columns = [
                 header: "Долгота"
             }),
             columnHelper.accessor("country", { header: "Страна" }),
-            columnHelper.accessor("region", { header: "Регион", size: 250 }),
+            columnHelper.accessor("region", {
+                header: "Регион",
+                size: 250, 
+                cell: info => <ExpandableText>{info.getValue()}</ExpandableText>
+            }
+            ),
             columnHelper.accessor("geo_comment", {
                 header: "Геокомментарий",
                 size: 270,
