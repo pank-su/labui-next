@@ -19,6 +19,7 @@ import { getCollection } from "./queries";
 import { info } from "console";
 import ExpandableText from "../components/expand-text";
 import { columns } from "./collection/columns";
+import { Table, TableHead, TableHeader, TableRow } from "../components/ui/table";
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
@@ -75,58 +76,46 @@ function CollectionTable({ data }: CollectionTableProps) {
     })
 
     return <>
-        <div ref={tableContainerRef} className="rounded-md border" style={{
-            overflow: 'auto', //our scrollable table container
+        <div ref={tableContainerRef} className="overflow-auto" style={{
             position: 'relative', //needed for sticky header,
             height: height
         }}>
-            <table style={{ display: 'grid' }} className="min-w-full table-fixed">
-                <thead
-                    style={{
-                        display: 'grid',
-                        position: 'sticky',
-                        top: 0,
-                        zIndex: 1,
-                    }}
-                    className="bg-gray-50 border-b border-gray-200"
-                >
+            <Table style={{ display: 'grid' }} >
+                <TableHeader style={{
+                    display: 'grid',
+                    position: 'sticky',
+                    top: 0,
+                    zIndex: 1,
+                }}>
                     {table.getHeaderGroups().map(headerGroup => (
-                        <tr
-                            key={headerGroup.id}
-                            style={{ display: 'flex', width: '100%' }}
-
-                        >
-                            {headerGroup.headers.map(header => {
-                                return (
-                                    <th
-                                        key={header.id}
-
-                                        style={{
-                                            display: 'flex',
-                                            width: header.getSize(),
-                                        }}
-                                        className="px-4 py-2 text-left text-sm font-medium text-gray-700 first:rounded-tl-md 
-                            last:rounded-tr-md border-r last:border-r-0  border-gray-200"
-                                    >
-                                        <div>
-                                            {header.isPlaceholder
-                                                ? null
-                                                : flexRender(
-                                                    header.column.columnDef.header,
-                                                    header.getContext()
-                                                )}
-                                        </div>
-                                    </th>
-                                )
-                            })}
-                        </tr>
+                        <TableRow key={headerGroup.id} style={{ display: 'flex', width: '100%' }}>
+                            {headerGroup.headers.map(header => (
+                                <TableHead
+                                    key={header.id}
+                                    colSpan={header.colSpan}
+                                    // Дополнительные стили/классы
+                                    style={{
+                                        display: 'flex',
+                                        width: header.getSize(),
+                                    }}
+                                >
+                                    {header.isPlaceholder
+                                        ? null
+                                        : flexRender(
+                                            header.column.columnDef.header,
+                                            header.getContext()
+                                        )}
+                                </TableHead>
+                            ))}
+                        </TableRow>
                     ))}
-                </thead>
+                </TableHeader>
+
                 <VirtualTableBody table={table} tableContainerRef={tableContainerRef} />
 
-            </table>
+            </Table>
 
-        </div>
+        </div >
     </>
 }
 

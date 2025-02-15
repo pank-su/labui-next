@@ -107,24 +107,20 @@ export const columns = [
     }),
     columnHelper.group({
         header: "Позиция",
-        columns: [columnHelper.group({
-            header: "Точка",
-            columns: [
-                columnHelper.accessor("latitude", {
-                    header: "Широта"
-                }),
-                columnHelper.accessor("longtitude", {
-                    header: "Долгота"
-                })
-            ],
-        },),
-        columnHelper.accessor("country", { header: "Страна" }),
-        columnHelper.accessor("region", { header: "Регион", size: 250 }),
-        columnHelper.accessor("geo_comment", {
-            header: "Геокомментарий",
-            size: 270,
-            cell: info => <ExpandableText>{info.getValue()}</ExpandableText> // TODO
-        }),
+        columns: [
+            columnHelper.accessor("latitude", {
+                header: "Широта"
+            }),
+            columnHelper.accessor("longtitude", {
+                header: "Долгота"
+            }),
+            columnHelper.accessor("country", { header: "Страна" }),
+            columnHelper.accessor("region", { header: "Регион", size: 250 }),
+            columnHelper.accessor("geo_comment", {
+                header: "Геокомментарий",
+                size: 270,
+                cell: info => <ExpandableText>{info.getValue()}</ExpandableText> // TODO
+            }),
         ]
     },),
     columnHelper.group({
