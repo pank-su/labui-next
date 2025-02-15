@@ -88,7 +88,7 @@ export const columns = [
     }),
 
     columnHelper.accessor('collect_id', {
-        cell: info => <>{info.getValue()}</>,
+        cell: info => <ExpandableText>{info.getValue()}</ExpandableText>,
         header: "collect id",
         size: 120
     }),
@@ -161,7 +161,9 @@ export const columns = [
                 cell: info => <ExpandableText>{info.getValue()}</ExpandableText>
             }),
             columnHelper.accessor("voucher_id", {
-                header: "ID"
+                header: "ID",
+                cell: info => <ExpandableText>{info.getValue()}</ExpandableText>
+
             })
         ]
     }),
