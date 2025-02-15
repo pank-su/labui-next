@@ -2,10 +2,10 @@ import { Avatar, Skeleton } from "antd";
 import Navigation from "./navigation";
 import { Search } from "./search";
 import { useEffect, useState } from "react";
-import { createClient } from "@/src/utils/supabase/client";
 import AuthBtn from "./auth-btn";
 import { User } from "@supabase/supabase-js";
 import ProfileAvatar from "./profile-avatar";
+import { useClient } from "@/utils/supabase/client";
 
 
 export default function Header() {
@@ -27,13 +27,13 @@ export default function Header() {
  * Кнопка или аватар авторизации
  */
 function AuthOrAvatar() {
+    const supabase = useClient()    
 
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<User | null>(null);
 
     useEffect(() => {
         async function fetchUser() {
-            const supabase = createClient();
             const {
                 data: { user },
             } = await supabase.auth.getUser();
