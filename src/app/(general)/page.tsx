@@ -1,26 +1,24 @@
 "use client"
 "use no memo"
 
-import { FloatButton, Skeleton, Tag, } from "antd"
-import { useClient } from "../../utils/supabase/client"
-import { useEffect, useMemo, useRef, useState } from "react";
 import { Tables } from "@/utils/supabase/gen-types";
 import useWindowSize from "@/utils/useWindowSize";
-import { badDateToDate, formatDate } from "@/utils/formatDate";
-import { CalendarOutlined, MoreOutlined, PlusOutlined, SearchOutlined, VerticalAlignBottomOutlined } from "@ant-design/icons";
-import dayjs, { Dayjs } from "dayjs";
-import isSameOrAfter from "dayjs/plugin/isSameOrAfter"
-import isSameOrBefore from "dayjs/plugin/isSameOrBefore"
-import { createColumnHelper, flexRender, getCoreRowModel, getSortedRowModel, useReactTable } from "@tanstack/react-table";
+import { MoreOutlined, PlusOutlined, VerticalAlignBottomOutlined } from "@ant-design/icons";
+import { useQuery } from "@tanstack/react-query";
+import { flexRender, getCoreRowModel, getFacetedMinMaxValues, getFacetedRowModel, getFacetedUniqueValues, getFilteredRowModel, getSortedRowModel, useReactTable } from "@tanstack/react-table";
+import { FloatButton, Skeleton } from "antd";
+import dayjs from "dayjs";
+import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
+import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+import { useMemo, useRef } from "react";
+import { useClient } from "../../utils/supabase/client";
+import { SortedIcon } from "../components/sorted-filter";
+import { Table, TableHead, TableHeader, TableRow } from "../components/ui/table";
+import { columns } from "./collection/columns";
 import { VirtualTableBody } from "./collection/table-body";
 import { FormattedBasicView } from "./models";
-import { useQuery } from "@tanstack/react-query";
 import { getCollection } from "./queries";
-import { info } from "console";
-import ExpandableText from "../components/expand-text";
-import { columns } from "./collection/columns";
-import { Table, TableHead, TableHeader, TableRow } from "../components/ui/table";
-import { SortedIcon } from "../components/sorted-filter";
+import Filter from "../components/filter";
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
@@ -66,6 +64,10 @@ function CollectionTable({ data }: CollectionTableProps) {
         data: data,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
+        getFilteredRowModel: getFilteredRowModel(),
+        getFacetedRowModel: getFacetedRowModel(), // client-side faceting
+        getFacetedUniqueValues: getFacetedUniqueValues(), // generate unique values for select filter/autocomplete
+        getFacetedMinMaxValues: getFacetedMinMaxValues(), // generate min/max values for range filter
         debugTable: true,
     })
 
@@ -112,18 +114,28 @@ function CollectionTable({ data }: CollectionTableProps) {
                                                     header.column.getCanSort() ? <SortedIcon isSorted={header.column.getIsSorted()} /> : <></>
                                                 }
                                             </div>
-
                                         )}
                                 </TableHead>
                             ))}
+
                         </TableRow>
                     ))}
+                    <TableRow key={"filter"} style={{ display: 'flex', width: '100%' }}>
+                        {table.getHeaderGroups().toReversed()[0].headers.map(header => {
+                            return <th key={"filter" + header.id}
+                                style={{
+                                    display: 'flex',
+                                    width: header.getSize(),
+                                }}>
+                                    <Filter column={header.column}/>
+                                </th>
+                        })}
+                    </TableRow>
+
                 </TableHeader>
 
                 <VirtualTableBody table={table} tableContainerRef={tableContainerRef} />
-
             </Table>
-
         </div >
     </>
 }

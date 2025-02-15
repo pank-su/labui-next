@@ -1,4 +1,4 @@
-import { createColumnHelper, SortDirection } from "@tanstack/react-table"
+import { createColumnHelper, RowData, SortDirection } from "@tanstack/react-table"
 import { FormattedBasicView } from "../models"
 import { formatDate } from "@/utils/formatDate"
 import ExpandableText from "@/app/components/expand-text"
@@ -6,6 +6,14 @@ import { Checkbox, Tag } from "antd"
 import { SortAscendingOutlined, SortDescendingOutlined } from "@ant-design/icons"
 
 const columnHelper = createColumnHelper<FormattedBasicView>()
+
+declare module '@tanstack/react-table' {
+    //allows us to define custom properties for our columns
+    export interface ColumnMeta<TData extends RowData, TValue> {
+        filterVariant?: 'index' | 'date-range' | 'select'
+    }
+}
+
 
 /**
  * Интерфейс для представления тега.
@@ -55,11 +63,6 @@ function formatSex(sex: string | null): string {
 }
 
 
-
-
-
-
-
 export const columns = [
     columnHelper.display({
         id: 'select-col',
@@ -84,7 +87,16 @@ export const columns = [
     columnHelper.accessor('id', {
         cell: info => <>{info.getValue()}</>,
         header: "ID",
-        size: 60
+        size: 60,
+        enableColumnFilter: true,
+        meta: {
+            filterVariant: "index"
+        },
+        filterFn: (row, id, filterValue) => {
+            if ((filterValue as number[])[0] == -1) return true
+            const value = row.getValue(id) as number
+            return (filterValue as number[]).includes(value)
+        }
     }),
 
     columnHelper.accessor('collect_id', {
@@ -142,7 +154,7 @@ export const columns = [
             columnHelper.accessor("country", { header: "Страна" }),
             columnHelper.accessor("region", {
                 header: "Регион",
-                size: 250, 
+                size: 250,
                 cell: info => <ExpandableText>{info.getValue()}</ExpandableText>
             }
             ),
@@ -179,7 +191,4 @@ export const columns = [
         header: "Комментарий",
         cell: info => <ExpandableText>{info.getValue()}</ExpandableText>
     })
-
-
-
 ]
