@@ -1,29 +1,20 @@
 "use client"
 "use no memo"
 
-import { FloatButton, Skeleton, Tag, } from "antd"
-import { useClient } from "../../utils/supabase/client"
-import { useEffect, useMemo, useRef, useState } from "react";
 import { Tables } from "@/utils/supabase/gen-types";
 import useWindowSize from "@/utils/useWindowSize";
-import { badDateToDate, formatDate } from "@/utils/formatDate";
-import { CalendarOutlined, MoreOutlined, PlusOutlined, SearchOutlined, VerticalAlignBottomOutlined } from "@ant-design/icons";
-import dayjs, { Dayjs } from "dayjs";
-import isSameOrAfter from "dayjs/plugin/isSameOrAfter"
-import isSameOrBefore from "dayjs/plugin/isSameOrBefore"
-import { createColumnHelper, flexRender, getCoreRowModel, getSortedRowModel, useReactTable } from "@tanstack/react-table";
-import { VirtualTableBody } from "./collection/table-body";
-import { FormattedBasicView } from "./models";
-import { useQuery } from "@tanstack/react-query";
-import { getCollection } from "./queries";
-import { info } from "console";
-import ExpandableText from "../components/expand-text";
-import { columns } from "./collection/columns";
-import { Table, TableHead, TableHeader, TableRow } from "../components/ui/table";
+import { MoreOutlined, PlusOutlined, VerticalAlignBottomOutlined } from "@ant-design/icons";
+import { useQuery } from "@supabase-cache-helpers/postgrest-react-query";
+import { flexRender, getCoreRowModel, getSortedRowModel, Table, useReactTable } from "@tanstack/react-table";
+import { FloatButton, Skeleton } from "antd";
+import { useMemo, useRef } from "react";
+import { useClient } from "../../utils/supabase/client";
 import { SortedIcon } from "../components/sorted-filter";
-
-dayjs.extend(isSameOrAfter)
-dayjs.extend(isSameOrBefore)
+import { TableHead, TableHeader, TableRow, Table as TableUi } from "../components/ui/table";
+import { columns } from "./collection/columns";
+import { VirtualTableBody } from "../components/data-table/body";
+import { FormattedBasicView } from "./models";
+import DataTable from "../components/data-table/data-table";
 
 
 // Захардкоженные значения пола для фильтрации/добавления
@@ -53,13 +44,6 @@ interface CollectionTableProps {
  */
 function CollectionTable({ data }: CollectionTableProps) {
 
-    const windowSize = useWindowSize()
-    const tableContainerRef = useRef<HTMLDivElement>(null)
-
-    const height = useMemo(() => {
-        return windowSize.height - 60
-    }, [windowSize.height])
-
 
     const table = useReactTable({
         columns: columns,
@@ -69,63 +53,7 @@ function CollectionTable({ data }: CollectionTableProps) {
         debugTable: true,
     })
 
-    return <>
-        <div ref={tableContainerRef} className="overflow-auto" style={{
-            position: 'relative', //needed for sticky header,
-            height: height
-        }}>
-            <Table style={{ display: 'grid' }} >
-                <TableHeader style={{
-                    display: 'grid',
-                    position: 'sticky',
-                    top: 0,
-                    zIndex: 1,
-                }}>
-                    {table.getHeaderGroups().map(headerGroup => (
-                        <TableRow key={headerGroup.id} style={{ display: 'flex', width: '100%' }}>
-                            {headerGroup.headers.map(header => (
-                                <TableHead
-                                    key={header.id}
-                                    colSpan={header.colSpan}
-                                    // Дополнительные стили/классы
-                                    style={{
-                                        display: 'flex',
-                                        width: header.getSize(),
-                                    }}
-                                >
-                                    {header.isPlaceholder
-                                        ? null
-                                        : (
-                                            <div
-                                                className={"flow w-full justify-between " +
-                                                    (header.column.getCanSort()
-                                                        ? 'cursor-pointer select-none'
-                                                        : '')
-                                                }
-                                                onClick={header.column.getToggleSortingHandler()}
-                                            >
-
-                                                {flexRender(
-                                                    header.column.columnDef.header,
-                                                    header.getContext())}
-                                                {
-                                                    header.column.getCanSort() ? <SortedIcon isSorted={header.column.getIsSorted()} /> : <></>
-                                                }
-                                            </div>
-
-                                        )}
-                                </TableHead>
-                            ))}
-                        </TableRow>
-                    ))}
-                </TableHeader>
-
-                <VirtualTableBody table={table} tableContainerRef={tableContainerRef} />
-
-            </Table>
-
-        </div >
-    </>
+    return <DataTable table={table}/>
 }
 
 
@@ -135,14 +63,12 @@ function CollectionTable({ data }: CollectionTableProps) {
 export default function CollectionPage() {
     const supabase = useClient()
 
-    const { data, isPending } = useQuery({
-        queryKey: ['collection'], queryFn: () =>
-            getCollection(supabase)
-    })
+    const { data, isPending } = useQuery(supabase.from("basic_view").select())
 
     if (isPending) {
         return <Skeleton active />
     }
+    
 
     return <div className="h-full">
         <CollectionTable data={data ?? []} />

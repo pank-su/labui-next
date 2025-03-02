@@ -1,11 +1,10 @@
-import { createColumnHelper, SortDirection } from "@tanstack/react-table"
-import { FormattedBasicView } from "../models"
-import { formatDate } from "@/utils/formatDate"
 import ExpandableText from "@/app/components/expand-text"
+import { formatDate } from "@/utils/formatDate"
+import { Tables } from "@/utils/supabase/gen-types"
+import { createColumnHelper } from "@tanstack/react-table"
 import { Checkbox, Tag } from "antd"
-import { SortAscendingOutlined, SortDescendingOutlined } from "@ant-design/icons"
 
-const columnHelper = createColumnHelper<FormattedBasicView>()
+const columnHelper = createColumnHelper<Tables<"basic_view">>()
 
 /**
  * Интерфейс для представления тега.
@@ -142,14 +141,14 @@ export const columns = [
             columnHelper.accessor("country", { header: "Страна" }),
             columnHelper.accessor("region", {
                 header: "Регион",
-                size: 250, 
+                size: 250,
                 cell: info => <ExpandableText>{info.getValue()}</ExpandableText>
             }
             ),
             columnHelper.accessor("geo_comment", {
                 header: "Геокомментарий",
                 size: 270,
-                cell: info => <ExpandableText>{info.getValue()}</ExpandableText> // TODO
+                cell: info => <ExpandableText>{info.getValue()}</ExpandableText>
             }),
         ]
     },),
