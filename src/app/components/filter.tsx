@@ -8,7 +8,7 @@ export default function Filter({ column }: { column: Column<any, unknown> }) {
 
 
     return <>{filterVariant === "index"
-        ? <Input placeholder="1,2,3-5" size="small" onChange={e => {
+        ? <Input placeholder="1,3-5" size="small" onChange={e => {
             if (e.target.value.trim() === "") {
                 column.setFilterValue([-1])
                 return
