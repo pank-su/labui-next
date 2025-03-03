@@ -1,10 +1,19 @@
-import ExpandableText from "@/app/components/expand-text"
+import { createColumnHelper, RowData, SortDirection } from "@tanstack/react-table"
+import { FormattedBasicView } from "../models"
 import { formatDate } from "@/utils/formatDate"
+import ExpandableText from "@/app/components/expand-text"
 import { Tables } from "@/utils/supabase/gen-types"
-import { createColumnHelper } from "@tanstack/react-table"
 import { Checkbox, Tag } from "antd"
 
 const columnHelper = createColumnHelper<Tables<"basic_view">>()
+
+declare module '@tanstack/react-table' {
+    //allows us to define custom properties for our columns
+    export interface ColumnMeta<TData extends RowData, TValue> {
+        filterVariant?: 'index' | 'date-range' | 'select'
+    }
+}
+
 
 /**
  * Интерфейс для представления тега.
@@ -54,11 +63,6 @@ function formatSex(sex: string | null): string {
 }
 
 
-
-
-
-
-
 export const columns = [
     columnHelper.display({
         id: 'select-col',
@@ -83,11 +87,20 @@ export const columns = [
     columnHelper.accessor('id', {
         cell: info => <>{info.getValue()}</>,
         header: "ID",
-        size: 60
+        size: 60,
+        enableColumnFilter: true,
+        meta: {
+            filterVariant: "index"
+        },
+        filterFn: (row, id, filterValue) => {
+            if ((filterValue as number[])[0] == -1) return true
+            const value = row.getValue(id) as number
+            return (filterValue as number[]).includes(value)
+        }
     }),
 
     columnHelper.accessor('collect_id', {
-        cell: info => <>{info.getValue()}</>,
+        cell: info => <ExpandableText>{info.getValue()}</ExpandableText>,
         header: "collect id",
         size: 120
     }),
@@ -160,7 +173,9 @@ export const columns = [
                 cell: info => <ExpandableText>{info.getValue()}</ExpandableText>
             }),
             columnHelper.accessor("voucher_id", {
-                header: "ID"
+                header: "ID",
+                cell: info => <ExpandableText>{info.getValue()}</ExpandableText>
+
             })
         ]
     }),
@@ -176,7 +191,4 @@ export const columns = [
         header: "Комментарий",
         cell: info => <ExpandableText>{info.getValue()}</ExpandableText>
     })
-
-
-
 ]

@@ -5,16 +5,21 @@ import { Tables } from "@/utils/supabase/gen-types";
 import useWindowSize from "@/utils/useWindowSize";
 import { MoreOutlined, PlusOutlined, VerticalAlignBottomOutlined } from "@ant-design/icons";
 import { useQuery } from "@supabase-cache-helpers/postgrest-react-query";
-import { flexRender, getCoreRowModel, getSortedRowModel, Table, useReactTable } from "@tanstack/react-table";
-import { FloatButton, Skeleton } from "antd";
-import { useMemo, useRef } from "react";
-import { useClient } from "../../utils/supabase/client";
-import { SortedIcon } from "../components/sorted-filter";
-import { TableHead, TableHeader, TableRow, Table as TableUi } from "../components/ui/table";
 import { columns } from "./collection/columns";
 import { VirtualTableBody } from "../components/data-table/body";
 import { FormattedBasicView } from "./models";
 import DataTable from "../components/data-table/data-table";
+import { flexRender, getCoreRowModel, getFacetedMinMaxValues, getFacetedRowModel, getFacetedUniqueValues, getFilteredRowModel, getSortedRowModel, useReactTable } from "@tanstack/react-table";
+import { FloatButton, Skeleton } from "antd";
+import dayjs from "dayjs";
+import { useMemo, useRef } from "react";
+import { useClient } from "../../utils/supabase/client";
+import { SortedIcon } from "../components/sorted-filter";
+import { Table, TableHead, TableHeader, TableRow } from "../components/ui/table";
+import { columns } from "./collection/columns";
+import { getCollection } from "./queries";
+import Filter from "../components/filter";
+
 
 
 // Захардкоженные значения пола для фильтрации/добавления
@@ -50,10 +55,16 @@ function CollectionTable({ data }: CollectionTableProps) {
         data: data,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
+        getFilteredRowModel: getFilteredRowModel(),
+        getFacetedRowModel: getFacetedRowModel(), // client-side faceting
+        getFacetedUniqueValues: getFacetedUniqueValues(), // generate unique values for select filter/autocomplete
+        getFacetedMinMaxValues: getFacetedMinMaxValues(), // generate min/max values for range filter
         debugTable: true,
     })
-
+    
+    
     return <DataTable table={table}/>
+
 }
 
 
