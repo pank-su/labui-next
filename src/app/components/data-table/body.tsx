@@ -29,7 +29,7 @@ export function VirtualTableBody<T>({ table, tableContainerRef }: VirtualTableBo
                 navigator.userAgent.indexOf('Firefox') === -1
                 ? element => element?.getBoundingClientRect().height
                 : undefined,
-        overscan: 5, // было 5
+        overscan: 10, // было 5
     })
 
     return (

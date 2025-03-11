@@ -6,13 +6,15 @@ import { SortedIcon } from "../sorted-filter";
 import { VirtualTableBody } from "./body";
 import useWindowSize from "@/utils/useWindowSize";
 import { useMemo, useRef } from "react";
+import { Spin } from "antd";
 
 
 interface DataTableProps<T>{
     table: Table<T>
+    loading?: boolean
 }
 
-export default function DataTable<T>({table}: DataTableProps<T>) {
+export default function DataTable<T>({table, loading = false}: DataTableProps<T>) {
     const windowSize = useWindowSize()
 
     const height = useMemo(() => {
@@ -24,11 +26,12 @@ export default function DataTable<T>({table}: DataTableProps<T>) {
 
     
 
-    return <>
+    return <> 
         <div ref={tableContainerRef} className="overflow-auto" style={{
             position: 'relative', //needed for sticky header,
             height: height
         }}>
+            <Spin spinning={loading} >
             <TableUi style={{ display: 'grid' }}>
                 <TableHeader style={{
                     display: 'grid',
@@ -71,11 +74,10 @@ export default function DataTable<T>({table}: DataTableProps<T>) {
                         </TableRow>
                     ))}
                 </TableHeader>
-
                 <VirtualTableBody table={table} tableContainerRef={tableContainerRef} />
 
             </TableUi>
-
+            </Spin>
         </div>
     </>;
 }
