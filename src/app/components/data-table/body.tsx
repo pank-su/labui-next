@@ -10,27 +10,11 @@ import { useMemo } from "react"
 interface VirtualTableBodyProps<T> {
     table: Table<T>
     tableContainerRef: React.RefObject<HTMLDivElement | null>
+    rowVirtualizer: Virtualizer<HTMLDivElement, HTMLTableRowElement>
 }
 
-export function VirtualTableBody<T>({ table, tableContainerRef }: VirtualTableBodyProps<T>) {
+export function VirtualTableBody<T>({ table, tableContainerRef, rowVirtualizer }: VirtualTableBodyProps<T>) {
     const { rows } = table.getRowModel()
-
-    
-
-   
-    // Important: Keep the row virtualizer in the lowest component possible to avoid unnecessary re-renders.
-    const rowVirtualizer = useVirtualizer<HTMLDivElement, HTMLTableRowElement>({
-        count: rows.length,
-        estimateSize: () => 24, //estimate row height for accurate scrollbar dragging
-        getScrollElement: () => tableContainerRef?.current,
-        //measure dynamic row height, except in firefox because it measures table border height incorrectly
-        measureElement:
-            typeof window !== 'undefined' &&
-                navigator.userAgent.indexOf('Firefox') === -1
-                ? element => element?.getBoundingClientRect().height
-                : undefined,
-        overscan: 10, // было 5
-    })
 
     return (
         <tbody

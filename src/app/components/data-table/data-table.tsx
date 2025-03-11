@@ -6,7 +6,9 @@ import { SortedIcon } from "../sorted-filter";
 import { VirtualTableBody } from "./body";
 import useWindowSize from "@/utils/useWindowSize";
 import { useMemo, useRef } from "react";
-import { Spin } from "antd";
+import { FloatButton, Spin } from "antd";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { MoreOutlined, PlusOutlined, VerticalAlignBottomOutlined, VerticalAlignTopOutlined } from "@ant-design/icons";
 
 
 interface DataTableProps<T>{
@@ -21,10 +23,29 @@ export default function DataTable<T>({table, loading = false}: DataTableProps<T>
         return windowSize.height - 60
     }, [windowSize.height])
 
+    const { rows } = table.getRowModel()
+
+
 
     const tableContainerRef = useRef<HTMLDivElement>(null)
 
+    // Important: Keep the row virtualizer in the lowest component possible to avoid unnecessary re-renders.
+    const rowVirtualizer = useVirtualizer<HTMLDivElement, HTMLTableRowElement>({
+        count: rows.length,
+        estimateSize: () => 24, //estimate row height for accurate scrollbar dragging
+        getScrollElement: () => tableContainerRef?.current,
+        //measure dynamic row height, except in firefox because it measures table border height incorrectly
+        measureElement:
+            typeof window !== 'undefined' &&
+                navigator.userAgent.indexOf('Firefox') === -1
+                ? element => element?.getBoundingClientRect().height
+                : undefined,
+        overscan: 10, // было 5
+    })
     
+    const scrollPosition = useMemo(() => {
+        return rowVirtualizer.getVirtualIndexes()[0]
+    }, [rowVirtualizer.scrollOffset, rows.length])
 
     return <> 
         <div ref={tableContainerRef} className="overflow-auto" style={{
@@ -74,10 +95,25 @@ export default function DataTable<T>({table, loading = false}: DataTableProps<T>
                         </TableRow>
                     ))}
                 </TableHeader>
-                <VirtualTableBody table={table} tableContainerRef={tableContainerRef} />
+                <VirtualTableBody table={table} tableContainerRef={tableContainerRef} rowVirtualizer={rowVirtualizer} />
 
             </TableUi>
             </Spin>
+            
         </div>
+        <FloatButton.Group shape="square" trigger="hover" icon={<MoreOutlined />}>
+            
+            { rows.length > 30  &&
+            <FloatButton icon={scrollPosition < rows.length / 2 ? <VerticalAlignBottomOutlined /> : <VerticalAlignTopOutlined/>} onClick={() => {
+                if (scrollPosition < rows.length / 2){
+                    rowVirtualizer.scrollToIndex(rows.length - 1)
+                }else{
+                    rowVirtualizer.scrollToIndex(0)
+
+                }
+            }}/> 
+            }
+            
+        </FloatButton.Group>
     </>;
 }

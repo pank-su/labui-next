@@ -54,11 +54,6 @@ export default function CollectionTable() {
 
     return <div className="h-full">
         <DataTable table={table} loading={isPending}  />
-        <FloatButton.Group shape="square" trigger="hover" icon={<MoreOutlined />}>
-            <FloatButton icon={<VerticalAlignBottomOutlined />} />
-            <FloatButton icon={<PlusOutlined />} />
-
-        </FloatButton.Group>
     </div>
 
 }
