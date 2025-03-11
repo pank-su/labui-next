@@ -2,10 +2,10 @@ import { createColumnHelper, RowData, SortDirection } from "@tanstack/react-tabl
 import { FormattedBasicView } from "../models"
 import { formatDate } from "@/utils/formatDate"
 import ExpandableText from "@/app/components/expand-text"
+import { Tables } from "@/utils/supabase/gen-types"
 import { Checkbox, Tag } from "antd"
-import { SortAscendingOutlined, SortDescendingOutlined } from "@ant-design/icons"
 
-const columnHelper = createColumnHelper<FormattedBasicView>()
+const columnHelper = createColumnHelper<Tables<"basic_view">>()
 
 declare module '@tanstack/react-table' {
     //allows us to define custom properties for our columns
@@ -161,7 +161,7 @@ export const columns = [
             columnHelper.accessor("geo_comment", {
                 header: "Геокомментарий",
                 size: 270,
-                cell: info => <ExpandableText>{info.getValue()}</ExpandableText> // TODO
+                cell: info => <ExpandableText>{info.getValue()}</ExpandableText>
             }),
         ]
     },),
