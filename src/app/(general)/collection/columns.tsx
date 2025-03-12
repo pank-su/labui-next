@@ -136,11 +136,13 @@ export const columns = [
     }),
     columnHelper.accessor("age", {
         cell: info => <>{formatAge(info.getValue())}</>,
-        header: "Возраст"
+        header: "Возраст",
+        size: 70
     }),
     columnHelper.accessor("sex", {
         cell: info => <>{formatSex(info.getValue())}</>,
-        header: "Пол"
+        header: "Пол",
+        size: 60
     }),
     columnHelper.group({
         header: "Позиция",
@@ -185,10 +187,13 @@ export const columns = [
             let tags = info.getValue()
             return <> {tags?.map((tag) => <Tag color="blue" key={(tag as unknown as Tag).id}>{(tag as unknown as Tag).name}</Tag>)}
             </>
-        }
+        },
+        size: 100
     }),
     columnHelper.accessor("comment", {
         header: "Комментарий",
-        cell: info => <ExpandableText>{info.getValue()}</ExpandableText>
+        cell: info => <ExpandableText>{info.getValue()}</ExpandableText>,
+        size: 400
+        
     })
 ]

@@ -6,6 +6,7 @@ import { ConfigProvider } from 'antd'
 import ruRU from 'antd/locale/ru_RU';
 import '@ant-design/v5-patch-for-react-19';
 import { ReactQueryClientProvider } from './components/query-provider';
+import { SearchProvider } from './components/search-context';
 
 
 export default function Layout({ children }: {
@@ -13,20 +14,23 @@ export default function Layout({ children }: {
 }) {
 
     return (
-        <ReactQueryClientProvider>
-            <html lang="ru">
-                <head>
+        <html lang="ru">
+            <head>
 
-                </head>
-                <body>
-                    <AntdRegistry>
-                        <ConfigProvider locale={ruRU}>
-                            {children}
-                        </ConfigProvider>
-                    </AntdRegistry>
-                </body>
-            </html>
-        </ReactQueryClientProvider>
+            </head>
+            <body>
+                <ReactQueryClientProvider>
+                    <SearchProvider>
+                        <AntdRegistry>
+                            <ConfigProvider locale={ruRU}>
+                                {children}
+                            </ConfigProvider>
+                        </AntdRegistry>
+                    </SearchProvider>
+                </ReactQueryClientProvider>
+
+            </body>
+        </html>
     )
 }
 

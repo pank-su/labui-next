@@ -1,11 +1,9 @@
-import { UserOutlined } from "@ant-design/icons";
-import { User } from "@supabase/supabase-js";
 import { Avatar, Dropdown, Skeleton } from "antd";
 import { MenuProps } from "antd/lib";
-import { data } from "autoprefixer";
-import { useEffect, useState } from "react";
+import {  useMemo } from "react";
 import { singOutAction } from "../auth/actions";
 import { useClient } from "@/utils/supabase/client";
+import { useQuery } from "@supabase-cache-helpers/postgrest-react-query";
 
 
 const items: MenuProps['items'] = [
@@ -17,25 +15,28 @@ const items: MenuProps['items'] = [
 ]
 
 
+export function generateAvatar(seed: String) {
+    return "https://api.dicebear.com/9.x/lorelei/svg?backgroundColor=b6e3f4&seed=" + seed
+}
+
 /**
  * Аватар профиля
  */
 export default function ProfileAvatar() {
 
-    const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
     const supabase = useClient()
 
-    useEffect(() => {
-        async function fetchProfile() {
-            const { data } = await supabase.from('profiles').select()
+    const {data, isPending} = useQuery(supabase.from("profiles").select())
 
-            setAvatarUrl(data![0].avatar ?? "https://api.dicebear.com/9.x/lorelei/svg?backgroundColor=b6e3f4&seed=" + data![0].id) // Если аватарки нет, то генерируем по идентификатору пользователя
-            // if data![0].avatar)
+    const avatarUrl = useMemo(() => {
+        if (!data){
+            return null
         }
-        fetchProfile()
+        return data[0]?.avatar ?? generateAvatar(data[0]?.id)
+    }, [data])
 
-    }, [])
-    if (avatarUrl == null) {
+
+    if (isPending) {
         return <Skeleton.Avatar />
     }
     return (

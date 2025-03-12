@@ -8,7 +8,7 @@ import useWindowSize from "@/utils/useWindowSize";
 import { useMemo, useRef } from "react";
 import { FloatButton, Spin } from "antd";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { MoreOutlined, PlusOutlined, VerticalAlignBottomOutlined, VerticalAlignTopOutlined } from "@ant-design/icons";
+import { VerticalAlignBottomOutlined, VerticalAlignTopOutlined } from "@ant-design/icons";
 import Filter from "../filter";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -55,7 +55,7 @@ export default function DataTable<T>({ table, loading = false }: DataTableProps<
             height: height
         }}>
             <Spin spinning={loading} >
-                <TableUi style={{ display: 'grid' }}>
+                <TableUi style={{ display: 'grid' }} >
                     <TableHeader style={{
                         display: 'grid',
                         position: 'sticky',
@@ -125,52 +125,52 @@ export default function DataTable<T>({ table, loading = false }: DataTableProps<
  * Анимированная кнопка для спуска вниз или вверх
  */
 interface AnimatedFloatButtonProps {
-    rows: any[]; 
+    rows: any[];
     scrollPosition: number;
     rowVirtualizer: {
-      scrollToIndex: (index: number) => void;
+        scrollToIndex: (index: number) => void;
     };
-  }
-  
-  export const AnimatedFloatButton: React.FC<AnimatedFloatButtonProps> = ({
+}
+
+export const AnimatedFloatButton: React.FC<AnimatedFloatButtonProps> = ({
     rows,
     scrollPosition,
     rowVirtualizer,
-  }) => {
+}) => {
     const isBottom = scrollPosition < rows.length / 2;
-  
+
     return (
-      <AnimatePresence>
-        {rows.length > 30 && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.3 }}
-            style={{ position: "fixed", bottom: 20, right: 20 }}
-          >
-            <FloatButton
-              icon={
+        <AnimatePresence>
+            {rows.length > 30 && (
                 <motion.div
-                  key={isBottom ? "down" : "up"}
-                  initial={{ rotate: -90, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: 90, opacity: 0 }}
-                  transition={{ duration: 0.3 }}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.3 }}
+                    style={{ position: "fixed", bottom: 20, right: 20 }}
                 >
-                  {isBottom ? <VerticalAlignBottomOutlined /> : <VerticalAlignTopOutlined />}
+                    <FloatButton
+                        icon={
+                            <motion.div
+                                key={isBottom ? "down" : "up"}
+                                initial={{ rotate: -90, opacity: 0 }}
+                                animate={{ rotate: 0, opacity: 1 }}
+                                exit={{ rotate: 90, opacity: 0 }}
+                                transition={{ duration: 0.3 }}
+                            >
+                                {isBottom ? <VerticalAlignBottomOutlined /> : <VerticalAlignTopOutlined />}
+                            </motion.div>
+                        }
+                        onClick={() => {
+                            if (isBottom) {
+                                rowVirtualizer.scrollToIndex(rows.length - 1);
+                            } else {
+                                rowVirtualizer.scrollToIndex(0);
+                            }
+                        }}
+                    />
                 </motion.div>
-              }
-              onClick={() => {
-                if (isBottom) {
-                  rowVirtualizer.scrollToIndex(rows.length - 1);
-                } else {
-                  rowVirtualizer.scrollToIndex(0);
-                }
-              }}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
+            )}
+        </AnimatePresence>
     );
-  };
+};
