@@ -9,6 +9,7 @@ import { useMemo, useRef } from "react";
 import { FloatButton, Spin } from "antd";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { MoreOutlined, PlusOutlined, VerticalAlignBottomOutlined, VerticalAlignTopOutlined } from "@ant-design/icons";
+import Filter from "../filter";
 
 
 interface DataTableProps<T>{
@@ -94,6 +95,17 @@ export default function DataTable<T>({table, loading = false}: DataTableProps<T>
                             ))}
                         </TableRow>
                     ))}
+                    <TableRow key={"filter"} style={{ display: 'flex', width: '100%' }}>
+                        {table.getHeaderGroups().toReversed()[0].headers.map(header => {
+                            return <th key={"filter" + header.id}
+                                style={{
+                                    display: 'flex',
+                                    width: header.getSize(),
+                                }}>
+                                    <Filter column={header.column}/>
+                                </th>
+                        })}
+                    </TableRow>
                 </TableHeader>
                 <VirtualTableBody table={table} tableContainerRef={tableContainerRef} rowVirtualizer={rowVirtualizer} />
 
