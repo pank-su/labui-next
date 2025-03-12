@@ -96,7 +96,7 @@ export default function DataTable<T>({table, loading = false}: DataTableProps<T>
                         </TableRow>
                     ))}
                     <TableRow key={"filter"} style={{ display: 'flex', width: '100%' }}>
-                        {table.getHeaderGroups().toReversed()[0].headers.map(header => {
+                        {table.getHeaderGroups().at(-1)!!.headers.map(header => {
                             return <th key={"filter" + header.id}
                                 style={{
                                     display: 'flex',
