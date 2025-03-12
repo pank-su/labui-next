@@ -12,12 +12,12 @@ import { MoreOutlined, PlusOutlined, VerticalAlignBottomOutlined, VerticalAlignT
 import Filter from "../filter";
 
 
-interface DataTableProps<T>{
+interface DataTableProps<T> {
     table: Table<T>
     loading?: boolean
 }
 
-export default function DataTable<T>({table, loading = false}: DataTableProps<T>) {
+export default function DataTable<T>({ table, loading = false }: DataTableProps<T>) {
     const windowSize = useWindowSize()
 
     const height = useMemo(() => {
@@ -43,89 +43,87 @@ export default function DataTable<T>({table, loading = false}: DataTableProps<T>
                 : undefined,
         overscan: 10, // было 5
     })
-    
+
     const scrollPosition = useMemo(() => {
         return rowVirtualizer.getVirtualIndexes()[0]
     }, [rowVirtualizer.scrollOffset, rows.length])
 
-    return <> 
+    return <>
         <div ref={tableContainerRef} className="overflow-auto" style={{
             position: 'relative', //needed for sticky header,
             height: height
         }}>
             <Spin spinning={loading} >
-            <TableUi style={{ display: 'grid' }}>
-                <TableHeader style={{
-                    display: 'grid',
-                    position: 'sticky',
-                    top: 0,
-                    zIndex: 1,
-                }}>
-                    {table.getHeaderGroups().map(headerGroup => (
-                        <TableRow key={headerGroup.id} style={{ display: 'flex', width: '100%' }}>
-                            {headerGroup.headers.map(header => (
-                                <TableHead
-                                    key={header.id}
-                                    colSpan={header.colSpan}
-                                    // Дополнительные стили/классы
+                <TableUi style={{ display: 'grid' }}>
+                    <TableHeader style={{
+                        display: 'grid',
+                        position: 'sticky',
+                        top: 0,
+                        zIndex: 1,
+                    }}>
+                        {table.getHeaderGroups().map(headerGroup => (
+                            <TableRow key={headerGroup.id} style={{ display: 'flex', width: '100%' }}>
+                                {headerGroup.headers.map(header => (
+                                    <TableHead
+                                        key={header.id}
+                                        colSpan={header.colSpan}
+                                        // Дополнительные стили/классы
+                                        style={{
+                                            display: 'flex',
+                                            width: header.getSize(),
+                                        }}
+                                    >
+                                        {header.isPlaceholder
+                                            ? null
+                                            : (
+                                                <div
+                                                    className={"flow w-full justify-between " +
+                                                        (header.column.getCanSort()
+                                                            ? 'cursor-pointer select-none'
+                                                            : '')}
+                                                    onClick={header.column.getToggleSortingHandler()}
+                                                >
+
+                                                    {flexRender(
+                                                        header.column.columnDef.header,
+                                                        header.getContext())}
+                                                    {header.column.getCanSort() ? <SortedIcon isSorted={header.column.getIsSorted()} /> : <></>}
+                                                </div>
+
+                                            )}
+                                    </TableHead>
+                                ))}
+                            </TableRow>
+                        ))}
+                        <TableRow key={"filter"} style={{ display: 'flex', width: '100%' }}>
+                            {table.getHeaderGroups().at(-1)!!.headers.map(header => {
+                                return <th key={"filter" + header.id}
                                     style={{
                                         display: 'flex',
                                         width: header.getSize(),
-                                    }}
-                                >
-                                    {header.isPlaceholder
-                                        ? null
-                                        : (
-                                            <div
-                                                className={"flow w-full justify-between " +
-                                                    (header.column.getCanSort()
-                                                        ? 'cursor-pointer select-none'
-                                                        : '')}
-                                                onClick={header.column.getToggleSortingHandler()}
-                                            >
-
-                                                {flexRender(
-                                                    header.column.columnDef.header,
-                                                    header.getContext())}
-                                                {header.column.getCanSort() ? <SortedIcon isSorted={header.column.getIsSorted()} /> : <></>}
-                                            </div>
-
-                                        )}
-                                </TableHead>
-                            ))}
-                        </TableRow>
-                    ))}
-                    <TableRow key={"filter"} style={{ display: 'flex', width: '100%' }}>
-                        {table.getHeaderGroups().at(-1)!!.headers.map(header => {
-                            return <th key={"filter" + header.id}
-                                style={{
-                                    display: 'flex',
-                                    width: header.getSize(),
-                                }}>
-                                    <Filter column={header.column}/>
+                                    }}>
+                                    <Filter column={header.column} />
                                 </th>
-                        })}
-                    </TableRow>
-                </TableHeader>
-                <VirtualTableBody table={table} tableContainerRef={tableContainerRef} rowVirtualizer={rowVirtualizer} />
+                            })}
+                        </TableRow>
+                    </TableHeader>
+                    <VirtualTableBody table={table} tableContainerRef={tableContainerRef} rowVirtualizer={rowVirtualizer} />
 
-            </TableUi>
+                </TableUi>
             </Spin>
-            
+
         </div>
-        <FloatButton.Group shape="square" trigger="hover" icon={<MoreOutlined />}>
-            
-            { rows.length > 30  &&
-            <FloatButton icon={scrollPosition < rows.length / 2 ? <VerticalAlignBottomOutlined /> : <VerticalAlignTopOutlined/>} onClick={() => {
-                if (scrollPosition < rows.length / 2){
+
+        {rows.length > 30 &&
+            <FloatButton icon={scrollPosition < rows.length / 2 ? <VerticalAlignBottomOutlined /> : <VerticalAlignTopOutlined />} onClick={() => {
+                if (scrollPosition < rows.length / 2) {
                     rowVirtualizer.scrollToIndex(rows.length - 1)
-                }else{
+                } else {
                     rowVirtualizer.scrollToIndex(0)
 
                 }
-            }}/> 
-            }
-            
-        </FloatButton.Group>
+            }} />
+        }
+
     </>;
 }
