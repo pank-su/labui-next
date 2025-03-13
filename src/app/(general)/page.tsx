@@ -74,7 +74,7 @@ export default function CollectionTable() {
                 <Avatar src={generateAvatar("4")} />
             </Avatar.Group>
         </div>
-        <DataTable table={table} loading={isPending} />
+        <DataTable table={table} loading={isLoading} padding={42} />
     </div>
 
 }

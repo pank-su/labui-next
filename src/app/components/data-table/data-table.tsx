@@ -16,13 +16,14 @@ import { AnimatePresence, motion } from "framer-motion";
 interface DataTableProps<T> {
     table: Table<T>
     loading?: boolean
+    padding?: number
 }
 
-export default function DataTable<T>({ table, loading = false }: DataTableProps<T>) {
+export default function DataTable<T>({ table, loading = false, padding = 0}: DataTableProps<T>) {
     const windowSize = useWindowSize()
 
     const height = useMemo(() => {
-        return windowSize.height - 60
+        return windowSize.height - (60 + padding)
     }, [windowSize.height])
 
     const { rows } = table.getRowModel()
