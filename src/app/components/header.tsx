@@ -19,7 +19,6 @@ const options = [
 ]
 
 export default function Header() {
-    const router = useRouter();
 
     return (
         <div className="w-full h-full px-8 flex justify-between items-center">
@@ -27,7 +26,7 @@ export default function Header() {
             <Navigation />
             <Search />
             <Select
-                defaultValue=""
+                defaultValue={""}
                 options={options}
                 className="w-32"
                 dropdownStyle={{ minWidth: '150px' }}

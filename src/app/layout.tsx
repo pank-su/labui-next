@@ -28,7 +28,6 @@ export default function Layout({ children }: {
                         </AntdRegistry>
                     </SearchProvider>
                 </ReactQueryClientProvider>
-
             </body>
         </html>
     )
