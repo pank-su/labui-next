@@ -3214,10 +3214,10 @@ export type Database = {
           gen_bank_id?: string | null
           geo_comment?: string | null
           id?: number
-          kind_id: number
+          kind_id?: number | null
           month?: number | null
           point?: unknown | null
-          region_id: number
+          region_id?: number | null
           sex_id?: number | null
           vouch_id?: string | null
           vouch_inst_id?: number | null

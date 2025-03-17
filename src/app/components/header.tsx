@@ -9,7 +9,7 @@ import { User } from "@supabase/supabase-js";
 import ProfileAvatar from "./profile-avatar";
 import { useClient } from "@/utils/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 
 const options = [
@@ -20,13 +20,15 @@ const options = [
 
 export default function Header() {
 
+    const pathname = usePathname()
+
     return (
         <div className="w-full h-full px-8 flex justify-between items-center">
             <AuthOrAvatar />
             <Navigation />
             <Search />
             <Select
-                defaultValue={""}
+                defaultValue={pathname.slice(1)}
                 options={options}
                 className="w-32"
                 dropdownStyle={{ minWidth: '150px' }}
@@ -48,15 +50,24 @@ export default function Header() {
     )
 }
 
+export function useUser() {
+    const supabase = useClient();
+    const { data, isLoading } = useQuery({ 
+        queryKey: ["supabase-get-user"], 
+        queryFn: () => supabase.auth.getUser() 
+    });
+
+    return {
+        user: data?.data.user,
+        isLoading
+    };
+}
+
 /**
  * Кнопка или аватар авторизации
  */
 function AuthOrAvatar() {
-    const supabase = useClient()
-
-    const { data, isLoading } = useQuery({ queryKey: ["supabase-get-user"], queryFn: () => supabase.auth.getUser() })
-
-    const user = data?.data.user;
+    const { user, isLoading } = useUser();
 
     if (isLoading) {
         return <Skeleton.Avatar active />;

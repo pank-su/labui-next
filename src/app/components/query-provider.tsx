@@ -17,6 +17,6 @@ export const ReactQueryClientProvider = ({ children }: { children: React.ReactNo
       })
   )
   return <QueryClientProvider client={queryClient}>{children}
-    <ReactQueryDevtools initialIsOpen={true} position='right' />
+    <ReactQueryDevtools  position='right' />
     </QueryClientProvider>
 }

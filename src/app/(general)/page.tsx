@@ -1,17 +1,24 @@
 "use client"
 
-import { useQuery, useSubscription, useUpsertItem } from "@supabase-cache-helpers/postgrest-react-query";
+import { useInsertMutation, useQuery, useSubscription, useUpsertItem } from "@supabase-cache-helpers/postgrest-react-query";
 import DataTable from "../components/data-table/data-table";
 import { getCoreRowModel, getFacetedMinMaxValues, getFacetedRowModel, getFacetedUniqueValues, getFilteredRowModel, getSortedRowModel, useReactTable } from "@tanstack/react-table";
 import { useClient } from "../../utils/supabase/client";
 import { columns } from "./collection/columns";
 import { useEffect, useMemo, useState } from "react";
-import { PlusOutlined, ReloadOutlined, SettingOutlined, DownloadOutlined } from "@ant-design/icons";
+import { PlusOutlined, ReloadOutlined,  DownloadOutlined } from "@ant-design/icons";
 import { Button, Avatar, Tooltip } from "antd";
 import { useSearch } from "../components/search-context";
 import exportToCsv from "tanstack-table-export-to-csv";
-import { Tables } from "@/utils/supabase/gen-types";
-import { useQuery as useQueryRQ } from "@tanstack/react-query";
+import { Database, Tables } from "@/utils/supabase/gen-types";
+import { useUser } from "../components/header";
+import { SupabaseClient } from "@supabase/supabase-js";
+import { FormattedBasicView } from "./models";
+
+
+async function loadBasicViewItemById(supabase: SupabaseClient<Database>, id: number){
+    return ((await supabase.from("basic_view").select("*").eq("id", id)).data as FormattedBasicView[])[0]
+}
 
 
 /**
@@ -21,7 +28,9 @@ export default function CollectionTable() {
     const supabase = useClient()
 
     const { search } = useSearch()
-                                                                           // Зачем тут все поля? Чтобы библиотека понимала, что нужно будет обновить, а не пыталась обновлять всё
+
+
+    // Зачем тут все поля? Чтобы библиотека понимала, что нужно будет обновить, а не пыталась обновлять всё
     const { data, isLoading } = useQuery(supabase.from("basic_view").select("id,collect_id,latitude,longtitude,order,family,genus,kind,age,sex,voucher_institute,voucher_id,country,region,geo_comment,day,month,year,comment,collectors,tags"))
 
     const upsertItem = useUpsertItem({
@@ -34,14 +43,19 @@ export default function CollectionTable() {
     // поэтому просто будет получать все изменения в таблице
     // и самостоятельно обновлять кэш
     // надо также подключить обновление при изменение смежных таблиц
-    useSubscription(supabase, "collection_insert", {
+    useSubscription(supabase, "collection_updates", {
         event: "*",
         table: "collection",
         schema: "public"
     }, ["id"], {
 
-        callback: (payload) => {
-            upsertItem((payload.new as Tables<"collection">)) // Элементы коллекции не удаляются
+        callback: async (payload) => {
+
+            console.log(payload)
+            const newItem = payload.new as Tables<"collection">
+            const basicViewItem = await loadBasicViewItemById(supabase,  newItem.id) 
+
+            upsertItem(basicViewItem) // Элементы коллекции не удаляются
         }
 
     })
@@ -69,11 +83,30 @@ export default function CollectionTable() {
         }
     })
 
+    const userLoad = useUser();
+
+    const { mutateAsync: insert } = useInsertMutation(
+        supabase.from("collection"),
+        ["id"],
+        "id",
+        {
+            onSuccess(data, variables, context) {
+                
+            },
+        }
+      )
+
+
     // TODO: очищать поля ввода фильтров
     return <div className="h-full">
         <div className="p-2 flex justify-between items-center">
             <div className="space-x-2">
-                <Button type="primary" icon={<PlusOutlined />}>Добавить запись</Button>
+                <Tooltip title={!userLoad.user ? "Для добавления записи нужно войти в аккаунт" : null}>
+                    <Button type="primary" icon={<PlusOutlined />} loading={userLoad.isLoading} onClick={() => insert([{}])} disabled={!userLoad.user}>
+                        Добавить запись
+                    </Button>
+                </Tooltip>
+
                 <Tooltip title="Сбросить фильтры">
                     <Button type="text" icon={<ReloadOutlined />} onClick={() => table.resetColumnFilters()} />
                 </Tooltip>
@@ -98,3 +131,4 @@ export default function CollectionTable() {
     </div>
 
 }
+
