@@ -6,17 +6,18 @@ import { getCoreRowModel, getFacetedMinMaxValues, getFacetedRowModel, getFaceted
 import { useClient } from "../../utils/supabase/client";
 import { columns } from "./collection/columns";
 import { useEffect, useMemo, useState } from "react";
-import { PlusOutlined, ReloadOutlined,  DownloadOutlined } from "@ant-design/icons";
+import { PlusOutlined, ReloadOutlined, DownloadOutlined } from "@ant-design/icons";
 import { Button, Avatar, Tooltip } from "antd";
 import { useSearch } from "../components/search-context";
-import exportToCsv from "tanstack-table-export-to-csv";
 import { Database, Tables } from "@/utils/supabase/gen-types";
 import { useUser } from "../components/header";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { FormattedBasicView } from "./models";
+import { download, generateCsv, mkConfig } from "export-to-csv";
+import { json } from "stream/consumers";
 
 
-async function loadBasicViewItemById(supabase: SupabaseClient<Database>, id: number){
+async function loadBasicViewItemById(supabase: SupabaseClient<Database>, id: number) {
     return ((await supabase.from("basic_view").select("*").eq("id", id)).data as FormattedBasicView[])[0]
 }
 
@@ -53,7 +54,7 @@ export default function CollectionTable() {
 
             console.log(payload)
             const newItem = payload.new as Tables<"collection">
-            const basicViewItem = await loadBasicViewItemById(supabase,  newItem.id) 
+            const basicViewItem = await loadBasicViewItemById(supabase, newItem.id)
 
             upsertItem(basicViewItem) // Элементы коллекции не удаляются
         }
@@ -91,11 +92,12 @@ export default function CollectionTable() {
         "id",
         {
             onSuccess(data, variables, context) {
-                
+
             },
         }
-      )
+    )
 
+    const csvConfig = mkConfig({ useKeysAsHeaders: true });
 
     // TODO: очищать поля ввода фильтров
     return <div className="h-full">
@@ -112,14 +114,16 @@ export default function CollectionTable() {
                 </Tooltip>
                 <Tooltip title="Экспорт">
                     <Button type="text" icon={<DownloadOutlined />} onClick={() => {
-                        const headers = table
-                            .getHeaderGroups()
-                            .map((x) => x.headers)
-                            .flat();
+                        
+                        const rows = table.getRowModel().rows.map(row => ({
+                            ...row.original,
+                            collectors: JSON.stringify(row.original.collectors),
+                            tags: JSON.stringify(row.original.tags)
+                        }));
 
-                        const rows = table.getCoreRowModel().rows;
+                        const csv = generateCsv(csvConfig)(rows);
 
-                        exportToCsv("collection", headers, rows);
+                        download(csvConfig)(csv); 
                     }} />
                 </Tooltip>
             </div>
