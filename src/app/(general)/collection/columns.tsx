@@ -1,9 +1,15 @@
-import { createColumnHelper, RowData, SortDirection } from "@tanstack/react-table"
+"use client"
+
+import { CellContext, createColumnHelper, RowData, SortDirection } from "@tanstack/react-table"
 import { FormattedBasicView } from "../models"
 import { formatDate } from "@/utils/formatDate"
-import ExpandableText from "@/app/components/expand-text"
+import ExpandableAndEditableText from "@/app/components/expand-text"
 import { Tables } from "@/utils/supabase/gen-types"
-import { Checkbox, Tag } from "antd"
+import { Button, Checkbox, Input, Space, Tag } from "antd"
+import { CheckOutlined } from "@ant-design/icons"
+import { useState } from "react"
+import { useClient } from "@/utils/supabase/client"
+import { useUpdateMutation } from "@supabase-cache-helpers/postgrest-react-query"
 
 const columnHelper = createColumnHelper<Tables<"basic_view">>()
 
@@ -63,6 +69,39 @@ function formatSex(sex: string | null): string {
 }
 
 
+function EditText<T, V>({ info, table = "collection" }: { info: CellContext<T, V>, table?: string }) {
+    const supabase = useClient()
+    const { mutateAsync: update } = useUpdateMutation(
+        // @ts-ignore
+        supabase.from(table),
+        // @ts-ignore
+        ['id']
+    );
+    const [value, setValue] = useState((info.getValue() ?? "").toString())
+
+    return (
+        <Space.Compact>
+            <Input
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                size="small"
+            />
+            <Button
+                onClick={() => {
+                    const key = info.column.id;
+                    update({                     // @ts-ignore
+                        id: info.row.getValue("id"),
+                        [key]: value
+                    });
+                }}
+                size="small"
+            >
+                <CheckOutlined />
+            </Button>
+        </Space.Compact>
+    );
+}
+
 export const columns = [
     columnHelper.display({
         id: 'select-col',
@@ -100,7 +139,9 @@ export const columns = [
     }),
 
     columnHelper.accessor('collect_id', {
-        cell: info => <ExpandableText>{info.getValue()}</ExpandableText>,
+        cell: info => <ExpandableAndEditableText editField={
+            <EditText info={info} />
+        }> {info.getValue()}</ExpandableAndEditableText >,
         header: "collect id",
         size: 120
     }),
@@ -157,13 +198,13 @@ export const columns = [
             columnHelper.accessor("region", {
                 header: "Регион",
                 size: 250,
-                cell: info => <ExpandableText>{info.getValue()}</ExpandableText>
+                cell: info => <ExpandableAndEditableText editField={<></>}>{info.getValue()}</ExpandableAndEditableText>
             }
             ),
             columnHelper.accessor("geo_comment", {
                 header: "Геокомментарий",
                 size: 270,
-                cell: info => <ExpandableText>{info.getValue()}</ExpandableText>
+                cell: info => <ExpandableAndEditableText editField={<></>}>{info.getValue()}</ExpandableAndEditableText>
             }),
         ]
     },),
@@ -172,11 +213,11 @@ export const columns = [
         columns: [
             columnHelper.accessor("voucher_institute", {
                 header: "Институт",
-                cell: info => <ExpandableText>{info.getValue()}</ExpandableText>
+                cell: info => <ExpandableAndEditableText editField={<></>}>{info.getValue()}</ExpandableAndEditableText>
             }),
             columnHelper.accessor("voucher_id", {
                 header: "ID",
-                cell: info => <ExpandableText>{info.getValue()}</ExpandableText>
+                cell: info => <ExpandableAndEditableText editField={<></>}>{info.getValue()}</ExpandableAndEditableText>
 
             })
         ]
@@ -192,8 +233,8 @@ export const columns = [
     }),
     columnHelper.accessor("comment", {
         header: "Комментарий",
-        cell: info => <ExpandableText>{info.getValue()}</ExpandableText>,
+        cell: info => <ExpandableAndEditableText editField={<></>}>{info.getValue()}</ExpandableAndEditableText>,
         size: 400
-        
+
     })
 ]
