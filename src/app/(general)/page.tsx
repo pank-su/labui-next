@@ -6,8 +6,8 @@ import { getCoreRowModel, getFacetedMinMaxValues, getFacetedRowModel, getFaceted
 import { useClient } from "../../utils/supabase/client";
 import { columns } from "./collection/columns";
 import { useEffect, useMemo, useState } from "react";
-import { PlusOutlined, ReloadOutlined, DownloadOutlined } from "@ant-design/icons";
-import { Button, Avatar, Tooltip } from "antd";
+import { PlusOutlined, ReloadOutlined, DownloadOutlined, SyncOutlined, QuestionCircleOutlined } from "@ant-design/icons";
+import { Button, Avatar, Tooltip, Popconfirm, Tag } from "antd";
 import { useSearch } from "../components/search-context";
 import { Database, Tables } from "@/utils/supabase/gen-types";
 import { useUser } from "../components/header";
@@ -15,6 +15,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { FormattedBasicView } from "./models";
 import { download, generateCsv, mkConfig } from "export-to-csv";
 import { json } from "stream/consumers";
+import NewId from "../components/data-table/new-id";
 
 
 async function loadBasicViewItemById(supabase: SupabaseClient<Database>, id: number) {
@@ -96,17 +97,25 @@ export default function CollectionTable() {
             },
         }
     )
+    table.getColumn("id")?.getFacetedMinMaxValues
 
     const csvConfig = mkConfig({ useKeysAsHeaders: true });
 
-    // TODO: очищать поля ввода фильтров
     return <div className="h-full">
         <div className="p-2 flex justify-between items-center">
             <div className="space-x-2">
                 <Tooltip title={!userLoad.user ? "Для добавления записи нужно войти в аккаунт" : null}>
-                    <Button type="primary" icon={<PlusOutlined />} loading={userLoad.isLoading} onClick={() => insert([{}])} disabled={!userLoad.user}>
-                        Добавить запись
-                    </Button>
+                    <Popconfirm placement="right" okText="Да" cancelText="Нет" icon={
+                        <QuestionCircleOutlined style={{color: "blue"}}/>
+                    } onConfirm={
+                        () => insert([{}])
+                    } title={<>
+                        Вы точно хотите добавить запись с ID <NewId column={table.getColumn("id") ?? null} />
+                    </>}>
+                        <Button type="primary" icon={<PlusOutlined />} loading={userLoad.isLoading} disabled={!userLoad.user}>
+                            Добавить запись
+                        </Button>
+                    </Popconfirm>
                 </Tooltip>
 
                 <Tooltip title="Сбросить фильтры">
@@ -114,7 +123,7 @@ export default function CollectionTable() {
                 </Tooltip>
                 <Tooltip title="Экспорт">
                     <Button type="text" icon={<DownloadOutlined />} onClick={() => {
-                        
+
                         const rows = table.getRowModel().rows.map(row => ({
                             ...row.original,
                             collectors: JSON.stringify(row.original.collectors),
@@ -123,7 +132,7 @@ export default function CollectionTable() {
 
                         const csv = generateCsv(csvConfig)(rows);
 
-                        download(csvConfig)(csv); 
+                        download(csvConfig)(csv);
                     }} />
                 </Tooltip>
             </div>
