@@ -12,6 +12,7 @@ import { useClient } from "@/utils/supabase/client"
 import { useUpdateMutation } from "@supabase-cache-helpers/postgrest-react-query"
 import { useQuery } from "@tanstack/react-query"
 import { useUser } from "../components/header"
+import { User } from "@supabase/supabase-js"
 
 const columnHelper = createColumnHelper<Tables<"basic_view">>()
 
@@ -103,6 +104,8 @@ function EditText({ cellValue, onCancel, onSuccess }: { cellValue: string | null
         </Space.Compact>
     );
 }
+
+
 
 export default function getColumns() {
     const supabase = useClient()
@@ -234,7 +237,25 @@ export default function getColumns() {
                 columnHelper.accessor("geo_comment", {
                     header: "Геокомментарий",
                     size: 270,
-                    cell: info => <ExpandableText>{info.getValue()}</ExpandableText>
+                    cell: info => {
+                        const [isEdit, setIsEdit] = useState(false)
+        
+        
+                        return <>{isEdit ? <EditText cellValue={info.getValue()} onCancel={() => {
+                            setIsEdit(false)
+                        }} onSuccess={(value) => {
+                            console.log(info.row.getValue("id"))
+                            update({ id: info.row.getValue("id"), geo_comment: value })
+                        }} /> : <ExpandableText onDoubleClick={
+                            (e) => {
+                                if (userLoad.user != null) {
+                                    setIsEdit(true)
+                                }
+                                e.preventDefault()
+        
+                            }
+                        }> {info.getValue()}</ExpandableText >}</>
+                    }
                 }),
             ]
         },),
@@ -263,7 +284,25 @@ export default function getColumns() {
         }),
         columnHelper.accessor("comment", {
             header: "Комментарий",
-            cell: info => <ExpandableText >{info.getValue()}</ExpandableText>,
+            cell: info => {
+                const [isEdit, setIsEdit] = useState(false)
+
+
+                return <>{isEdit ? <EditText cellValue={info.getValue()} onCancel={() => {
+                    setIsEdit(false)
+                }} onSuccess={(value) => {
+                    console.log(info.row.getValue("id"))
+                    update({ id: info.row.getValue("id"), comment: value })
+                }} /> : <ExpandableText onDoubleClick={
+                    (e) => {
+                        if (userLoad.user != null) {
+                            setIsEdit(true)
+                        }
+                        e.preventDefault()
+
+                    }
+                }> {info.getValue()}</ExpandableText >}</>
+            },
             size: 400
 
         })
