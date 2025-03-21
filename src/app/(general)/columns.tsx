@@ -3,13 +3,15 @@
 import { CellContext, createColumnHelper, RowData, SortDirection } from "@tanstack/react-table"
 import { FormattedBasicView } from "./models"
 import { formatDate } from "@/utils/formatDate"
-import ExpandableAndEditableText from "@/app/components/expand-text"
+import ExpandableText from "@/app/components/expand-text"
 import { Tables } from "@/utils/supabase/gen-types"
-import { Button, Checkbox, Input, Space, Tag } from "antd"
+import { Button, Checkbox, Input, Popconfirm, Space, Tag } from "antd"
 import { CheckOutlined } from "@ant-design/icons"
 import { useState } from "react"
 import { useClient } from "@/utils/supabase/client"
 import { useUpdateMutation } from "@supabase-cache-helpers/postgrest-react-query"
+import { useQuery } from "@tanstack/react-query"
+import { useUser } from "../components/header"
 
 const columnHelper = createColumnHelper<Tables<"basic_view">>()
 
@@ -69,30 +71,30 @@ function formatSex(sex: string | null): string {
 }
 
 
-function EditText<T, V>({ info, table = "collection" }: { info: CellContext<T, V>, table?: string }) {
-    const supabase = useClient()
-    const { mutateAsync: update } = useUpdateMutation(
-        // @ts-ignore
-        supabase.from(table),
-        // @ts-ignore
-        ['id']
-    );
-    const [value, setValue] = useState((info.getValue() ?? "").toString())
+function EditText({ cellValue, onCancel, onSuccess }: { cellValue: string | null, onCancel: () => void, onSuccess: (value: string | null) => void }) {
 
+    const [value, setValue] = useState(cellValue)
+
+    // Возможно стоит добавить popconfirm
     return (
         <Space.Compact>
             <Input
-                value={value}
+                value={value ?? ""}
                 onChange={(e) => setValue(e.target.value)}
                 size="small"
+                onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                        onCancel()
+                    } else if (e.key === "Enter") {
+                        onSuccess(value)
+                    }
+
+                }}
+
             />
             <Button
                 onClick={() => {
-                    const key = info.column.id;
-                    update({                     // @ts-ignore
-                        id: info.row.getValue("id"),
-                        [key]: value
-                    });
+                    onSuccess(value)
                 }}
                 size="small"
             >
@@ -102,139 +104,168 @@ function EditText<T, V>({ info, table = "collection" }: { info: CellContext<T, V
     );
 }
 
-export const columns = [
-    columnHelper.display({
-        id: 'select-col',
-        size: 33,
-        header: ({ table }) => (
-            <Checkbox
-                checked={table.getIsAllRowsSelected()}
-                indeterminate={table.getIsSomeRowsSelected()}
-                onChange={table.getToggleAllRowsSelectedHandler()}
-            />
-        ),
-        cell: ({ row }) => (
-            <Checkbox
-                checked={row.getIsSelected()}
-                disabled={!row.getCanSelect()}
-                onChange={row.getToggleSelectedHandler()}
-            />
-        )
-    }),
+export default function getColumns() {
+    const supabase = useClient()
+    const userLoad = useUser();
 
 
-    columnHelper.accessor('id', {
-        cell: info => <>{info.getValue()}</>,
-        header: "ID",
-        size: 60,
-        enableColumnFilter: true,
-        meta: {
-            filterVariant: "index"
-        },
-        filterFn: (row, id, filterValue) => {
-            if ((filterValue as number[])[0] == -1) return true
-            const value = row.getValue(id) as number
-            return (filterValue as number[]).includes(value)
-        }
-    }),
 
-    columnHelper.accessor('collect_id', {
-        cell: info => <ExpandableAndEditableText editField={
-            <EditText info={info} />
-        }> {info.getValue()}</ExpandableAndEditableText >,
-        header: "collect id",
-        size: 120
-    }),
+    const { mutateAsync: update } = useUpdateMutation(
+        supabase.from("collection"),
+        ['id']
+    );
 
-    columnHelper.group({
-        header: "Топология",
-        columns: [
-            columnHelper.accessor('order', {
-                cell: info => <>{info.getValue()}</>,
-                header: "Отряд",
-                size: 120
-            }),
-            columnHelper.accessor('family', {
-                cell: info => <>{info.getValue()}</>,
-                header: "Семейство",
-                size: 120
-            }),
-            columnHelper.accessor('genus', {
-                cell: info => <>{info.getValue()}</>,
-                header: "Род",
-                size: 130
-            }),
-            columnHelper.accessor('kind', {
-                cell: info => <>{info.getValue()}</>,
-                header: "Вид",
-                size: 120
-            }),
-        ]
-    }),
-    columnHelper.accessor(row => formatDate(row.year, row.month, row.day), {
-        id: "date",
-        header: "Дата"
-    }),
-    columnHelper.accessor("age", {
-        cell: info => <>{formatAge(info.getValue())}</>,
-        header: "Возраст",
-        size: 70
-    }),
-    columnHelper.accessor("sex", {
-        cell: info => <>{formatSex(info.getValue())}</>,
-        header: "Пол",
-        size: 60
-    }),
-    columnHelper.group({
-        header: "Позиция",
-        columns: [
-            columnHelper.accessor("latitude", {
-                header: "Широта"
-            }),
-            columnHelper.accessor("longtitude", {
-                header: "Долгота"
-            }),
-            columnHelper.accessor("country", { header: "Страна" }),
-            columnHelper.accessor("region", {
-                header: "Регион",
-                size: 250,
-                cell: info => <ExpandableAndEditableText editField={<></>}>{info.getValue()}</ExpandableAndEditableText>
-            }
+
+    return [
+        columnHelper.display({
+            id: 'select-col',
+            size: 33,
+            header: ({ table }) => (
+                <Checkbox
+                    checked={table.getIsAllRowsSelected()}
+                    indeterminate={table.getIsSomeRowsSelected()}
+                    onChange={table.getToggleAllRowsSelectedHandler()}
+                />
             ),
-            columnHelper.accessor("geo_comment", {
-                header: "Геокомментарий",
-                size: 270,
-                cell: info => <ExpandableAndEditableText editField={<></>}>{info.getValue()}</ExpandableAndEditableText>
-            }),
-        ]
-    },),
-    columnHelper.group({
-        header: "Ваучер",
-        columns: [
-            columnHelper.accessor("voucher_institute", {
-                header: "Институт",
-                cell: info => <ExpandableAndEditableText editField={<></>}>{info.getValue()}</ExpandableAndEditableText>
-            }),
-            columnHelper.accessor("voucher_id", {
-                header: "ID",
-                cell: info => <ExpandableAndEditableText editField={<></>}>{info.getValue()}</ExpandableAndEditableText>
+            cell: ({ row }) => (
+                <Checkbox
+                    checked={row.getIsSelected()}
+                    disabled={!row.getCanSelect()}
+                    onChange={row.getToggleSelectedHandler()}
+                />
+            )
+        }),
 
-            })
-        ]
-    }),
-    columnHelper.accessor("tags", {
-        header: "Тэги",
-        cell: info => {
-            let tags = info.getValue()
-            return <> {tags?.map((tag) => <Tag color="blue" key={(tag as unknown as Tag).id}>{(tag as unknown as Tag).name}</Tag>)}
-            </>
-        },
-        size: 100
-    }),
-    columnHelper.accessor("comment", {
-        header: "Комментарий",
-        cell: info => <ExpandableAndEditableText editField={<></>}>{info.getValue()}</ExpandableAndEditableText>,
-        size: 400
 
-    })
-]
+        columnHelper.accessor('id', {
+            cell: info => <>{info.getValue()}</>,
+            header: "ID",
+            size: 60,
+            enableColumnFilter: true,
+            meta: {
+                filterVariant: "index"
+            },
+            filterFn: (row, id, filterValue) => {
+                if ((filterValue as number[])[0] == -1) return true
+                const value = row.getValue(id) as number
+                return (filterValue as number[]).includes(value)
+            }
+        }),
+
+        columnHelper.accessor('collect_id', {
+            cell: info => {
+                const [isEdit, setIsEdit] = useState(false)
+
+
+                return <>{isEdit ? <EditText cellValue={info.getValue()} onCancel={() => {
+                    setIsEdit(false)
+                }} onSuccess={(value) => {
+                    console.log(info.row.getValue("id"))
+                    update({ id: info.row.getValue("id"), collect_id: value })
+                }} /> : <ExpandableText onDoubleClick={
+                    (e) => {
+                        if (userLoad.user != null) {
+                            setIsEdit(true)
+                        }
+                        e.preventDefault()
+
+                    }
+                }> {info.getValue()}</ExpandableText >}</>
+            },
+            header: "collect id",
+            size: 120
+        }),
+
+        columnHelper.group({
+            header: "Топология",
+            columns: [
+                columnHelper.accessor('order', {
+                    cell: info => <>{info.getValue()}</>,
+                    header: "Отряд",
+                    size: 120
+                }),
+                columnHelper.accessor('family', {
+                    cell: info => <>{info.getValue()}</>,
+                    header: "Семейство",
+                    size: 120
+                }),
+                columnHelper.accessor('genus', {
+                    cell: info => <>{info.getValue()}</>,
+                    header: "Род",
+                    size: 130
+                }),
+                columnHelper.accessor('kind', {
+                    cell: info => <>{info.getValue()}</>,
+                    header: "Вид",
+                    size: 120
+                }),
+            ]
+        }),
+        columnHelper.accessor(row => formatDate(row.year, row.month, row.day), {
+            id: "date",
+            header: "Дата"
+        }),
+        columnHelper.accessor("age", {
+            cell: info => <>{formatAge(info.getValue())}</>,
+            header: "Возраст",
+            size: 70
+        }),
+        columnHelper.accessor("sex", {
+            cell: info => <>{formatSex(info.getValue())}</>,
+            header: "Пол",
+            size: 60
+        }),
+        columnHelper.group({
+            header: "Позиция",
+            columns: [
+                columnHelper.accessor("latitude", {
+                    header: "Широта"
+                }),
+                columnHelper.accessor("longtitude", {
+                    header: "Долгота"
+                }),
+                columnHelper.accessor("country", { header: "Страна" }),
+                columnHelper.accessor("region", {
+                    header: "Регион",
+                    size: 250,
+                    cell: info => <ExpandableText >{info.getValue()}</ExpandableText>
+                }
+                ),
+                columnHelper.accessor("geo_comment", {
+                    header: "Геокомментарий",
+                    size: 270,
+                    cell: info => <ExpandableText>{info.getValue()}</ExpandableText>
+                }),
+            ]
+        },),
+        columnHelper.group({
+            header: "Ваучер",
+            columns: [
+                columnHelper.accessor("voucher_institute", {
+                    header: "Институт",
+                    cell: info => <ExpandableText >{info.getValue()}</ExpandableText>
+                }),
+                columnHelper.accessor("voucher_id", {
+                    header: "ID",
+                    cell: info => <ExpandableText >{info.getValue()}</ExpandableText>
+
+                })
+            ]
+        }),
+        columnHelper.accessor("tags", {
+            header: "Тэги",
+            cell: info => {
+                let tags = info.getValue()
+                return <> {tags?.map((tag) => <Tag color="blue" key={(tag as unknown as Tag).id}>{(tag as unknown as Tag).name}</Tag>)}
+                </>
+            },
+            size: 100
+        }),
+        columnHelper.accessor("comment", {
+            header: "Комментарий",
+            cell: info => <ExpandableText >{info.getValue()}</ExpandableText>,
+            size: 400
+
+        })
+    ]
+}
