@@ -4,7 +4,7 @@ import { useInsertMutation, useQuery, useSubscription, useUpsertItem } from "@su
 import DataTable from "../components/data-table/data-table";
 import { getCoreRowModel, getFacetedMinMaxValues, getFacetedRowModel, getFacetedUniqueValues, getFilteredRowModel, getSortedRowModel, useReactTable } from "@tanstack/react-table";
 import { useClient } from "../../utils/supabase/client";
-import { columns } from "./collection/columns";
+import { columns } from "./columns";
 import { useEffect, useMemo, useState } from "react";
 import { PlusOutlined, ReloadOutlined, DownloadOutlined, SyncOutlined, QuestionCircleOutlined } from "@ant-design/icons";
 import { Button, Avatar, Tooltip, Popconfirm, Tag } from "antd";

@@ -1,7 +1,7 @@
 "use client"
 
 import { CellContext, createColumnHelper, RowData, SortDirection } from "@tanstack/react-table"
-import { FormattedBasicView } from "../models"
+import { FormattedBasicView } from "./models"
 import { formatDate } from "@/utils/formatDate"
 import ExpandableAndEditableText from "@/app/components/expand-text"
 import { Tables } from "@/utils/supabase/gen-types"
