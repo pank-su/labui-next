@@ -1,21 +1,18 @@
 "use client"
 
-import { CellContext, createColumnHelper, RowData, SortDirection } from "@tanstack/react-table"
-import { FormattedBasicView } from "./models"
-import { formatDate } from "@/utils/formatDate"
 import ExpandableText from "@/app/components/expand-text"
-import { Tables } from "@/utils/supabase/gen-types"
-import { Button, Checkbox, Input, Popconfirm, Space, Tag } from "antd"
-import { CheckOutlined } from "@ant-design/icons"
-import { useState } from "react"
+import { formatDate } from "@/utils/formatDate"
 import { useClient } from "@/utils/supabase/client"
-import { useUpdateMutation } from "@supabase-cache-helpers/postgrest-react-query"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useUpdateMutation } from "@supabase-cache-helpers/postgrest-react-query"
+import { CellContext, createColumnHelper, RowData } from "@tanstack/react-table"
+import { Checkbox, Select, Tag } from "antd"
+import { useState } from "react"
+import { EditableCell } from "../components/data-table/editable"
 import { useUser } from "../components/header"
-import { User } from "@supabase/supabase-js"
-import TextArea from "antd/es/input/TextArea"
+import { FormattedBasicView, GenomRow } from "./models"
 
-const columnHelper = createColumnHelper<Tables<"basic_view">>()
+
+const columnHelper = createColumnHelper<FormattedBasicView>()
 
 declare module '@tanstack/react-table' {
     //allows us to define custom properties for our columns
@@ -23,6 +20,7 @@ declare module '@tanstack/react-table' {
         filterVariant?: 'index' | 'date-range' | 'select'
     }
 }
+
 
 
 /**
@@ -73,67 +71,27 @@ function formatSex(sex: string | null): string {
 }
 
 
-function EditText({ cellValue, onCancel, onSuccess }: { cellValue: string | null, onCancel: () => void, onSuccess: (value: string | null) => void }) {
 
-    const [value, setValue] = useState(cellValue)
-
-    // Возможно стоит добавить popconfirm
-    return (
-        <Space.Compact className="w-full">
-            <TextArea
-                value={value ?? ""}
-                onChange={(e) => setValue(e.target.value)}
-                className="w-full"
-                size="small"
-                onKeyDown={(e) => {
-                    if (e.key === 'Escape') {
-                        onCancel()
-                    } else if (e.key === "Enter") {
-                        onSuccess(value)
-                    }
-                }}
-             autoSize />
-            <Button
-                onClick={() => {
-                    onSuccess(value)
-                }}
-                size="small"
-            >
-                <CheckOutlined />
-            </Button>
-        </Space.Compact>
-    );
-}
-
-function EditableCell({ cellValue, onSave, user }: { cellValue: string | null, onSave: (value: string | null) => void, user?: User | null }) {
-    const [isEdit, setIsEdit] = useState(false);
-    return isEdit ? (
-        <EditText
-            cellValue={cellValue}
-            onCancel={() => setIsEdit(false)}
-            onSuccess={(value) => {
-                onSave(value);
-                setIsEdit(false); // закрываем редактор после успешного обновления
-            }}
-        />
-    ) : (
-        <ExpandableText onDoubleClick={(e) => {
-            if (user) {
-                setIsEdit(true);
-            }
-            e.preventDefault();
-        }}>
-            {cellValue}
-        </ExpandableText>
-    );
+function SelectEdit<R, T>({ data, value }: { data?: { id: number, name: string | null }[] | null, value: string, onValueChange: (id: number, name: string) => void }) {
+    return <Select className="w-full"
+        defaultValue={data?.find((el) => el.name == value)?.id}
+        showSearch
+        filterOption={(input, option) =>
+            (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+        }
+        options={(data ?? []).map(item => ({
+            value: item.id,
+            label: item.name
+        }))}
+    />
 }
 
 
 
 export default function getColumns() {
+    const [editedGenomRow, setEditedGenomRow] = useState<GenomRow | null>(null)
     const supabase = useClient()
-    const {user} = useUser();
-
+    const { user } = useUser()
 
 
     const { mutateAsync: update } = useUpdateMutation(
@@ -179,8 +137,8 @@ export default function getColumns() {
         }),
 
         columnHelper.accessor('collect_id', {
-            cell: info => <EditableCell cellValue={info.getValue()} 
-                onSave={(value) => update({ id: info.row.getValue("id"), collect_id: value })} 
+            cell: info => <EditableCell cellValue={info.getValue()}
+                onSave={(value) => update({ id: info.row.getValue("id"), collect_id: value })}
                 user={user} />
             ,
             header: "collect id",
@@ -191,7 +149,28 @@ export default function getColumns() {
             header: "Топология",
             columns: [
                 columnHelper.accessor('order', {
-                    cell: info => <>{info.getValue()}</>,
+                    cell: info => {
+                        const { data } = useQuery(supabase.from("order").select("id,name"))
+                        const isEdit = editedGenomRow?.rowId == info.row.getValue("id")
+
+
+                        return <>
+                            {isEdit ? <SelectEdit data={data} value={editedGenomRow?.order ?? ""} onValueChange={
+                                (id, name) => {
+                                    
+                                }
+                            } /> : <div className={"cursor-pointer w-full"} onDoubleClick={(e) => {
+                                setEditedGenomRow({
+                                    rowId: info.row.getValue("id"),
+                                    order: info.getValue(),
+                                    family: info.row.getValue("family"),
+                                    genus: info.row.getValue("genus")
+                                })
+                                e.preventDefault()
+                            }}>{info.getValue()}</div>
+                            }
+                        </>
+                    },
                     header: "Отряд",
                     size: 120
                 }),
@@ -245,9 +224,9 @@ export default function getColumns() {
                 columnHelper.accessor("geo_comment", {
                     header: "Геокомментарий",
                     size: 270,
-                    cell: info =>  <EditableCell cellValue={info.getValue()} 
-                    onSave={(value) => update({ id: info.row.getValue("id"), geo_comment: value })} 
-                    user={user} />
+                    cell: info => <EditableCell cellValue={info.getValue()}
+                        onSave={(value) => update({ id: info.row.getValue("id"), geo_comment: value })}
+                        user={user} />
                 }),
             ]
         },),
@@ -276,9 +255,9 @@ export default function getColumns() {
         }),
         columnHelper.accessor("comment", {
             header: "Комментарий",
-            cell: info => <EditableCell cellValue={info.getValue()} 
-            onSave={(value) => update({ id: info.row.getValue("id"), comment: value })} 
-            user={user} />,
+            cell: info => <EditableCell cellValue={info.getValue()}
+                onSave={(value) => update({ id: info.row.getValue("id"), comment: value })}
+                user={user} />,
             size: 400
 
         })

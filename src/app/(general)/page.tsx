@@ -82,6 +82,9 @@ export default function CollectionTable() {
         autoResetPageIndex: false,
         state: {
             globalFilter: search
+        },
+        meta: {
+            
         }
     })
 
