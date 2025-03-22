@@ -13,6 +13,7 @@ import { useUpdateMutation } from "@supabase-cache-helpers/postgrest-react-query
 import { useQuery } from "@tanstack/react-query"
 import { useUser } from "../components/header"
 import { User } from "@supabase/supabase-js"
+import TextArea from "antd/es/input/TextArea"
 
 const columnHelper = createColumnHelper<Tables<"basic_view">>()
 
@@ -78,10 +79,11 @@ function EditText({ cellValue, onCancel, onSuccess }: { cellValue: string | null
 
     // Возможно стоит добавить popconfirm
     return (
-        <Space.Compact>
-            <Input
+        <Space.Compact className="w-full">
+            <TextArea
                 value={value ?? ""}
                 onChange={(e) => setValue(e.target.value)}
+                className="w-full"
                 size="small"
                 onKeyDown={(e) => {
                     if (e.key === 'Escape') {
@@ -89,10 +91,8 @@ function EditText({ cellValue, onCancel, onSuccess }: { cellValue: string | null
                     } else if (e.key === "Enter") {
                         onSuccess(value)
                     }
-
                 }}
-
-            />
+             autoSize />
             <Button
                 onClick={() => {
                     onSuccess(value)
@@ -105,11 +105,34 @@ function EditText({ cellValue, onCancel, onSuccess }: { cellValue: string | null
     );
 }
 
+function EditableCell({ cellValue, onSave, user }: { cellValue: string | null, onSave: (value: string | null) => void, user?: User | null }) {
+    const [isEdit, setIsEdit] = useState(false);
+    return isEdit ? (
+        <EditText
+            cellValue={cellValue}
+            onCancel={() => setIsEdit(false)}
+            onSuccess={(value) => {
+                onSave(value);
+                setIsEdit(false); // закрываем редактор после успешного обновления
+            }}
+        />
+    ) : (
+        <ExpandableText onDoubleClick={(e) => {
+            if (user) {
+                setIsEdit(true);
+            }
+            e.preventDefault();
+        }}>
+            {cellValue}
+        </ExpandableText>
+    );
+}
+
 
 
 export default function getColumns() {
     const supabase = useClient()
-    const userLoad = useUser();
+    const {user} = useUser();
 
 
 
@@ -156,25 +179,10 @@ export default function getColumns() {
         }),
 
         columnHelper.accessor('collect_id', {
-            cell: info => {
-                const [isEdit, setIsEdit] = useState(false)
-
-
-                return <>{isEdit ? <EditText cellValue={info.getValue()} onCancel={() => {
-                    setIsEdit(false)
-                }} onSuccess={(value) => {
-                    console.log(info.row.getValue("id"))
-                    update({ id: info.row.getValue("id"), collect_id: value })
-                }} /> : <ExpandableText onDoubleClick={
-                    (e) => {
-                        if (userLoad.user != null) {
-                            setIsEdit(true)
-                        }
-                        e.preventDefault()
-
-                    }
-                }> {info.getValue()}</ExpandableText >}</>
-            },
+            cell: info => <EditableCell cellValue={info.getValue()} 
+                onSave={(value) => update({ id: info.row.getValue("id"), collect_id: value })} 
+                user={user} />
+            ,
             header: "collect id",
             size: 120
         }),
@@ -237,25 +245,9 @@ export default function getColumns() {
                 columnHelper.accessor("geo_comment", {
                     header: "Геокомментарий",
                     size: 270,
-                    cell: info => {
-                        const [isEdit, setIsEdit] = useState(false)
-        
-        
-                        return <>{isEdit ? <EditText cellValue={info.getValue()} onCancel={() => {
-                            setIsEdit(false)
-                        }} onSuccess={(value) => {
-                            console.log(info.row.getValue("id"))
-                            update({ id: info.row.getValue("id"), geo_comment: value })
-                        }} /> : <ExpandableText onDoubleClick={
-                            (e) => {
-                                if (userLoad.user != null) {
-                                    setIsEdit(true)
-                                }
-                                e.preventDefault()
-        
-                            }
-                        }> {info.getValue()}</ExpandableText >}</>
-                    }
+                    cell: info =>  <EditableCell cellValue={info.getValue()} 
+                    onSave={(value) => update({ id: info.row.getValue("id"), geo_comment: value })} 
+                    user={user} />
                 }),
             ]
         },),
@@ -284,25 +276,9 @@ export default function getColumns() {
         }),
         columnHelper.accessor("comment", {
             header: "Комментарий",
-            cell: info => {
-                const [isEdit, setIsEdit] = useState(false)
-
-
-                return <>{isEdit ? <EditText cellValue={info.getValue()} onCancel={() => {
-                    setIsEdit(false)
-                }} onSuccess={(value) => {
-                    console.log(info.row.getValue("id"))
-                    update({ id: info.row.getValue("id"), comment: value })
-                }} /> : <ExpandableText onDoubleClick={
-                    (e) => {
-                        if (userLoad.user != null) {
-                            setIsEdit(true)
-                        }
-                        e.preventDefault()
-
-                    }
-                }> {info.getValue()}</ExpandableText >}</>
-            },
+            cell: info => <EditableCell cellValue={info.getValue()} 
+            onSave={(value) => update({ id: info.row.getValue("id"), comment: value })} 
+            user={user} />,
             size: 400
 
         })
