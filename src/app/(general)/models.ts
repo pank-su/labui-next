@@ -1,11 +1,22 @@
-import { Tables } from "@/utils/supabase/gen-types";
+import { CompositeTypes, Tables } from "@/utils/supabase/gen-types";
 
 export type FormattedBasicView = Tables<"basic_view"> 
 
+export function toGenomRow(view: FormattedBasicView): GenomRow {
+    return {
+        rowId: view.id,
+        order: view.order,
+        family: view.family,
+        genus: view.genus,
+        kind: view.kind
+    }
+}
+
+export type Topology = CompositeTypes<"topology_type">
 export interface GenomRow {
-    rowId: number,
-    order?: string | null,
-    family?: string | null,
-    genus? : string | null,
-    kind?: string | null
+    rowId: number | null,
+    order?: Topology | null,
+    family?: Topology | null,
+    genus? :Topology | null,
+    kind?: Topology | null
 }

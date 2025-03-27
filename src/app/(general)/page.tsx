@@ -5,7 +5,7 @@ import DataTable from "../components/data-table/data-table";
 import { getCoreRowModel, getFacetedMinMaxValues, getFacetedRowModel, getFacetedUniqueValues, getFilteredRowModel, getSortedRowModel, useReactTable } from "@tanstack/react-table";
 import { useClient } from "../../utils/supabase/client";
 import  getColumns  from "./columns";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { PlusOutlined, ReloadOutlined, DownloadOutlined, SyncOutlined, QuestionCircleOutlined } from "@ant-design/icons";
 import { Button, Avatar, Tooltip, Popconfirm, Tag } from "antd";
 import { useSearch } from "../components/search-context";
@@ -14,7 +14,6 @@ import { useUser } from "../components/header";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { FormattedBasicView } from "./models";
 import { download, generateCsv, mkConfig } from "export-to-csv";
-import { json } from "stream/consumers";
 import NewId from "../components/data-table/new-id";
 
 
@@ -129,8 +128,12 @@ export default function CollectionTable() {
 
                         const rows = table.getRowModel().rows.map(row => ({
                             ...row.original,
-                            collectors: JSON.stringify(row.original.collectors),
-                            tags: JSON.stringify(row.original.tags)
+                            collectors: row.original.collectors?.map((collector) => `${collector.last_name} ${collector.first_name} ${collector.second_name}`).join(","),
+                            tags: row.original.tags?.map((t) => t.name).join(","),
+                            order: row.original.order?.name,
+                            family: row.original.family?.name,
+                            genus: row.original.genus?.name,
+                            kind: row.original.kind?.name
                         }));
 
                         const csv = generateCsv(csvConfig)(rows);
