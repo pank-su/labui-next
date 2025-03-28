@@ -3783,6 +3783,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      update_collection_taxonomy_by_ids: {
+        Args: {
+          col_id: number
+          order_id?: number
+          family_id?: number
+          genus_id?: number
+          kind_id?: number
+        }
+        Returns: undefined
+      }
       url_decode: {
         Args: {
           data: string

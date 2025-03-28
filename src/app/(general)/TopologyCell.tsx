@@ -1,7 +1,9 @@
-import { Select } from "antd";
+import { Button, Input, Modal, Select, Space } from "antd";
 import { GenomRow, Topology } from "./models";
+import { useEffect, useState } from "react";
+import { CheckOutlined } from "@ant-design/icons";
+import { useInsertMutation } from "@supabase-cache-helpers/postgrest-react-query";
 import { useClient } from "@/utils/supabase/client";
-import { useEffect } from "react";
 
 interface TopologyCellProps {
     genomRow: GenomRow;
@@ -10,6 +12,7 @@ interface TopologyCellProps {
     options: { id: number, name: string | null }[];
     isDisabled: boolean;
     isEditing: boolean;
+    isLoading: boolean;
     onEdit: (row: GenomRow) => void;
     onChange: (field: string, value: Topology | undefined) => void;
     showActions?: boolean;
@@ -25,33 +28,96 @@ export const TopologyCell: React.FC<TopologyCellProps> = ({
     isDisabled,
     isEditing,
     onEdit,
+    isLoading,
     onChange,
     showActions = false,
     onSave,
     onCancel
 }) => {
+    const [isAddNewModalVisible, setIsAddNewModalVisible] = useState(false);
+    const [newItemName, setNewItemName] = useState("");
+    const [search, setSearch] = useState("")
 
-    useEffect(() => {
-        if (isEditing){
-            console.log(genomRow)
-            console.log(genomRow[field]?.id)
+    const supabase = useClient()
+
+    const { mutateAsync: insertItem, isPending } = useInsertMutation(
+        supabase.from(field),
+        ["id"],
+        "id"
+    );
+
+    const handleAddNewItem = async () => {
+        if (!newItemName.trim()) return;
+
+        try {
+            let insertData: any = { name: newItemName };
+
+            // Добавляем ID родительского элемента, если необходимо
+            switch (field) {
+                case 'family':
+                    if (genomRow.order?.id) {
+                        insertData.order_id = genomRow.order.id;
+                    }
+                    break;
+
+                case 'genus':
+                    if (genomRow.family?.id) {
+                        insertData.family_id = genomRow.family.id;
+                    }
+                    break;
+
+                case 'kind':
+                    if (genomRow.genus?.id) {
+                        insertData.genus_id = genomRow.genus.id;
+                    }
+                    break;
+            }
+
+            // Выполняем вставку
+            const result = await insertItem([insertData]);
+
+            if (result && result.length > 0) {
+
+
+                // Закрываем модальное окно
+                setIsAddNewModalVisible(false);
+                setNewItemName("");
+            }
+        } catch (error) {
+            console.error('Ошибка при добавлении элемента:', error);
         }
-    }, [genomRow])
-    
+    }
+
 
 
     // Получение всех полей для редактирования
     const startEditing = () => {
         onEdit(genomRow)
+
     };
 
     if (isEditing) {
         return (
-            <div className="relative w-full">
+            <Space.Compact size={"small"} className="w-full">
                 <Select
+                    onKeyDown={(e) => {
+                        if (e.key === 'Escape') {
+                            onCancel?.()
+                        }
+                    }}
                     className="w-full"
                     value={genomRow[field]?.id}
-                    onChange={(newId) => {
+                    searchValue={search}
+                    onSearch={setSearch}
+                    loading={isLoading}
+                    
+                    onChange={(newId, option) => {
+                        
+                        if (!Array.isArray(option) && option != null && option.value === "add-new") {
+                            setNewItemName(search)
+                            setIsAddNewModalVisible(true);
+                            return;
+                        }
                         const selectedOption = options.find(opt => opt.id === newId);
 
                         if (selectedOption) {
@@ -63,33 +129,59 @@ export const TopologyCell: React.FC<TopologyCellProps> = ({
                         }
                     }}
                     disabled={isDisabled}
+                    placement={"topLeft"}
                     showSearch
                     filterOption={(input, option) =>
-                        (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+
+                        option?.value == "add-new" || (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
                     }
-                    options={options.map(item => ({
-                        value: item.id,
-                        label: item.name
-                    }))}
+                    options={[
+                        ...options.map(item => ({
+                            value: item.id,
+                            label: item.name
+                        })),
+                        { value: "add-new", label: `＋ Добавить` }
+                    ]
+                    }
                 />
 
                 {showActions && (
-                    <div className="absolute top-0 right-0 flex space-x-1 mt-1 mr-1">
-                        <button
-                            className="px-2 py-0.5 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
-                            onClick={onSave}
-                        >
-                            ✓
-                        </button>
-                        <button
-                            className="px-2 py-0.5 text-xs bg-gray-200 rounded hover:bg-gray-300"
-                            onClick={onCancel}
-                        >
-                            ✕
-                        </button>
+                    <Button
+                        onClick={onSave}
+                        icon={<CheckOutlined />}
+                    />
+
+
+                )
+
+
+                }
+                <Modal
+                    title={`Добавить новый ${field}`}
+                    open={isAddNewModalVisible}
+                    onOk={handleAddNewItem}
+                    onCancel={() => {
+                        setIsAddNewModalVisible(false);
+                        setNewItemName("");
+                    }}
+                    okText="Добавить"
+                    cancelText="Отмена"
+                    confirmLoading={isPending}
+                >
+                    <div className="mb-2">
+                        Введите название для нового элемента{field === 'family' ? ` в отряде ${genomRow.order?.name || ''}` :
+                            field === 'genus' ? ` в семействе ${genomRow.family?.name || ''}` :
+                                field === 'kind' ? ` в роде ${genomRow.genus?.name || ''}` : ''}
                     </div>
-                )}
-            </div>
+                    <Input
+                        placeholder="Название"
+                        value={newItemName}
+                        onChange={(e) => setNewItemName(e.target.value)}
+                        onPressEnter={handleAddNewItem}
+                        autoFocus
+                    />
+                </Modal>
+            </Space.Compact>
         );
     }
 

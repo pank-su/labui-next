@@ -73,25 +73,6 @@ function formatSex(sex: string | null): string {
 
 
 
-function SelectEdit<R, T>({ data, value, onValueChange }: { data?: { id: number, name: string | null }[] | null, value: string, onValueChange: (id: number, name: string | null) => void }) {
-    return <Select className="w-full"
-        defaultValue={data?.find((el) => el.name == value)?.id}
-        showSearch
-        filterOption={(input, option) =>
-            (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-        }
-        onSelect={(id, item) => {
-            onValueChange(id, item.label)
-        }
-
-        }
-        options={(data ?? []).map(item => ({
-            value: item.id,
-            label: item.name
-        }))}
-    />
-}
-
 
 
 
@@ -107,20 +88,20 @@ export default function getColumns() {
         ['id']
     );
 
-    const { data: orders } = useQuery(supabase.from("order").select("id,name"));
+    const { data: orders, isLoading: isOrdersLoading } = useQuery(supabase.from("order").select("id,name").not('name', 'is', null));
 
-    const { data: families } = useQuery(
-        supabase.from("family").select("id,name")
+    const { data: families, isLoading: isFamiliesLoading } = useQuery(
+        supabase.from("family").select("id,name").not('name', 'is', null)
             .eq('order_id', editedGenomRow?.order?.id || -1),
         { enabled: !!editedGenomRow?.order?.id }
     );
-    const { data: genera } = useQuery(
-        supabase.from("genus").select("id,name")
+    const { data: genera, isLoading: isGeneraLoading } = useQuery(
+        supabase.from("genus").select("id,name").not('name', 'is', null)
             .eq('family_id', editedGenomRow?.family?.id || -1),
         { enabled: !!editedGenomRow?.family?.id }
     );
-    const { data: kinds } = useQuery(
-        supabase.from("kind").select("id,name")
+    const { data: kinds, isLoading: isKindsLoading } = useQuery(
+        supabase.from("kind").select("id,name").not('name', 'is', null)
             .eq('genus_id', editedGenomRow?.genus?.id || -1),
         { enabled: !!editedGenomRow?.genus?.id }
     );
@@ -153,9 +134,18 @@ export default function getColumns() {
         setEditedGenomRow(updatedRow);
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (editedGenomRow) {
-            // TODO:
+            console.log(editedGenomRow)
+            await supabase.rpc("update_collection_taxonomy_by_ids", { 
+                col_id: editedGenomRow.rowId!, 
+                order_id: editedGenomRow.order?.id ?? undefined, 
+                family_id: editedGenomRow.family?.id ?? undefined,
+                genus_id: editedGenomRow.genus?.id ?? undefined,
+                kind_id: editedGenomRow.kind?.id ?? undefined
+            })
+            setEditedGenomRow(null)
+
         }
     };
 
@@ -173,15 +163,15 @@ export default function getColumns() {
                 break;
             case 'family':
                 options = families || [];
-                isDisabled = !editedGenomRow?.order;
+                isDisabled = !editedGenomRow?.order?.id;
                 break;
             case 'genus':
                 options = genera || [];
-                isDisabled = !editedGenomRow?.family;
+                isDisabled = !editedGenomRow?.family?.id;
                 break;
             case 'kind':
                 options = kinds || [];
-                isDisabled = !editedGenomRow?.genus;
+                isDisabled = !editedGenomRow?.genus?.id;
                 break;
         }
 
@@ -231,7 +221,7 @@ export default function getColumns() {
                 user={user} />
             ,
             header: "collect id",
-            size: 120
+            size: 150
         }),
 
         columnHelper.group({
@@ -240,8 +230,8 @@ export default function getColumns() {
                 columnHelper.accessor('order', {
                     cell: info => {
                         const { options, isDisabled } = getFieldProps('order');
-                        
-                        const isEditing = info.row.getValue("id") == editedGenomRow?.rowId
+
+                        const isEditing = !!(info.row.getValue("id") == editedGenomRow?.rowId && user)
 
                         return (
                             <TopologyCell
@@ -255,17 +245,18 @@ export default function getColumns() {
                                 onChange={handleFieldChange}
                                 showActions={false}
                                 onSave={handleSave}
+                                isLoading={isOrdersLoading}
                                 onCancel={handleCancel}
                             />
                         );
                     },
                     header: "Отряд",
-                    size: 120
+                    size: 150
                 }),
                 columnHelper.accessor('family', {
                     cell: info => {
                         const { options, isDisabled } = getFieldProps('family');
-                        const isEditing = info.row.getValue("id") == editedGenomRow?.rowId
+                        const isEditing = !!(info.row.getValue("id") == editedGenomRow?.rowId && user)
 
                         return (
                             <TopologyCell
@@ -279,17 +270,19 @@ export default function getColumns() {
                                 onChange={handleFieldChange}
                                 showActions={false}
                                 onSave={handleSave}
+                                isLoading={isFamiliesLoading}
+
                                 onCancel={handleCancel}
                             />
                         );
                     },
                     header: "Семейство",
-                    size: 120
+                    size: 150
                 }),
                 columnHelper.accessor('genus', {
                     cell: info => {
                         const { options, isDisabled } = getFieldProps('genus');
-                        const isEditing = info.row.getValue("id") == editedGenomRow?.rowId
+                        const isEditing = !!(info.row.getValue("id") == editedGenomRow?.rowId && user)
 
                         return (
                             <TopologyCell
@@ -303,16 +296,18 @@ export default function getColumns() {
                                 onChange={handleFieldChange}
                                 showActions={false}
                                 onSave={handleSave}
+                                isLoading={isGeneraLoading}
+
                                 onCancel={handleCancel}
                             />
                         );
-                    },                    header: "Род",
-                    size: 130
+                    }, header: "Род",
+                    size: 150
                 }),
                 columnHelper.accessor('kind', {
                     cell: info => {
                         const { options, isDisabled } = getFieldProps('kind');
-                        const isEditing = info.row.getValue("id") == editedGenomRow?.rowId
+                        const isEditing = !!(info.row.getValue("id") == editedGenomRow?.rowId && user)
 
                         return (
                             <TopologyCell
@@ -324,13 +319,15 @@ export default function getColumns() {
                                 isDisabled={isDisabled}
                                 onEdit={setEditedGenomRow}
                                 onChange={handleFieldChange}
-                                showActions={false}
+                                showActions={true}
                                 onSave={handleSave}
+                                isLoading={isKindsLoading}
+
                                 onCancel={handleCancel}
                             />
                         );
-                    },                    header: "Вид",
-                    size: 120
+                    }, header: "Вид",
+                    size: 150
                 }),
             ]
         }),
