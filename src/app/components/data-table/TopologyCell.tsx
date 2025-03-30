@@ -1,5 +1,5 @@
 import { Button, Input, Modal, Select, Space } from "antd";
-import { GenomRow, Topology } from "./models";
+import { GenomRow, Topology } from "../../(general)/models";
 import { useEffect, useState } from "react";
 import { CheckOutlined } from "@ant-design/icons";
 import { useInsertMutation } from "@supabase-cache-helpers/postgrest-react-query";

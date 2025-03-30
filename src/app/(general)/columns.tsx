@@ -10,8 +10,9 @@ import {  useState } from "react"
 import { EditableCell } from "../components/data-table/editable"
 import { useUser } from "../components/header"
 import { FormattedBasicView, GenomRow, toGenomRow, Topology } from "./models"
-import { TopologyCell } from "./TopologyCell"
-import { DateCell } from "./DateCell"
+import { TopologyCell } from "../components/data-table/TopologyCell"
+import { DateCell } from "../components/data-table/DateCell"
+import { SelectCell } from "../components/data-table/SelectCell"
 
 
 const columnHelper = createColumnHelper<FormattedBasicView>()
@@ -337,7 +338,7 @@ export default function getColumns() {
         columnHelper.accessor(row => formatDate(row.year, row.month, row.day), {
             id: "date",
             header: "Дата",
-            size: 190,
+            size: 160,
             cell: info => {
                 const rowId = info.row.getValue("id") as number;
                 const isEditing = !!user;
@@ -369,9 +370,41 @@ export default function getColumns() {
             }
         }),
         columnHelper.accessor("age", {
-            cell: info => <>{formatAge(info.getValue())}</>,
+            cell: info => {
+                const rowId = info.row.getValue("id") as number;
+                const isEditing = !!user;
+                const value = info.getValue() as string | null;
+                const displayValue = formatAge(value);
+                
+                // Опции для возраста
+                const ageOptions = [
+                    { value: 1, label: 'juvenile' },
+                    { value: 2, label: 'subadult' },
+                    { value: 3, label: 'adult' },
+                    { value: null, label: 'Не указано' }
+                ];
+
+
+                return (
+                    <SelectCell
+                        value={ageOptions.find((data) => data.label ==  value)?.value}
+                        displayValue={displayValue}
+                        options={ageOptions}
+                        rowId={rowId}
+                        isEditing={isEditing}
+                        onSave={async (rowId, value) => {
+                            await update({ 
+                                id: rowId,
+                                age_id: value
+                            });
+                        }}
+                        onCancel={() => {}}
+                        placeholder="Выберите возраст"
+                    />
+                );
+            },
             header: "Возраст",
-            size: 70
+            size: 110
         }),
         columnHelper.accessor("sex", {
             cell: info => <>{formatSex(info.getValue())}</>,
