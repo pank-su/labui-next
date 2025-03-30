@@ -33,5 +33,6 @@ docker run -p 3000:3000 -d labui-next
 
 ```sh
 bun install
+bun run build
 bun run start
 ```
