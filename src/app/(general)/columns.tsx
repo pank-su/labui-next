@@ -4,13 +4,14 @@ import ExpandableText from "@/app/components/expand-text"
 import { formatDate } from "@/utils/formatDate"
 import { useClient } from "@/utils/supabase/client"
 import { useQuery, useUpdateMutation } from "@supabase-cache-helpers/postgrest-react-query"
-import { CellContext, createColumnHelper, RowData } from "@tanstack/react-table"
-import { Checkbox, Select, Tag } from "antd"
-import { useMemo, useState } from "react"
+import {  createColumnHelper, RowData } from "@tanstack/react-table"
+import { Checkbox, Tag } from "antd"
+import {  useState } from "react"
 import { EditableCell } from "../components/data-table/editable"
 import { useUser } from "../components/header"
 import { FormattedBasicView, GenomRow, toGenomRow, Topology } from "./models"
 import { TopologyCell } from "./TopologyCell"
+import { DateCell } from "./DateCell"
 
 
 const columnHelper = createColumnHelper<FormattedBasicView>()
@@ -21,6 +22,8 @@ declare module '@tanstack/react-table' {
         filterVariant?: 'index' | 'date-range' | 'select'
     }
 }
+
+
 
 
 
@@ -333,7 +336,37 @@ export default function getColumns() {
         }),
         columnHelper.accessor(row => formatDate(row.year, row.month, row.day), {
             id: "date",
-            header: "Дата"
+            header: "Дата",
+            size: 190,
+            cell: info => {
+                const rowId = info.row.getValue("id") as number;
+                const isEditing = !!user;
+                const year = info.row.original.year;
+                const month = info.row.original.month;
+                const day = info.row.original.day;
+                const value = info.getValue() as string;
+                
+                return (
+                    <DateCell
+                        value={value}
+                        year={year}
+                        month={month}
+                        day={day}
+                        rowId={rowId}
+                        isEditing={isEditing}
+                        onSave={async (rowId, year, month, day) => {
+                            await update({ 
+                                id: rowId,
+                                year: year,
+                                month: month,
+                                day: day
+                            });
+                        }}
+                        onCancel={() => {}}
+                        disabled={!user}
+                    />
+                );
+            }
         }),
         columnHelper.accessor("age", {
             cell: info => <>{formatAge(info.getValue())}</>,

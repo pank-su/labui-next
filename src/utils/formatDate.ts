@@ -7,20 +7,18 @@
  */
 export function formatDate(year: number | null, month: number | null, day: number | null): string{
     const parts: string[] = [];
-    if (year !== null) {
-        parts.push(year.toString());
-    }
-
-    if (month !== null) {
-        parts.push(month.toString().padStart(2, '0'));
-    }
 
     if (day !== null) {
         parts.push(day.toString().padStart(2, '0'));
     }
+    if (month !== null) {
+        parts.push(month.toString().padStart(2, '0'));
+    }
+    if (year !== null) {
+        parts.push(year.toString());
+    }
 
-
-    return parts.length > 0 ? parts.join('-') : '';
+    return parts.length > 0 ? parts.join('.') : '';
 };
 
 
