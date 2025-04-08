@@ -12,6 +12,8 @@ LabUI Next - это веб-интерфейс нового поколения, �
 - React
 - TypeScript
 - Bun
+- Tanstack Query
+- Tanstack Table
 
 ## Начало работы
 
