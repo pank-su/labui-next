@@ -41,7 +41,6 @@ interface PointFeature {
 const CollectionMap: React.FC<CollectionMapProps> = ({
                                                          height = '600px',
                                                          fullScreen = false,
-                                                         showAllItems = true,
                                                          onBoundsChange,
                                                          filteredItems,
                                                          simplified = false
@@ -133,21 +132,6 @@ const CollectionMap: React.FC<CollectionMapProps> = ({
         }
     });
 
-    // При монтировании компонента регистрируем обработчик изменений карты
-    useEffect(() => {
-        if (mapRef.current) {
-            const map = mapRef.current.getMap();
-            // Инициализируем границы и зум
-            const initialBounds = map.getBounds().toArray().flat() as [number, number, number, number];
-            setBounds(initialBounds);
-            setZoom(map.getZoom());
-
-            // Вызываем колбэк с начальными границами, если он предоставлен
-            if (onBoundsChange) {
-                onBoundsChange(initialBounds);
-            }
-        }
-    }, [mapRef, onBoundsChange]);
 
     // Обработка клика по кластеру
     const handleClusterClick = useCallback((clusterId: number, longitude: number, latitude: number) => {
@@ -211,7 +195,7 @@ const CollectionMap: React.FC<CollectionMapProps> = ({
     // Обработка состояния загрузки
     if (isLoading && !filteredItems) {
         return <div className="flex justify-center items-center" style={{height}}>
-            <Spin size="large" tip="Загрузка карты..."/>
+            <Spin size="large" />
         </div>;
     }
 
@@ -261,6 +245,7 @@ const CollectionMap: React.FC<CollectionMapProps> = ({
         <div style={{height, width: '100%'}} className={fullScreen ? 'fixed inset-0 z-50' : ''}>
             <Map
                 ref={mapRef}
+                onRender={onMapMoveEnd}
                 initialViewState={initialViewState}
                 mapStyle="https://api.maptiler.com/maps/019615fe-ff46-7b99-a1b5-53f413c455dc/style.json?key=bWMAD0ONYiA5u4kpUJlf"
                 style={{width: '100%', height: '100%'}}

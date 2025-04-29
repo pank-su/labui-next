@@ -19,11 +19,9 @@ export async function signInAction(formData: FormInput): Promise<SignInResult> {
 
     // Добавляем revalidatePath для обновления данных
     revalidatePath("/", "layout")
-    revalidatePath("/", "page")
 
-    
     // Выполняем редирект на сервере
-    permanentRedirect("/")
+    redirect("/")
 
     return {
         success: true,
@@ -36,5 +34,6 @@ export async function singOutAction() {
     const supabase = await createClient()
     await supabase.auth.signOut()
     revalidatePath("/", "layout")
-    return permanentRedirect("/")
+
+    return redirect("/")
 }
