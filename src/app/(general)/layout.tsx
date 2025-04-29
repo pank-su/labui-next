@@ -5,6 +5,7 @@ import Header from '../components/header'
 import { theme } from 'antd'
 
 import '@ant-design/v5-patch-for-react-19';
+import {Suspense} from "react";
 
 
 const { useToken } = theme;
@@ -27,7 +28,9 @@ export default function Layout({ children }: {
             </div>
 
             <div className={styles.content}>
+                <Suspense>
                 {children}
+                </Suspense>
             </div>
         </div>
     )

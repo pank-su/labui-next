@@ -20,13 +20,11 @@ export default function Layout({ children }: {
             </head>
             <body>
                 <ReactQueryClientProvider>
-                    <SearchProvider>
                         <AntdRegistry>
                             <ConfigProvider locale={ruRU}>
                                 {children}
                             </ConfigProvider>
                         </AntdRegistry>
-                    </SearchProvider>
                 </ReactQueryClientProvider>
             </body>
         </html>

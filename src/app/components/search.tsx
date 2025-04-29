@@ -9,7 +9,7 @@ export function Search() {
     const pathname = usePathname()
 
     const searchParams = useSearchParams()
-    const search = searchParams.get('search') ?? "";
+    const search = searchParams.get('q') ?? "";
 
     
     // const {setSearch, search} = useSearch()

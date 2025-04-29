@@ -1,3 +1,5 @@
+import {Suspense} from "react";
+
 export default function Collectors(){
-    return <>TODO</>
+    return <Suspense><>TODO</></Suspense>
 }
