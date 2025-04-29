@@ -231,7 +231,7 @@ export default function getColumns() {
         columnHelper.group({
             header: "Топология",
             columns: [
-                columnHelper.accessor('order', {
+                columnHelper.accessor('order.name', {
                     cell: info => {
                         const { options, isDisabled } = getFieldProps('order');
 
@@ -255,9 +255,10 @@ export default function getColumns() {
                         );
                     },
                     header: "Отряд",
-                    size: 150
+                    size: 150,
+
                 }),
-                columnHelper.accessor('family', {
+                columnHelper.accessor('family.name', {
                     cell: info => {
                         const { options, isDisabled } = getFieldProps('family');
                         const isEditing = !!(info.row.getValue("id") == editedGenomRow?.rowId && user)
@@ -283,7 +284,7 @@ export default function getColumns() {
                     header: "Семейство",
                     size: 150
                 }),
-                columnHelper.accessor('genus', {
+                columnHelper.accessor('genus.name', {
                     cell: info => {
                         const { options, isDisabled } = getFieldProps('genus');
                         const isEditing = !!(info.row.getValue("id") == editedGenomRow?.rowId && user)
@@ -308,7 +309,7 @@ export default function getColumns() {
                     }, header: "Род",
                     size: 150
                 }),
-                columnHelper.accessor('kind', {
+                columnHelper.accessor('kind.name', {
                     cell: info => {
                         const { options, isDisabled } = getFieldProps('kind');
                         const isEditing = !!(info.row.getValue("id") == editedGenomRow?.rowId && user)

@@ -29,7 +29,7 @@ import {
     GlobalOutlined
 } from "@ant-design/icons";
 import {Button, Avatar, Tooltip, Popconfirm, Tag} from "antd";
-import {useRouter} from 'next/navigation';
+import {useRouter, useSearchParams} from 'next/navigation';
 import {useSearch} from "../components/search-context";
 import {Database, Tables} from "@/utils/supabase/gen-types";
 import {useUser} from "../components/header";
@@ -56,7 +56,10 @@ async function loadBasicViewItemById(supabase: SupabaseClient<Database>, id: num
 export default function CollectionTable() {
     const supabase = useClient()
     const router = useRouter()
-    const {search} = useSearch()
+    // const {search} = useSearch()
+
+    const searchParams =  useSearchParams()
+    const search = searchParams.get("q") || ""
 
     // Режим отображения (по умолчанию - только таблица)
     const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.TABLE_ONLY);

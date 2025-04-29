@@ -8,7 +8,7 @@ import { useClient } from "@/utils/supabase/client";
 interface TopologyCellProps {
     genomRow: GenomRow;
     field: 'order' | 'family' | 'genus' | 'kind';
-    value: Topology | undefined;
+    value: string | null;
     options: { id: number, name: string | null }[];
     isDisabled: boolean;
     isEditing: boolean;
@@ -190,7 +190,7 @@ export const TopologyCell: React.FC<TopologyCellProps> = ({
             className="cursor-pointer w-full"
             onDoubleClick={startEditing}
         >
-            {value?.name || ''}
+            {value || ''}
         </div>
     );
 };
