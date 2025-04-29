@@ -189,7 +189,7 @@ export default function CollectionTable() {
                         <Button
                             type="text"
                             icon={<ReloadOutlined/>}
-                            onClick={() => table.resetColumnFilters()}
+                            onClick={() => router.push("/")}
                         />
                     </Tooltip>
 

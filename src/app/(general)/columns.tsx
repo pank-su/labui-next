@@ -20,7 +20,7 @@ const columnHelper = createColumnHelper<FormattedBasicView>()
 declare module '@tanstack/react-table' {
     //allows us to define custom properties for our columns
     export interface ColumnMeta<TData extends RowData, TValue> {
-        filterVariant?: 'index' | 'date-range' | 'select'
+        filterVariant?: 'index' | 'input' | 'date-range' | 'select'
     }
 }
 
@@ -226,7 +226,11 @@ export default function getColumns() {
                 user={user} />
             ,
             header: "collect id",
-            size: 150
+            size: 150,
+            filterFn: "includesString",
+            meta: {
+                filterVariant: "input"
+            }
         }),
 
         columnHelper.group({

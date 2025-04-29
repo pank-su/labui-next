@@ -9,7 +9,7 @@ import { useMemo, useRef } from "react";
 import { FloatButton, Spin } from "antd";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { VerticalAlignBottomOutlined, VerticalAlignTopOutlined } from "@ant-design/icons";
-import Filter from "../filter";
+import Filter from "./filters/filter";
 import { AnimatePresence, motion } from "framer-motion";
 
 
