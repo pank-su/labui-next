@@ -209,6 +209,7 @@ export default function getColumns() {
             header: "ID",
             size: 60,
             enableColumnFilter: true,
+            enableGlobalFilter: true,
             meta: {
                 filterVariant: "index"
             },
@@ -229,7 +230,7 @@ export default function getColumns() {
         }),
 
         columnHelper.group({
-            header: "Топология",
+            header: "Классификация",
             columns: [
                 columnHelper.accessor('order.name', {
                     cell: info => {
@@ -416,10 +417,12 @@ export default function getColumns() {
             header: "Позиция",
             columns: [
                 columnHelper.accessor("latitude", {
-                    header: "Широта"
+                    header: "Широта",
+                    enableGlobalFilter: false
                 }),
-                columnHelper.accessor("longtitude", {
-                    header: "Долгота"
+                columnHelper.accessor("longitude", {
+                    header: "Долгота",
+                    enableGlobalFilter: false
                 }),
                 columnHelper.accessor("country", { header: "Страна" }),
                 columnHelper.accessor("region", {
