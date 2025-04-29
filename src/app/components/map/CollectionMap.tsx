@@ -68,7 +68,7 @@ const CollectionMap: React.FC<CollectionMapProps> = ({
     // Получаем данные коллекции с широтой и долготой
     const {data: allData, isLoading, isError} = useQuery(
         supabase.from("basic_view")
-            .select("id,collect_id,latitude,longtitude,order,family,genus,kind,country,region")
+            .select("id,collect_id,latitude,longitude,order,family,genus,kind,country,region")
             .not('latitude', 'is', null)
             .not('longtitude', 'is', null)
     );
@@ -97,7 +97,7 @@ const CollectionMap: React.FC<CollectionMapProps> = ({
     // Центрируем карту на первом элементе или на центре России
     const initialViewState = useMemo(() => {
         return {
-            longitude: data && data.length > 0 && data[0].longtitude ? data[0].longtitude : 37.6,
+            longitude: data && data.length > 0 && data[0].longitude ? data[0].longitude : 37.6,
             latitude: data && data.length > 0 && data[0].latitude ? data[0].latitude : 55.7,
             zoom: 3
         };
@@ -107,7 +107,7 @@ const CollectionMap: React.FC<CollectionMapProps> = ({
     const points = useMemo(() => {
         if (!data) return [];
 
-        return data.filter(item => item.latitude && item.longtitude).map(item => ({
+        return data.filter(item => item.latitude && item.longitude).map(item => ({
             type: 'Feature',
             properties: {
                 itemId: item.id!,
@@ -115,7 +115,7 @@ const CollectionMap: React.FC<CollectionMapProps> = ({
             },
             geometry: {
                 type: 'Point',
-                coordinates: [item.longtitude!, item.latitude!]
+                coordinates: [item.longitude!, item.latitude!]
             }
         })) as PointFeature[];
     }, [data]);
@@ -183,7 +183,7 @@ const CollectionMap: React.FC<CollectionMapProps> = ({
 
         const itemsAtSameLocation = data.filter(dataItem =>
             dataItem.latitude === item.latitude &&
-            dataItem.longtitude === item.longtitude
+            dataItem.longitude === item.longitude
         );
 
 
@@ -214,7 +214,7 @@ const CollectionMap: React.FC<CollectionMapProps> = ({
     }
 
     // Количество элементов с координатами
-    const pointsCount = data.filter(item => item.latitude && item.longtitude).length;
+    const pointsCount = data.filter(item => item.latitude && item.longitude).length;
 
     // Переход к детальной странице элемента
     const openItemDetails = (id: number) => {
@@ -310,7 +310,7 @@ const CollectionMap: React.FC<CollectionMapProps> = ({
                 {/* Всплывающее окно с информацией об элементе */}
                 {popupInfo && (
                     <Popup
-                        longitude={popupInfo.longtitude!}
+                        longitude={popupInfo.longitude!}
                         latitude={popupInfo.latitude!}
                         anchor="bottom"
                         closeOnClick={false}
@@ -323,7 +323,7 @@ const CollectionMap: React.FC<CollectionMapProps> = ({
                             <div className="text-sm text-gray-600">{formatLocation(popupInfo)}</div>
                             <div className="mt-2">
                 <span className="text-xs text-gray-500">
-                  {popupInfo.latitude}, {popupInfo.longtitude}
+                  {popupInfo.latitude}, {popupInfo.longitude}
                 </span>
                             </div>
 
