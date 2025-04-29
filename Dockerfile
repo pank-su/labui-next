@@ -14,7 +14,7 @@ RUN bun install
 COPY . .
 
 # Собираем приложение Next.js (команда "next build" должна быть прописана в package.json)
-RUN bun run next build
+RUN bun run build
 
 
 # Stage 2: Финальный образ для продакшена
@@ -29,4 +29,4 @@ COPY --from=builder /app ./
 EXPOSE 3000
 
 # Запускаем приложение
-CMD ["bun", "run", "next", "start"]
+CMD ["bun", "run", "start"]
