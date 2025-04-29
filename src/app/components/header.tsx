@@ -3,7 +3,7 @@
 import { Avatar, Select, Skeleton } from "antd";
 import Navigation from "./navigation";
 import { Search } from "./search";
-import { useEffect, useMemo, useState } from "react";
+import {Suspense, useEffect, useMemo, useState} from "react";
 import AuthBtn from "./auth-btn";
 import { User } from "@supabase/supabase-js";
 import ProfileAvatar from "./profile-avatar";
@@ -26,7 +26,9 @@ export default function Header() {
         <div className="w-full h-full px-8 flex justify-between items-center">
             <AuthOrAvatar />
             <Navigation />
-            <Search />
+            <Suspense>
+                <Search />
+            </Suspense>
             <Select
                 defaultValue={pathname.slice(1)}
                 options={options}

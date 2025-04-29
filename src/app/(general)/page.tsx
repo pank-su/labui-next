@@ -28,9 +28,8 @@ import {
     TableOutlined,
     GlobalOutlined
 } from "@ant-design/icons";
-import {Button, Avatar, Tooltip, Popconfirm, Tag} from "antd";
-import {useRouter} from 'next/navigation';
-import {useSearch} from "../components/search-context";
+import {Button,  Tooltip, Popconfirm, Tag} from "antd";
+import {useRouter, useSearchParams} from 'next/navigation';
 import {Database, Tables} from "@/utils/supabase/gen-types";
 import {useUser} from "../components/header";
 import {SupabaseClient} from "@supabase/supabase-js";
@@ -56,7 +55,10 @@ async function loadBasicViewItemById(supabase: SupabaseClient<Database>, id: num
 export default function CollectionTable() {
     const supabase = useClient()
     const router = useRouter()
-    const {search} = useSearch()
+    // const {search} = useSearch()
+
+    const searchParams =  useSearchParams()
+    const search = searchParams.get("q") || ""
 
     // Режим отображения (по умолчанию - только таблица)
     const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.TABLE_ONLY);
@@ -68,7 +70,7 @@ export default function CollectionTable() {
     const {
         data,
         isLoading
-    } = useQuery(supabase.from("basic_view").select("id,collect_id,latitude,longtitude,order,family,genus,kind,age,sex,voucher_institute,voucher_id,country,region,geo_comment,day,month,year,comment,collectors,tags"))
+    } = useQuery(supabase.from("basic_view").select("id,collect_id,latitude,longitude,order,family,genus,kind,age,sex,voucher_institute,voucher_id,country,region,geo_comment,day,month,year,comment,collectors,tags"))
 
     const upsertItem = useUpsertItem({
         primaryKeys: ["id"],
@@ -104,12 +106,12 @@ export default function CollectionTable() {
 
         // Элементы только в видимой области карты
         return data.filter(item => {
-            if (!item.latitude || !item.longtitude) return false;
+            if (!item.latitude || !item.longitude) return false;
 
             const [west, south, east, north] = mapBounds;
             return (
-                item.longtitude >= west &&
-                item.longtitude <= east &&
+                item.longitude >= west &&
+                item.longitude <= east &&
                 item.latitude >= south &&
                 item.latitude <= north
             );
