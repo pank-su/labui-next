@@ -10,9 +10,9 @@ import {  useState } from "react"
 import { EditableCell } from "../components/data-table/editable"
 import { useUser } from "../components/header"
 import { FormattedBasicView, GenomRow, toGenomRow, Topology } from "./models"
-import { TopologyCell } from "../components/data-table/TopologyCell"
-import { DateCell } from "../components/data-table/DateCell"
-import { SelectCell } from "../components/data-table/SelectCell"
+import { TopologyCell } from "../components/data-table/topology-cell"
+import { DataCell } from "../components/data-table/data-cell"
+import { SelectCell } from "../components/data-table/select-cell"
 
 
 const columnHelper = createColumnHelper<FormattedBasicView>()
@@ -261,6 +261,9 @@ export default function getColumns() {
                     },
                     header: "Отряд",
                     size: 150,
+                    meta:{
+                        filterVariant: "select"
+                    }
 
                 }),
                 columnHelper.accessor('family.name', {
@@ -287,7 +290,10 @@ export default function getColumns() {
                         );
                     },
                     header: "Семейство",
-                    size: 150
+                    size: 150,
+                    meta:{
+                        filterVariant: "select"
+                    }
                 }),
                 columnHelper.accessor('genus.name', {
                     cell: info => {
@@ -312,7 +318,10 @@ export default function getColumns() {
                             />
                         );
                     }, header: "Род",
-                    size: 150
+                    size: 150,
+                    meta:{
+                        filterVariant: "select"
+                    }
                 }),
                 columnHelper.accessor('kind.name', {
                     cell: info => {
@@ -337,7 +346,10 @@ export default function getColumns() {
                             />
                         );
                     }, header: "Вид",
-                    size: 150
+                    size: 150,
+                    meta:{
+                        filterVariant: "select"
+                    }
                 }),
             ]
         }),
@@ -354,7 +366,7 @@ export default function getColumns() {
                 const value = info.getValue() as string;
                 
                 return (
-                    <DateCell
+                    <DataCell
                         value={value}
                         year={year}
                         month={month}
