@@ -10,7 +10,7 @@ export function useFilterQuery(id: string, setFilter: (value: string) => void, r
 
     const queryValue = searchParams.get(id) ?? "";
 
-    const [value, setValue] = useState(queryValue)
+    const [value, setValue] = useState<string>(queryValue)
 
 
     useEffect(() => {
@@ -18,11 +18,15 @@ export function useFilterQuery(id: string, setFilter: (value: string) => void, r
             setFilter(value)
             return;
         }
+
         const params = new URLSearchParams(searchParams);
 
 
-        if (value.trim() === "") {
+        if (value.trim() === "" && value != " ") {
             resetFilter()
+            if (!searchParams.has(id)) {
+                return;
+            }
             params.delete(id)
         } else {
             setFilter(value)
@@ -30,12 +34,16 @@ export function useFilterQuery(id: string, setFilter: (value: string) => void, r
         }
 
         if (params.size != 0) router.push(pathname + "?" + params.toString());
-        else router.push(pathname)
+        else {
+            console.log(id)
+            router.push(pathname)
+        }
     }, [...deps, value])
 
     // Если фильтр был сброшен, то очищаем поле
     useEffect(() => {
-        if (queryValue.trim() === "") {
+        console.log(queryValue)
+        if (queryValue.trim() === "" && queryValue != " ") {
             setValue("")
         }
     }, [queryValue])

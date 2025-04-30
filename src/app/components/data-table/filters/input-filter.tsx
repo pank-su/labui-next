@@ -13,7 +13,7 @@ export function InputFilter({column}: { column: Column<any> }) {
 
 
     return (
-        <Input value={value} onChange={e => {
+        <Input value={value} placeholder={"Найти..."} onChange={e => {
             setValue(e.target.value)
 
         }}/>

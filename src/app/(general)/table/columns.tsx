@@ -1,18 +1,19 @@
 "use client"
 
 import ExpandableText from "@/app/components/expand-text"
-import { formatDate } from "@/utils/formatDate"
-import { useClient } from "@/utils/supabase/client"
-import { useQuery, useUpdateMutation } from "@supabase-cache-helpers/postgrest-react-query"
-import {  createColumnHelper, RowData } from "@tanstack/react-table"
-import { Checkbox, Tag } from "antd"
-import {  useState } from "react"
-import { EditableCell } from "../../components/data-table/editable"
-import { useUser } from "../../components/header"
-import { FormattedBasicView, GenomRow, toGenomRow, Topology } from "../models"
-import { TopologyCell } from "../../components/data-table/topology-cell"
-import { DataCell } from "../../components/data-table/data-cell"
-import { SelectCell } from "../../components/data-table/select-cell"
+import {formatDate} from "@/utils/formatDate"
+import {useClient} from "@/utils/supabase/client"
+import {useQuery, useUpdateMutation} from "@supabase-cache-helpers/postgrest-react-query"
+import {createColumnHelper, RowData} from "@tanstack/react-table"
+import {Checkbox, Tag} from "antd"
+import {useState} from "react"
+import {EditableCell} from "../../components/data-table/editable"
+import {useUser} from "../../components/header"
+import {FormattedBasicView, GenomRow, toGenomRow, Topology} from "../models"
+import {TopologyCell} from "../../components/data-table/topology-cell"
+import {DataCell} from "../../components/data-table/data-cell"
+import {SelectCell} from "../../components/data-table/select-cell"
+import {loadOrders} from "@/app/(general)/queries";
 
 
 const columnHelper = createColumnHelper<FormattedBasicView>()
@@ -24,8 +25,10 @@ declare module '@tanstack/react-table' {
     }
 }
 
-
-
+const selectFilter = (row: { getValue: (arg0: any) => string | null }, id: any, filterValue: string | null) => {
+    const value = row.getValue(id) as string | null
+    return filterValue === " " && value === null || filterValue === value
+}
 
 
 /**
@@ -50,10 +53,14 @@ interface Tag {
  */
 function formatAge(age: string | null): string {
     switch (age) {
-        case "adult": return "ad"
-        case "juvenile": return "juv"
-        case "subadult": return "sad"
-        default: return age ?? ""
+        case "adult":
+            return "ad"
+        case "juvenile":
+            return "juv"
+        case "subadult":
+            return "sad"
+        default:
+            return age ?? ""
     }
 }
 
@@ -76,44 +83,39 @@ function formatSex(sex: string | null): string {
 }
 
 
-
-
-
-
-
 export default function getColumns() {
     const [editedGenomRow, setEditedGenomRow] = useState<GenomRow | null>(null)
     const supabase = useClient()
-    const { user } = useUser()
+    const {user} = useUser()
 
 
-    const { mutateAsync: update } = useUpdateMutation(
+    const {mutateAsync: update} = useUpdateMutation(
         supabase.from("collection"),
         ['id']
     );
 
-    const { data: orders, isLoading: isOrdersLoading } = useQuery(supabase.from("order").select("id,name").not('name', 'is', null));
+    const {data: orders, isLoading: isOrdersLoading} = useQuery(loadOrders(supabase));
 
-    const { data: families, isLoading: isFamiliesLoading } = useQuery(
+    const {data: families, isLoading: isFamiliesLoading} = useQuery(
         supabase.from("family").select("id,name").not('name', 'is', null)
             .eq('order_id', editedGenomRow?.order?.id || -1),
-        { enabled: !!editedGenomRow?.order?.id }
+        {enabled: !!editedGenomRow?.order?.id}
     );
-    const { data: genera, isLoading: isGeneraLoading } = useQuery(
+    const {data: genera, isLoading: isGeneraLoading} = useQuery(
         supabase.from("genus").select("id,name").not('name', 'is', null)
             .eq('family_id', editedGenomRow?.family?.id || -1),
-        { enabled: !!editedGenomRow?.family?.id }
+        {enabled: !!editedGenomRow?.family?.id}
     );
-    const { data: kinds, isLoading: isKindsLoading } = useQuery(
+    const {data: kinds, isLoading: isKindsLoading} = useQuery(
         supabase.from("kind").select("id,name").not('name', 'is', null)
             .eq('genus_id', editedGenomRow?.genus?.id || -1),
-        { enabled: !!editedGenomRow?.genus?.id }
+        {enabled: !!editedGenomRow?.genus?.id}
     );
 
     const handleFieldChange = (field: string, value: Topology | undefined) => {
         if (!editedGenomRow) return;
 
-        const updatedRow = { ...editedGenomRow };
+        const updatedRow = {...editedGenomRow};
         switch (field) {
             case 'order':
                 updatedRow.order = value;
@@ -141,9 +143,9 @@ export default function getColumns() {
     const handleSave = async () => {
         if (editedGenomRow) {
             console.log(editedGenomRow)
-            await supabase.rpc("update_collection_taxonomy_by_ids", { 
-                col_id: editedGenomRow.rowId!, 
-                order_id: editedGenomRow.order?.id ?? undefined, 
+            await supabase.rpc("update_collection_taxonomy_by_ids", {
+                col_id: editedGenomRow.rowId!,
+                order_id: editedGenomRow.order?.id ?? undefined,
                 family_id: editedGenomRow.family?.id ?? undefined,
                 genus_id: editedGenomRow.genus?.id ?? undefined,
                 kind_id: editedGenomRow.kind?.id ?? undefined
@@ -179,7 +181,7 @@ export default function getColumns() {
                 break;
         }
 
-        return { options, isDisabled };
+        return {options, isDisabled};
     };
 
 
@@ -187,14 +189,14 @@ export default function getColumns() {
         columnHelper.display({
             id: 'select-col',
             size: 33,
-            header: ({ table }) => (
+            header: ({table}) => (
                 <Checkbox
                     checked={table.getIsAllRowsSelected()}
                     indeterminate={table.getIsSomeRowsSelected()}
                     onChange={table.getToggleAllRowsSelectedHandler()}
                 />
             ),
-            cell: ({ row }) => (
+            cell: ({row}) => (
                 <Checkbox
                     checked={row.getIsSelected()}
                     disabled={!row.getCanSelect()}
@@ -222,8 +224,8 @@ export default function getColumns() {
 
         columnHelper.accessor('collect_id', {
             cell: info => <EditableCell cellValue={info.getValue()}
-                onSave={(value) => update({ id: info.row.getValue("id"), collect_id: value })}
-                user={user} />
+                                        onSave={(value) => update({id: info.row.getValue("id"), collect_id: value})}
+                                        user={user}/>
             ,
             header: "collect id",
             size: 150,
@@ -238,7 +240,7 @@ export default function getColumns() {
             columns: [
                 columnHelper.accessor('order.name', {
                     cell: info => {
-                        const { options, isDisabled } = getFieldProps('order');
+                        const {options, isDisabled} = getFieldProps('order');
 
                         const isEditing = !!(info.row.getValue("id") == editedGenomRow?.rowId && user)
 
@@ -261,14 +263,15 @@ export default function getColumns() {
                     },
                     header: "Отряд",
                     size: 150,
-                    meta:{
+                    meta: {
                         filterVariant: "select"
-                    }
+                    },
+                    filterFn: selectFilter
 
                 }),
                 columnHelper.accessor('family.name', {
                     cell: info => {
-                        const { options, isDisabled } = getFieldProps('family');
+                        const {options, isDisabled} = getFieldProps('family');
                         const isEditing = !!(info.row.getValue("id") == editedGenomRow?.rowId && user)
 
                         return (
@@ -291,13 +294,15 @@ export default function getColumns() {
                     },
                     header: "Семейство",
                     size: 150,
-                    meta:{
+                    meta: {
                         filterVariant: "select"
-                    }
+                    },
+                    filterFn: selectFilter
+
                 }),
                 columnHelper.accessor('genus.name', {
                     cell: info => {
-                        const { options, isDisabled } = getFieldProps('genus');
+                        const {options, isDisabled} = getFieldProps('genus');
                         const isEditing = !!(info.row.getValue("id") == editedGenomRow?.rowId && user)
 
                         return (
@@ -319,13 +324,15 @@ export default function getColumns() {
                         );
                     }, header: "Род",
                     size: 150,
-                    meta:{
+                    meta: {
                         filterVariant: "select"
-                    }
+                    },
+                    filterFn: selectFilter
+
                 }),
                 columnHelper.accessor('kind.name', {
                     cell: info => {
-                        const { options, isDisabled } = getFieldProps('kind');
+                        const {options, isDisabled} = getFieldProps('kind');
                         const isEditing = !!(info.row.getValue("id") == editedGenomRow?.rowId && user)
 
                         return (
@@ -347,9 +354,11 @@ export default function getColumns() {
                         );
                     }, header: "Вид",
                     size: 150,
-                    meta:{
+                    meta: {
                         filterVariant: "select"
-                    }
+                    },
+                    filterFn: selectFilter
+
                 }),
             ]
         }),
@@ -364,7 +373,7 @@ export default function getColumns() {
                 const month = info.row.original.month;
                 const day = info.row.original.day;
                 const value = info.getValue() as string;
-                
+
                 return (
                     <DataCell
                         value={value}
@@ -374,14 +383,15 @@ export default function getColumns() {
                         rowId={rowId}
                         isEditing={isEditing}
                         onSave={async (rowId, year, month, day) => {
-                            await update({ 
+                            await update({
                                 id: rowId,
                                 year: year,
                                 month: month,
                                 day: day
                             });
                         }}
-                        onCancel={() => {}}
+                        onCancel={() => {
+                        }}
                         disabled={!user}
                     />
                 );
@@ -393,41 +403,52 @@ export default function getColumns() {
                 const isEditing = !!user;
                 const value = info.getValue() as string | null;
                 const displayValue = formatAge(value);
-                
+
                 // Опции для возраста
                 const ageOptions = [
-                    { value: 1, label: 'juvenile' },
-                    { value: 2, label: 'subadult' },
-                    { value: 3, label: 'adult' },
-                    { value: null, label: 'Не указано' }
+                    {value: 1, label: 'juvenile'},
+                    {value: 2, label: 'subadult'},
+                    {value: 3, label: 'adult'},
+                    {value: null, label: 'Не указано'}
                 ];
 
 
                 return (
                     <SelectCell
-                        value={ageOptions.find((data) => data.label ==  value)?.value}
+                        value={ageOptions.find((data) => data.label == value)?.value}
                         displayValue={displayValue}
                         options={ageOptions}
                         rowId={rowId}
                         isEditing={isEditing}
                         onSave={async (rowId, value) => {
-                            await update({ 
+                            await update({
                                 id: rowId,
                                 age_id: value
                             });
                         }}
-                        onCancel={() => {}}
+                        onCancel={() => {
+                        }}
                         placeholder="Выберите возраст"
                     />
                 );
             },
             header: "Возраст",
-            size: 110
+            size: 110,
+            meta: {
+                filterVariant: "select"
+            },
+            filterFn: selectFilter
+
         }),
         columnHelper.accessor("sex", {
             cell: info => <>{formatSex(info.getValue())}</>,
             header: "Пол",
-            size: 60
+            size: 60,
+            meta: {
+                filterVariant: "select"
+            },
+            filterFn: selectFilter
+
         }),
         columnHelper.group({
             header: "Позиция",
@@ -440,19 +461,33 @@ export default function getColumns() {
                     header: "Долгота",
                     enableGlobalFilter: false
                 }),
-                columnHelper.accessor("country", { header: "Страна" }),
+                columnHelper.accessor("country", {
+                    header: "Страна", cell: info => <ExpandableText>{info.getValue()}</ExpandableText>,
+                    meta: {
+                        filterVariant: "select"
+                    }
+                }),
                 columnHelper.accessor("region", {
-                    header: "Регион",
-                    size: 250,
-                    cell: info => <ExpandableText >{info.getValue()}</ExpandableText>
-                }
+                        header: "Регион",
+                        size: 250,
+                        cell: info => <ExpandableText>{info.getValue()}</ExpandableText>,
+                        meta: {
+                            filterVariant: "select"
+                        }
+                    }
                 ),
                 columnHelper.accessor("geo_comment", {
                     header: "Геокомментарий",
                     size: 270,
                     cell: info => <EditableCell cellValue={info.getValue()}
-                        onSave={(value) => update({ id: info.row.getValue("id"), geo_comment: value })}
-                        user={user} />
+                                                onSave={(value) => update({
+                                                    id: info.row.getValue("id"),
+                                                    geo_comment: value
+                                                })}
+                                                user={user}/>,
+                    meta: {
+                        filterVariant: "input"
+                    }
                 }),
             ]
         },),
@@ -461,12 +496,17 @@ export default function getColumns() {
             columns: [
                 columnHelper.accessor("voucher_institute", {
                     header: "Институт",
-                    cell: info => <ExpandableText >{info.getValue()}</ExpandableText>
+                    cell: info => <ExpandableText>{info.getValue()}</ExpandableText>,
+                    meta: {
+                        filterVariant: "select"
+                    }
                 }),
                 columnHelper.accessor("voucher_id", {
                     header: "ID",
-                    cell: info => <ExpandableText >{info.getValue()}</ExpandableText>
-
+                    cell: info => <ExpandableText>{info.getValue()}</ExpandableText>,
+                    meta: {
+                        filterVariant: "input"
+                    }
                 })
             ]
         }),
@@ -482,10 +522,12 @@ export default function getColumns() {
         columnHelper.accessor("comment", {
             header: "Комментарий",
             cell: info => <EditableCell cellValue={info.getValue()}
-                onSave={(value) => update({ id: info.row.getValue("id"), comment: value })}
-                user={user} />,
-            size: 400
-
+                                        onSave={(value) => update({id: info.row.getValue("id"), comment: value})}
+                                        user={user}/>,
+            size: 400,
+            meta: {
+                filterVariant: "input"
+            }
         })
     ]
 }

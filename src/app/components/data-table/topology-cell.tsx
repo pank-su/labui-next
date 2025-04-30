@@ -190,7 +190,7 @@ export const TopologyCell: React.FC<TopologyCellProps> = ({
             className="cursor-pointer w-full"
             onDoubleClick={startEditing}
         >
-            {value || ''}
+            {value || ' '}
         </div>
     );
 };

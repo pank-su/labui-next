@@ -97,6 +97,12 @@ export default function CollectionTable() {
         state: {
             globalFilter: search
         },
+        filterFns:{
+          selectFilter: (row, id, filterValue) => {
+              const value = row.getValue(id) as string | null
+              return  filterValue === " " && value === null || filterValue === value
+          }
+        },
         meta: {}
     })
 
