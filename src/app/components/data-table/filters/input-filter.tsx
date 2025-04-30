@@ -1,30 +1,16 @@
 import {Column} from "@tanstack/react-table";
-import {usePathname, useRouter, useSearchParams} from "next/navigation";
-import {useEffect, useState} from "react";
 import {Input} from "antd";
+import {useFilterQuery} from "@/app/components/data-table/filters/utils";
 
-export function InputFilter({column}: { column: Column<any, unknown> }) {
-    const router = useRouter();
-    const pathname = usePathname()
-
-    const searchParams = useSearchParams()
+export function InputFilter({column}: { column: Column<any> }) {
     const columnId = column.id;
-    const idValue = searchParams.get(columnId) ?? "";
 
-    const [value, setValue] = useState(idValue)
-    useEffect(() => {
-        const params = new URLSearchParams(searchParams);
+    const {value, setValue} = useFilterQuery(columnId, (value) => {
+        column.setFilterValue(value);
+    }, () => {
+        column.setFilterValue(undefined)
+    })
 
-        if (value.trim() === "") {
-            column.setFilterValue(undefined)
-            params.delete(columnId)
-        } else {
-            column.setFilterValue(value)
-            params.set(columnId, value);
-        }
-        router.push(pathname + "?" + params.toString());
-
-    }, [value])
 
     return (
         <Input value={value} onChange={e => {
