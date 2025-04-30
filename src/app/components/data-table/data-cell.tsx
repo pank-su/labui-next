@@ -15,7 +15,7 @@ interface DateCellProps {
     disabled?: boolean;
 }
 
-export const DateCell: React.FC<DateCellProps> = ({
+export const DataCell: React.FC<DateCellProps> = ({
     value,
     year,
     month,
