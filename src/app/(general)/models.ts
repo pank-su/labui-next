@@ -20,3 +20,10 @@ export interface GenomRow {
     genus? :Topology | null,
     kind?: Topology | null
 }
+
+// Режимы отображения страницы
+enum ViewMode {
+    TABLE_ONLY, // Только таблица
+    MAP_ONLY,   // Только карта
+    SPLIT       // Разделенный режим (таблица + карта)
+}

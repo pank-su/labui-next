@@ -7,12 +7,12 @@ import { useQuery, useUpdateMutation } from "@supabase-cache-helpers/postgrest-r
 import {  createColumnHelper, RowData } from "@tanstack/react-table"
 import { Checkbox, Tag } from "antd"
 import {  useState } from "react"
-import { EditableCell } from "../components/data-table/editable"
-import { useUser } from "../components/header"
-import { FormattedBasicView, GenomRow, toGenomRow, Topology } from "./models"
-import { TopologyCell } from "../components/data-table/topology-cell"
-import { DataCell } from "../components/data-table/data-cell"
-import { SelectCell } from "../components/data-table/select-cell"
+import { EditableCell } from "../../components/data-table/editable"
+import { useUser } from "../../components/header"
+import { FormattedBasicView, GenomRow, toGenomRow, Topology } from "../models"
+import { TopologyCell } from "../../components/data-table/topology-cell"
+import { DataCell } from "../../components/data-table/data-cell"
+import { SelectCell } from "../../components/data-table/select-cell"
 
 
 const columnHelper = createColumnHelper<FormattedBasicView>()
