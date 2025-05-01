@@ -1,7 +1,8 @@
 import {Column} from "@tanstack/react-table";
-import {Select} from "antd";
+import {Button, Select, Space} from "antd";
 import {useMemo} from "react";
 import {useFilterQuery} from "@/app/components/data-table/filters/utils";
+import {ReloadOutlined} from "@ant-design/icons";
 
 export default function SelectFilter({column}: { column: Column<any> }) {
     const columnId = column.id;
@@ -30,9 +31,11 @@ export default function SelectFilter({column}: { column: Column<any> }) {
     })
 
 
-    return <Select value={value} className="w-full text-start" showSearch={true}
+    return <Space.Compact className="w-full"><Select value={value} className="w-full text-start" showSearch={true}
                    onSelect={(e) => {
                        setValue(e)
 
                    }} options={options}/>
+        { value != "" && <Button onClick={(_) => setValue("")} icon={<ReloadOutlined/>}/>}
+    </Space.Compact>
 }
