@@ -22,7 +22,7 @@ const columnHelper = createColumnHelper<FormattedBasicView>()
 declare module '@tanstack/react-table' {
     //allows us to define custom properties for our columns
     export interface ColumnMeta<TData extends RowData, TValue> {
-        filterVariant?: 'index' | 'input' | 'date' | 'select'
+        filterVariant?: 'index' | 'input' | 'date' | 'select' | 'geo' | "checkbox"
     }
 }
 
@@ -187,8 +187,9 @@ export default function getColumns() {
 
 
     return [
+        /* Вернуть, когда будет смысл
         columnHelper.display({
-            id: 'select-col',
+            id: 'select',
             size: 33,
             header: ({table}) => (
                 <Checkbox
@@ -203,8 +204,12 @@ export default function getColumns() {
                     disabled={!row.getCanSelect()}
                     onChange={row.getToggleSelectedHandler()}
                 />
-            )
+            ),
+            meta:{
+                filterVariant: "checkbox"
+            }
         }),
+         */
 
 
         columnHelper.accessor('id', {
@@ -488,11 +493,17 @@ export default function getColumns() {
             columns: [
                 columnHelper.accessor("latitude", {
                     header: "Широта",
-                    enableGlobalFilter: false
+                    enableGlobalFilter: false,
+                    meta: {
+                        filterVariant: "geo"
+                    }
                 }),
                 columnHelper.accessor("longitude", {
                     header: "Долгота",
-                    enableGlobalFilter: false
+                    enableGlobalFilter: false,
+                    meta: {
+                        filterVariant: "geo"
+                    }
                 }),
                 columnHelper.accessor("country", {
                     header: "Страна", cell: info => <ExpandableText>{info.getValue()}</ExpandableText>,

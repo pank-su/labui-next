@@ -58,11 +58,11 @@ export default function DateFilter({column}: { column: Column<any> }) {
 
 
     return <Space.Compact>
-        <Input status={fromError ? "error" : ""} value={fromValue}
+        <Input placeholder={"От"} status={fromError ? "error" : ""} value={fromValue}
                onChange={(e) => setFromValue(e.currentTarget.value)}/>
 
         <Button style={{pointerEvents: 'none'}} icon={<MinusOutlined/>}></Button>
-        <Input status={toError ? "error" : ""} value={toValue}
+        <Input placeholder={"До"} status={toError ? "error" : ""} value={toValue}
                onChange={(e) => setToValue(e.currentTarget.value)}/>
     </Space.Compact>
 }

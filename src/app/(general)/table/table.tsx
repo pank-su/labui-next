@@ -92,7 +92,7 @@ export default function CollectionTable() {
         getFacetedRowModel: getFacetedRowModel(),
         getFacetedUniqueValues: getFacetedUniqueValues(),
         getFacetedMinMaxValues: getFacetedMinMaxValues(),
-        debugTable: true,
+        //debugTable: true,
         autoResetPageIndex: false,
         state: {
             globalFilter: search
