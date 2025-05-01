@@ -28,7 +28,7 @@ export default function SelectFilter({column}: { column: Column<any> }) {
 
     }, () => {
         column.setFilterValue(undefined)
-    })
+    }, [], (value) => value != " ")
 
 
     return <Space.Compact className="w-full"><Select value={value} className="w-full text-start" showSearch={true}

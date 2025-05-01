@@ -14,6 +14,7 @@ import {TopologyCell} from "../../components/data-table/topology-cell"
 import {DataCell} from "../../components/data-table/data-cell"
 import {SelectCell} from "../../components/data-table/select-cell"
 import {loadOrders} from "@/app/(general)/queries";
+import {FilterDate} from "@/app/components/data-table/filters/date-filter";
 
 
 const columnHelper = createColumnHelper<FormattedBasicView>()
@@ -21,7 +22,7 @@ const columnHelper = createColumnHelper<FormattedBasicView>()
 declare module '@tanstack/react-table' {
     //allows us to define custom properties for our columns
     export interface ColumnMeta<TData extends RowData, TValue> {
-        filterVariant?: 'index' | 'input' | 'date-range' | 'select'
+        filterVariant?: 'index' | 'input' | 'date' | 'select'
     }
 }
 
@@ -365,7 +366,7 @@ export default function getColumns() {
         columnHelper.accessor(row => formatDate(row.year, row.month, row.day), {
             id: "date",
             header: "Дата",
-            size: 160,
+            size: 220,
             cell: info => {
                 const rowId = info.row.getValue("id") as number;
                 const isEditing = !!user;
@@ -395,6 +396,38 @@ export default function getColumns() {
                         disabled={!user}
                     />
                 );
+            },
+            filterFn: (row, id, filterValue) => {
+                const key = (y: number, m: number, d: number) => y * 10_000 + m * 100 + d;
+                const filter = filterValue as FilterDate;
+
+                if (!filter.from && !filter.to) return true;
+
+                // 2) у строки даже года нет – сразу мимо
+                const y = row.original.year;
+                if (y == null) return false;
+
+                // 3) «кодируем» дату строки. Если месяца/дня нет – берём минимумы
+                const rowKey = key(y, row.original.month ?? 1, row.original.day ?? 1);
+
+                // 4) то же для from / to
+                const fromKey = filter.from
+                    ? key(filter.from.year,
+                        filter.from.month ?? 1,
+                        filter.from.day   ?? 1)                   // earliest
+                    : null;
+
+                const toKey = filter.to
+                    ? key(filter.to.year,
+                        filter.to.month ?? 12,
+                        filter.to.day   ?? 31)                    // latest (31 ок, нам важно только «максимум»)
+                    : null;
+
+                return (fromKey === null || rowKey >= fromKey) &&
+                    (toKey   === null || rowKey <= toKey);
+            },
+            meta:{
+                filterVariant: "date"
             }
         }),
         columnHelper.accessor("age", {
@@ -443,7 +476,7 @@ export default function getColumns() {
         columnHelper.accessor("sex", {
             cell: info => <>{formatSex(info.getValue())}</>,
             header: "Пол",
-            size: 60,
+            size: 85,
             meta: {
                 filterVariant: "select"
             },
