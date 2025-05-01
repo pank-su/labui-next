@@ -30,7 +30,7 @@ export function useFilterQuery(id: string, setFilter: (value: string) => void, r
         const params = new URLSearchParams(searchParams);
 
 
-        if (value.trim() === "" && isInvalid(value)) {
+        if (value.trim() === "" || isInvalid(value)) {
             resetFilter()
             if (!searchParams.has(id)) {
                 return;
@@ -49,7 +49,7 @@ export function useFilterQuery(id: string, setFilter: (value: string) => void, r
 
     // Если фильтр был сброшен, то очищаем поле
     useEffect(() => {
-        if (queryValue.trim() === "" && isInvalid(queryValue)) {
+        if (queryValue.trim() === "" || isInvalid(queryValue)) {
             setValue("")
         }
     }, [queryValue])
