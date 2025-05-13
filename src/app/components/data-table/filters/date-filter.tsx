@@ -51,8 +51,6 @@ export default function DateFilter({column}: { column: Column<any> }) {
     })
 
     useEffect(() => {
-        console.log({from: fromDate, to: toDate})
-
         column.setFilterValue({from: fromDate, to: toDate})
     }, [fromDate, toDate])
 

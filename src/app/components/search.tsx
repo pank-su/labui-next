@@ -1,7 +1,7 @@
 import { SearchOutlined } from "@ant-design/icons";
 import { Space, Mentions, Button, Input } from "antd";
 import { useSearch } from "./search-context";
-import { useState } from "react";
+import {useEffect, useState} from "react";
 import {usePathname, useRouter, useSearchParams} from "next/navigation";
 
 export function Search() {
@@ -11,7 +11,7 @@ export function Search() {
     const searchParams = useSearchParams()
     const search = searchParams.get('q') ?? "";
 
-    
+
     // const {setSearch, search} = useSearch()
 
     const [query, setQuery] = useState<string>(search)

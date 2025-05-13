@@ -1,4 +1,11 @@
-import {DownloadOutlined, EnvironmentOutlined, PlusOutlined, ReloadOutlined} from "@ant-design/icons";
+import {
+    DownloadOutlined,
+    EnvironmentOutlined,
+    PlusOutlined,
+    ReloadOutlined,
+    SplitCellsOutlined,
+    TableOutlined
+} from "@ant-design/icons";
 import {Button, Popconfirm, Tooltip} from "antd";
 import {Table} from "@tanstack/react-table";
 import {FormattedBasicView} from "@/app/(general)/models";
@@ -7,12 +14,14 @@ import {useUser} from "@/app/components/header";
 import {download, generateCsv, mkConfig} from "export-to-csv";
 import {useInsertMutation} from "@supabase-cache-helpers/postgrest-react-query";
 import {useClient} from "@/utils/supabase/client";
-import {useRouter} from "next/navigation";
+import {useRouter, useSearchParams} from "next/navigation";
 
 
 export default function CollectionTableControls({table}: {
     table: Table<FormattedBasicView>
 }) {
+
+
     const router = useRouter()
 
     const supabase = useClient()
@@ -87,29 +96,25 @@ export default function CollectionTableControls({table}: {
 
             {/* Кнопки переключения режимов отображения */}
             <div className="space-x-2">
-                {/*<Button.Group>*/}
-                {/*    <Tooltip title="Показать только таблицу">*/}
-                {/*        <Button*/}
-                {/*            type={viewMode === ViewMode.TABLE_ONLY ? "primary" : "default"}*/}
-                {/*            icon={<TableOutlined/>}*/}
-                {/*            onClick={() => toggleViewMode(ViewMode.TABLE_ONLY)}*/}
-                {/*        />*/}
-                {/*    </Tooltip>*/}
-                {/*    <Tooltip title="Разделенный режим">*/}
-                {/*        <Button*/}
-                {/*            type={viewMode === ViewMode.SPLIT ? "primary" : "default"}*/}
-                {/*            icon={<SplitCellsOutlined/>}*/}
-                {/*            onClick={() => toggleViewMode(ViewMode.SPLIT)}*/}
-                {/*        />*/}
-                {/*    </Tooltip>*/}
-                {/*    <Tooltip title="Показать только карту">*/}
-                {/*        <Button*/}
-                {/*            type={viewMode === ViewMode.MAP_ONLY ? "primary" : "default"}*/}
-                {/*            icon={<GlobalOutlined/>}*/}
-                {/*            onClick={() => toggleViewMode(ViewMode.MAP_ONLY)}*/}
-                {/*        />*/}
-                {/*    </Tooltip>*/}
-                {/*</Button.Group>*/}
+                <Button.Group>
+                    <Tooltip title="Показать только таблицу">
+                        <Button
+                            type={!false ? "primary" : "default"}
+                            icon={<TableOutlined/>}
+                            onClick={() => {
+                            }}
+                        />
+                    </Tooltip>
+                    <Tooltip title="Разделенный режим">
+                        <Button
+                            type={true ? "primary" : "default"}
+                            icon={<SplitCellsOutlined/>}
+                            onClick={() => {
+                            }}
+                        />
+                    </Tooltip>
+
+                </Button.Group>
 
                 <Tooltip title="Открыть карту на весь экран">
                     <Button

@@ -33,8 +33,7 @@ export default function CollectionTable() {
     const supabase = useClient()
     // const {search} = useSearch()
 
-    const searchParams = useSearchParams()
-    const search = searchParams.get("q") || ""
+
 
     // Режим отображения (по умолчанию - только таблица)
     //const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.TABLE_ONLY);
@@ -47,6 +46,9 @@ export default function CollectionTable() {
         data,
         isLoading
     } = useQuery(getBasicView(supabase))
+
+    const searchParams = useSearchParams()
+    const search = searchParams.get("q") || ""
 
     const upsertItem = useUpsertItem({
         primaryKeys: ["id"],

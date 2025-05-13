@@ -97,7 +97,7 @@ export default function DataTable<T>({ table, loading = false, padding = 0}: Dat
                                 ))}
                             </TableRow>
                         ))}
-                        <TableRow key={"filter"} style={{ display: 'flex', width: '100%' }}>
+                        <TableRow className={"bg-background"} key={"filter"} style={{display: 'flex', width: '100%'}}>
                             {table.getHeaderGroups().at(-1)!!.headers.map(header => {
                                 return <th key={"filter" + header.id}
                                     style={{

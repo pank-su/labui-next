@@ -1,6 +1,7 @@
 import {Column} from "@tanstack/react-table";
-import {Input} from "antd";
+import {Button, Input, Space} from "antd";
 import {useFilterQuery} from "@/app/components/data-table/filters/utils";
+import {ReloadOutlined} from "@ant-design/icons";
 
 export function InputFilter({column}: { column: Column<any> }) {
     const columnId = column.id;
@@ -13,9 +14,12 @@ export function InputFilter({column}: { column: Column<any> }) {
 
 
     return (
-        <Input value={value} placeholder={"Найти..."} onChange={e => {
-            setValue(e.target.value)
+        <Space.Compact>
+            <Input value={value} placeholder={"Найти..."} onChange={e => {
+                setValue(e.target.value)
 
-        }}/>
+            }}/>
+            {value.trim() != "" && <Button onClick={(_) => setValue("")} icon={<ReloadOutlined/>}/>}
+        </Space.Compact>
     )
 }

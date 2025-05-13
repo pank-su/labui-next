@@ -7,7 +7,7 @@ import {usePathname, useRouter, useSearchParams} from "next/navigation";
  * @param id используется для определения в query
  * @param setFilter установка фильтра
  * @param resetFilter сброс фильтра
- * @param isInvalid
+ * @param isInvalid дополнительные фильтры для проверки корректного ввода
  * @param deps дополнительные зависимости
  */
 export function useFilterQuery(id: string, setFilter: (value: string) => void, resetFilter: () => void, deps: DependencyList = [], isInvalid: (value: string) => boolean = (_) => true) {
@@ -30,7 +30,7 @@ export function useFilterQuery(id: string, setFilter: (value: string) => void, r
         const params = new URLSearchParams(searchParams);
 
 
-        if (value.trim() === "" || isInvalid(value)) {
+        if (value.trim() === "" && isInvalid(value)) {
             resetFilter()
             if (!searchParams.has(id)) {
                 return;
@@ -49,7 +49,7 @@ export function useFilterQuery(id: string, setFilter: (value: string) => void, r
 
     // Если фильтр был сброшен, то очищаем поле
     useEffect(() => {
-        if (queryValue.trim() === "" || isInvalid(queryValue)) {
+        if (queryValue.trim() === "" && isInvalid(queryValue)) {
             setValue("")
         }
     }, [queryValue])
