@@ -41,7 +41,7 @@ export function useFilterQuery(id: string, setFilter: (value: string) => void, r
             params.set(id, value);
         }
 
-        if (params.size != 0) router.push(pathname + "?" + params.toString());
+        if (params.size != 0) window.history.pushState(null, "", pathname + "?" + params.toString());
         else {
             router.push(pathname)
         }
