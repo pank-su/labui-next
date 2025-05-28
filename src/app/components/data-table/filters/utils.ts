@@ -20,32 +20,45 @@ export function useFilterQuery(id: string, setFilter: (value: string) => void, r
 
     const [value, setValue] = useState<string>(queryValue)
 
+    const [debouncedValue, setDebouncedValue] = useState<string>(queryValue);
+
+    // Эффект для debounce: обновляет debouncedValue через 0.5с после изменения inputValue
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedValue(value);
+        }, 700); // 0.7 секунды
+
+        // Очистка таймера, если value изменился до истечения 0.5с
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [value]);
 
     useEffect(() => {
-        if (searchParams.has(id, value)) {
-            setFilter(value)
+        if (searchParams.has(id, debouncedValue)) {
+            setFilter(debouncedValue)
             return;
         }
 
         const params = new URLSearchParams(searchParams);
 
 
-        if (value.trim() === "" && isInvalid(value)) {
+        if (value.trim() === "" && isInvalid(debouncedValue)) {
             resetFilter()
             if (!searchParams.has(id)) {
                 return;
             }
             params.delete(id)
         } else {
-            setFilter(value)
-            params.set(id, value);
+            setFilter(debouncedValue)
+            params.set(id, debouncedValue);
         }
 
         if (params.size != 0) router.push(pathname + "?" + params.toString());
         else {
             router.push(pathname)
         }
-    }, [...deps, value])
+    }, [...deps, debouncedValue])
 
     // Если фильтр был сброшен, то очищаем поле
     useEffect(() => {
