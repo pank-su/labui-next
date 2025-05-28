@@ -8,7 +8,9 @@ export function Search() {
     const pathname = usePathname()
 
     const searchParams = useSearchParams()
-    const search = searchParams.get('q') ?? "";
+    const search = searchParams.get("q") ?? "";
+
+
 
 
     // const {setSearch, search} = useSearch()
@@ -16,10 +18,13 @@ export function Search() {
     const [query, setQuery] = useState<string>(search)
 
     const searchHook = () => {
-        const params = new URLSearchParams(search);
+        const params = new URLSearchParams(searchParams);
         if (query.trim() != "") {
             params.set("q", query);
-            router.push(pathname + "?" + params.toString());
+            if (params.size != 0) router.push(pathname + "?" + params.toString());
+            else {
+                router.push(pathname)
+            }
         } else {
             router.push(pathname);
         }

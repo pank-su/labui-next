@@ -1,278 +1,241 @@
 "use client"
 
-import React, {useCallback, useMemo, useRef, useState} from 'react';
-import {Map, Marker, NavigationControl, Popup} from 'react-map-gl/maplibre';
-import {useClient} from '@/utils/supabase/client';
-import {useQuery} from '@supabase-cache-helpers/postgrest-react-query';
-import {Button, Card, Empty, List, Spin, Typography} from 'antd';
-import {FormattedBasicView} from '@/app/(general)/models';
-import {useRouter} from 'next/navigation';
-import useSupercluster from 'use-supercluster';
-import 'maplibre-gl/dist/maplibre-gl.css';
+import React, { useCallback, useMemo, useRef, useState } from "react"
+import { Map, Marker, NavigationControl, Popup } from "react-map-gl/maplibre"
+import {Button, Card, Empty, List, Spin, Typography} from "antd"
+import { FormattedBasicView } from "@/app/(general)/models"
+import { useRouter } from "next/navigation"
+import useSupercluster from "use-supercluster"
+import "maplibre-gl/dist/maplibre-gl.css"
 
-const {Text} = Typography;
+const { Text } = Typography
 
 interface CollectionMapProps {
-    height?: string;
-    fullScreen?: boolean;
-    showAllItems?: boolean; // Показывать все элементы или только в видимой области
-    onBoundsChange?: (bounds: [number, number, number, number]) => void; // Колбэк для передачи границ карты
-    filteredItems?: FormattedBasicView[]; // Отфильтрованные элементы для отображения
-    simplified?: boolean; // Упрощенный режим без счетчика и с минимальным UI
+    height?: string
+    onBoundsChange?: (bounds: [number, number, number, number]) => void
+    items: FormattedBasicView[] // Элементы для отображения (обязательный)
+    isLoading?: boolean
 }
 
 interface PointFeature {
-    type: 'Feature';
+    type: "Feature"
     properties: {
-        cluster?: boolean;
-        itemId: number;
-        item: FormattedBasicView;
-    };
+        cluster?: boolean
+        itemId: number
+        item: FormattedBasicView
+    }
     geometry: {
-        type: 'Point';
-        coordinates: [number, number];
-    };
+        type: "Point"
+        coordinates: [number, number]
+    }
 }
 
 /**
  * Компонент для отображения элементов коллекции на карте
- * с поддержкой кластеризации близких элементов
+ * с поддержкой кластеризации близких элементов.
+ * Данные передаются через items.
  */
 const CollectionMap: React.FC<CollectionMapProps> = ({
-                                                         height = '600px',
-                                                         fullScreen = false,
+                                                         height = "600px",
                                                          onBoundsChange,
-                                                         filteredItems,
-                                                         simplified = false
+                                                         items,
+                                                         isLoading = false
                                                      }) => {
-    const supabase = useClient();
-    const router = useRouter();
-    const mapRef = useRef<any>(null);
+    const router = useRouter() // Оставлен, может пригодиться для действий в попапах
+    const mapRef = useRef<any>(null)
 
-    // Состояние для открытого попапа
-    const [popupInfo, setPopupInfo] = useState<FormattedBasicView | null>(null);
-
-    // Состояние для списка элементов в точке
+    const [popupInfo, setPopupInfo] = useState<FormattedBasicView | null>(null)
     const [pointItems, setPointItems] = useState<{
-        items: FormattedBasicView[],
-        longitude: number,
+        items: FormattedBasicView[]
+        longitude: number
         latitude: number
-    } | null>(null);
+    } | null>(null)
+    const [bounds, setBounds] = useState<
+        [number, number, number, number] | undefined
+    >(undefined)
+    const [zoom, setZoom] = useState(3)
 
-    // Состояние для отслеживания границ видимой области карты
-    const [bounds, setBounds] = useState<[number, number, number, number] | undefined>(undefined);
-
-    // Состояние для зума карты
-    const [zoom, setZoom] = useState(3);
-
-    // Получаем данные коллекции с широтой и долготой
-    const {data: allData, isLoading, isError} = useQuery(
-        supabase.from("basic_view")
-            .select("id,collect_id,latitude,longitude,order,family,genus,kind,country,region")
-            .not('latitude', 'is', null)
-            .not('longtitude', 'is', null)
-    );
-
-    // Используем либо переданные фильтрованные элементы, либо все данные
+    // Используем переданные элементы
     const data = useMemo(() => {
-        if (filteredItems) return filteredItems;
-        return allData || [];
-    }, [filteredItems, allData]);
+        return items || []
+    }, [items])
 
-    // Обработчик изменения масштаба или перемещения карты
     const onMapMoveEnd = useCallback(() => {
-        if (!mapRef.current) return;
+        if (!mapRef.current) return
 
-        const map = mapRef.current.getMap();
-        const newBounds = map.getBounds().toArray().flat() as [number, number, number, number];
-        setBounds(newBounds);
-        setZoom(map.getZoom());
+        const map = mapRef.current.getMap()
+        const newBounds = map.getBounds().toArray().flat() as [
+            number,
+            number,
+            number,
+            number,
+        ]
+        setBounds(newBounds)
+        setZoom(map.getZoom())
 
-        // Вызываем колбэк с новыми границами, если он предоставлен
         if (onBoundsChange) {
-            onBoundsChange(newBounds);
+            onBoundsChange(newBounds)
         }
-    }, [onBoundsChange]);
+    }, [onBoundsChange])
 
-    // Центрируем карту на первом элементе или на центре России
     const initialViewState = useMemo(() => {
         return {
-            longitude: data && data.length > 0 && data[0].longitude ? data[0].longitude : 37.6,
-            latitude: data && data.length > 0 && data[0].latitude ? data[0].latitude : 55.7,
-            zoom: 3
-        };
-    }, [data]);
+            longitude:
+                data && data.length > 0 && data[0].longitude ? data[0].longitude : 37.6,
+            latitude:
+                data && data.length > 0 && data[0].latitude ? data[0].latitude : 55.7,
+            zoom: 3,
+        }
+    }, [data])
 
-    // Преобразуем данные в формат GeoJSON для кластеризации
     const points = useMemo(() => {
-        if (!data) return [];
+        if (!data) return []
 
-        return data.filter(item => item.latitude && item.longitude).map(item => ({
-            type: 'Feature',
-            properties: {
-                itemId: item.id!,
-                item: item
-            },
-            geometry: {
-                type: 'Point',
-                coordinates: [item.longitude!, item.latitude!]
-            }
-        })) as PointFeature[];
-    }, [data]);
+        return data
+            .filter((item) => item.latitude && item.longitude)
+            .map((item) => ({
+                type: "Feature",
+                properties: {
+                    itemId: item.id!,
+                    item: item,
+                },
+                geometry: {
+                    type: "Point",
+                    coordinates: [item.longitude!, item.latitude!],
+                },
+            })) as PointFeature[]
+    }, [data])
 
-    // Используем хук для кластеризации
-    const {clusters, supercluster} = useSupercluster({
+    const { clusters, supercluster } = useSupercluster({
         points,
         bounds,
         zoom,
         options: {
-            radius: 75, // Радиус кластеризации в пикселях
-            maxZoom: 20, // Максимальный зум для кластеризации
-            minPoints: 2 // Минимальное количество точек для формирования кластера
-        }
-    });
+            radius: 75,
+            maxZoom: 20,
+            minPoints: 2,
+        },
+    })
 
+    const handleClusterClick = useCallback(
+        (clusterId: number, longitude: number, latitude: number) => {
+            if (!supercluster) return
 
-    // Обработка клика по кластеру
-    const handleClusterClick = useCallback((clusterId: number, longitude: number, latitude: number) => {
-        if (!supercluster) return;
+            const clusterPoints = supercluster.getLeaves(clusterId, Infinity)
+            const sameLocation = clusterPoints.every((point, _, arr) => {
+                const [lng1, lat1] = point.geometry.coordinates
+                const [lng2, lat2] = arr[0].geometry.coordinates
+                return Math.abs(lng1 - lng2) < 0.0001 && Math.abs(lat1 - lat2) < 0.0001
+            })
 
-        // Получаем точки, входящие в этот кластер
-        const clusterPoints = supercluster.getLeaves(clusterId, Infinity);
+            if (sameLocation && clusterPoints.length > 1) {
+                const itemsInCluster = clusterPoints.map(
+                    (point) => point.properties.item,
+                )
+                setPointItems({
+                    items: itemsInCluster,
+                    longitude,
+                    latitude,
+                })
+                setPopupInfo(null)
+            } else {
+                const expansionZoom = Math.min(
+                    supercluster.getClusterExpansionZoom(clusterId) || 0,
+                    20,
+                )
+                mapRef.current?.getMap().flyTo({
+                    center: [longitude, latitude],
+                    zoom: expansionZoom,
+                    speed: 1.5,
+                })
+                setPointItems(null)
+            }
+        },
+        [supercluster],
+    )
 
-        // Определяем, находятся ли все точки кластера в одной геопозиции
-        const sameLocation = clusterPoints.every((point, _, arr) => {
-            const [lng1, lat1] = point.geometry.coordinates;
-            const [lng2, lat2] = arr[0].geometry.coordinates;
-
-            // Используем очень маленькое значение для определения "одной точки"
-            return Math.abs(lng1 - lng2) < 0.0001 && Math.abs(lat1 - lat2) < 0.0001;
-        });
-
-        if (sameLocation && clusterPoints.length > 1) {
-            // Если все точки в одной геопозиции, показываем список элементов
-            const items = clusterPoints.map(point => point.properties.item);
-            setPointItems({
-                items,
-                longitude,
-                latitude
-            });
-            setPopupInfo(null); // Закрываем другой попап, если он открыт
-        } else {
-            // Если точки распределены, приближаем карту для раскрытия кластера
-            const expansionZoom = Math.min(
-                supercluster.getClusterExpansionZoom(clusterId) || 0,
-                20
-            );
-
-            mapRef.current?.getMap().flyTo({
-                center: [longitude, latitude],
-                zoom: expansionZoom,
-                speed: 1.5
-            });
-
-            // Закрываем список элементов, если он открыт
-            setPointItems(null);
-        }
-    }, [supercluster]);
-
-    // Обработка клика по маркеру
     const handleMarkerClick = useCallback((item: FormattedBasicView) => {
-        // Проверяем, есть ли в этой точке другие элементы
-        if (!data) return;
+        setPopupInfo(item)
+        setPointItems(null)
+    }, [])
 
-        const itemsAtSameLocation = data.filter(dataItem =>
-            dataItem.latitude === item.latitude &&
-            dataItem.longitude === item.longitude
-        );
-
-
-        setPopupInfo(item);
-        setPointItems(null);
-
-    }, [data]);
-
-    // Обработка состояния загрузки
-    if (isLoading && !filteredItems) {
-        return <div className="flex justify-center items-center" style={{height}}>
-            <Spin size="large"/>
-        </div>;
+    if (isLoading){
+        return <div
+            className="flex justify-center items-center"
+            style={{ height }}
+        >
+            <Spin />
+        </div>
     }
 
-    // Обработка ошибки
-    if (isError && !filteredItems) {
-        return <div className="flex justify-center items-center" style={{height}}>
-            <Empty description="Не удалось загрузить данные для карты"/>
-        </div>;
+    if (!isLoading && (!data || data.length === 0) ) {
+        return (
+            <div
+                className="flex justify-center items-center"
+                style={{ height }}
+            >
+                <Empty description="Нет элементов для отображения" />
+            </div>
+        )
     }
 
-    // Обработка отсутствия данных с координатами
-    if ((!data || data.length === 0) && !isLoading) {
-        return <div className="flex justify-center items-center" style={{height}}>
-            <Empty description="Нет элементов с геоданными для отображения"/>
-        </div>;
+    const pointsWithCoordinates = data.filter(
+        (item) => item.latitude && item.longitude,
+    )
+
+    if (pointsWithCoordinates.length === 0) {
+        return (
+            <div
+                className="flex justify-center items-center"
+                style={{ height }}
+            >
+                <Empty description="Нет элементов с геоданными для отображения" />
+            </div>
+        )
     }
 
-    // Количество элементов с координатами
-    const pointsCount = data.filter(item => item.latitude && item.longitude).length;
-
-    // Переход к детальной странице элемента
-    const openItemDetails = (id: number) => {
-        router.push(`/collection/${id}`);
-    };
-
-    // Форматирование данных таксономии для отображения
     const formatTaxonomy = (item: FormattedBasicView) => {
-        const parts = [];
-        if (item.order?.name) parts.push(item.order.name);
-        if (item.family?.name) parts.push(item.family.name);
-        if (item.genus?.name) parts.push(item.genus.name);
-        if (item.kind?.name) parts.push(item.kind.name);
+        const parts = []
+        if (item.order?.name) parts.push(item.order.name)
+        if (item.family?.name) parts.push(item.family.name)
+        if (item.genus?.name) parts.push(item.genus.name)
+        if (item.kind?.name) parts.push(item.kind.name)
+        return parts.join(" > ")
+    }
 
-        return parts.join(' > ');
-    };
-
-    // Форматирование адреса
     const formatLocation = (item: FormattedBasicView) => {
-        const parts = [];
-        if (item.country) parts.push(item.country);
-        if (item.region) parts.push(item.region);
+        const parts = []
+        if (item.country) parts.push(item.country)
+        if (item.region) parts.push(item.region)
+        return parts.join(", ")
+    }
 
-        return parts.join(', ');
-    };
+    // const openItemDetails = (id: number) => { // Если понадобится кнопка в попапе
+    //     router.push(`/collection/${id}`);
+    // };
 
     return (
-        <div style={{height, width: '100%'}} className={fullScreen ? 'fixed inset-0 z-50' : ''}>
+        <div style={{ height, width: "100%" }}>
             <Map
                 ref={mapRef}
                 onRender={onMapMoveEnd}
                 initialViewState={initialViewState}
                 mapStyle="https://api.maptiler.com/maps/019615fe-ff46-7b99-a1b5-53f413c455dc/style.json?key=bWMAD0ONYiA5u4kpUJlf"
-                style={{width: '100%', height: '100%'}}
+                style={{ width: "100%", height: "100%" }}
                 onMoveEnd={onMapMoveEnd}
                 attributionControl={false}
                 renderWorldCopies={true}
-                maxPitch={0}
+                maxZoom={16}
             >
-                <NavigationControl position="top-right"/>
+                <NavigationControl position="top-right" />
 
-                {/* Отображение информации о количестве элементов */}
-                {!simplified && (
-                    <div className="absolute top-2 left-2 bg-white bg-opacity-80 p-2 rounded shadow z-10">
-                        <Text>Элементов на карте: {pointsCount}</Text>
-                    </div>
-                )}
-
-                {/* Рендеринг кластеров и отдельных маркеров */}
-                {clusters.map(cluster => {
-                    const [longitude, latitude] = cluster.geometry.coordinates;
-                    const properties = cluster.properties;
-                    const isCluster = properties.cluster;
-                    // Используем приведение типа для доступа к свойствам кластера
-                    const pointCount = isCluster ? (properties as any).point_count : 1;
-
-                    // Рендерим кластер
-                    const size = Math.min(pointCount / points.length * 100, 40) + 20;
+                {clusters.map((cluster) => {
+                    const [longitude, latitude] = cluster.geometry.coordinates
+                    const properties = cluster.properties
+                    const isCluster = properties.cluster
+                    const pointCount = isCluster ? (properties as any).point_count : 1
+                    const size =
+                        Math.min((pointCount / points.length) * 100, 40) + 20
 
                     return (
                         <Marker
@@ -280,14 +243,15 @@ const CollectionMap: React.FC<CollectionMapProps> = ({
                             longitude={longitude}
                             latitude={latitude}
                             onClick={() => {
-                                if (isCluster)
+                                if (isCluster) {
                                     handleClusterClick(
-                                        // Используем приведение типа для доступа к id кластера
                                         (cluster as any).id,
                                         longitude,
-                                        latitude
+                                        latitude,
                                     )
-                                else handleMarkerClick(properties.item)
+                                } else {
+                                    handleMarkerClick(properties.item)
+                                }
                             }}
                         >
                             <div
@@ -295,19 +259,17 @@ const CollectionMap: React.FC<CollectionMapProps> = ({
                                 style={{
                                     width: `${size}px`,
                                     height: `${size}px`,
-                                    backgroundColor: '#1890ff',
-                                    border: '2px solid white',
-                                    boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+                                    backgroundColor: "#1890ff",
+                                    border: "2px solid white",
+                                    boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
                                 }}
                             >
                                 {pointCount}
                             </div>
                         </Marker>
-                    );
-
+                    )
                 })}
 
-                {/* Всплывающее окно с информацией об элементе */}
                 {popupInfo && (
                     <Popup
                         longitude={popupInfo.longitude!}
@@ -320,18 +282,22 @@ const CollectionMap: React.FC<CollectionMapProps> = ({
                         <div className="p-2">
                             <div className="font-bold text-lg">ID: {popupInfo.id}</div>
                             <div className="text-sm">{formatTaxonomy(popupInfo)}</div>
-                            <div className="text-sm text-gray-600">{formatLocation(popupInfo)}</div>
+                            <div className="text-sm text-gray-600">
+                                {formatLocation(popupInfo)}
+                            </div>
                             <div className="mt-2">
                 <span className="text-xs text-gray-500">
                   {popupInfo.latitude}, {popupInfo.longitude}
                 </span>
                             </div>
-
+                            {/* Пример кнопки для перехода, если понадобится */}
+                            {/* <Button size="small" onClick={() => openItemDetails(popupInfo.id!)} className="mt-2">
+                                Детали
+                            </Button> */}
                         </div>
                     </Popup>
                 )}
 
-                {/* Всплывающее окно со списком элементов в одной точке */}
                 {pointItems && (
                     <Popup
                         longitude={pointItems.longitude}
@@ -344,7 +310,7 @@ const CollectionMap: React.FC<CollectionMapProps> = ({
                         <Card
                             title={`Элементы в точке (${pointItems.items.length})`}
                             size="small"
-                            style={{maxHeight: '400px', overflow: 'auto'}}
+                            style={{ maxHeight: "400px", overflow: "auto" }}
                             extra={
                                 <Button
                                     type="link"
@@ -362,10 +328,15 @@ const CollectionMap: React.FC<CollectionMapProps> = ({
                                         <div className="w-full">
                                             <div className="flex justify-between items-center">
                                                 <Text strong>ID: {item.id}</Text>
-
+                                                {/* Пример кнопки для перехода, если понадобится */}
+                                                {/* <Button type="link" size="small" onClick={() => openItemDetails(item.id!)}>
+                                                    Детали
+                                                </Button> */}
                                             </div>
                                             <div className="text-sm">{formatTaxonomy(item)}</div>
-                                            <div className="text-xs text-gray-500">{formatLocation(item)}</div>
+                                            <div className="text-xs text-gray-500">
+                                                {formatLocation(item)}
+                                            </div>
                                         </div>
                                     </List.Item>
                                 )}
@@ -379,7 +350,7 @@ const CollectionMap: React.FC<CollectionMapProps> = ({
                 )}
             </Map>
         </div>
-    );
-};
+    )
+}
 
-export default CollectionMap;
+export default CollectionMap

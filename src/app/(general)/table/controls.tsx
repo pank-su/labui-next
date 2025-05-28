@@ -96,26 +96,6 @@ export default function CollectionTableControls({table}: {
 
             {/* Кнопки переключения режимов отображения */}
             <div className="space-x-2">
-                <Space.Compact>
-                    <Tooltip title="Показать только таблицу">
-                        <Button
-                            type={!false ? "primary" : "default"}
-                            icon={<TableOutlined/>}
-                            onClick={() => {
-                            }}
-                        />
-                    </Tooltip>
-                    <Tooltip title="Разделенный режим">
-                        <Button
-                            type={true ? "primary" : "default"}
-                            icon={<SplitCellsOutlined/>}
-                            onClick={() => {
-                            }}
-                        />
-                    </Tooltip>
-
-                </Space.Compact>
-
                 <Tooltip title="Открыть карту на весь экран">
                     <Button
                         type="primary"

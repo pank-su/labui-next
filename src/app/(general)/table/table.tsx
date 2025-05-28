@@ -11,7 +11,7 @@ import {
     getSortedRowModel,
     useReactTable
 } from "@tanstack/react-table";
-import {useCallback, useMemo, useState} from "react";
+import {useCallback, useMemo, useRef} from "react";
 
 import {Database, Tables} from "@/utils/supabase/gen-types";
 import {SupabaseClient} from "@supabase/supabase-js";
@@ -20,6 +20,12 @@ import DataTable from "@/app/components/data-table/data-table";
 import {FormattedBasicView} from "@/app/(general)/models";
 import {getBasicView} from "@/app/(general)/queries";
 import CollectionTableControls from "@/app/(general)/table/controls";
+import {usePathname, useRouter, useSearchParams} from "next/navigation";
+import CollectionMap from "@/app/components/map/CollectionMap";
+
+
+const mapStates = ["closed", "open", "select"] as const;
+type MapState = typeof mapStates[number];
 
 async function loadBasicViewItemById(supabase: SupabaseClient<Database>, id: number) {
     return ((await supabase.from("basic_view").select("*").eq("id", id)).data as FormattedBasicView[])[0]
@@ -30,15 +36,9 @@ async function loadBasicViewItemById(supabase: SupabaseClient<Database>, id: num
  */
 export default function CollectionTable() {
     const supabase = useClient()
-    // const {search} = useSearch()
 
-
-
-    // Режим отображения (по умолчанию - только таблица)
-    //const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.TABLE_ONLY);
-
-    // Границы карты для фильтрации элементов
-    const [mapBounds, setMapBounds] = useState<[number, number, number, number] | null>(null);
+    const router = useRouter();
+    const pathname = usePathname()
 
     // Зачем тут все поля? Чтобы библиотека понимала, что нужно будет обновить, а не пыталась обновлять всё
     const {
@@ -46,8 +46,13 @@ export default function CollectionTable() {
         isLoading
     } = useQuery(getBasicView(supabase))
 
-    //const searchParams = useSearchParams()
-    const search =  ""
+    const searchParams = useSearchParams()
+    const search = searchParams.get("q") ?? "";
+
+    const param = searchParams.get("map");
+    const mapState: "closed" | "open" | "select" = mapStates.includes(param as MapState)
+        ? (param as MapState)
+        : "closed";
 
     const upsertItem = useUpsertItem({
         primaryKeys: ["id"],
@@ -59,6 +64,7 @@ export default function CollectionTable() {
     // поэтому просто будет получать все изменения в таблице
     // и самостоятельно обновлять кэш
     // надо также подключить обновление при изменении смежных таблиц
+    // TODO: привязаться к триггеру обновления view
     useSubscription(supabase, "collection_updates", {
         event: "*",
         table: "collection",
@@ -78,11 +84,6 @@ export default function CollectionTable() {
     }, [data])
 
 
-    // Обработчик изменения границ карты
-    const handleBoundsChange = useCallback((bounds: [number, number, number, number]) => {
-        setMapBounds(bounds);
-    }, []);
-
     // Таблица использует отфильтрованные данные в режиме разделенного экрана
     const table = useReactTable({
         columns: getColumns(),
@@ -98,14 +99,56 @@ export default function CollectionTable() {
         state: {
             globalFilter: search
         },
-        filterFns:{
-          selectFilter: (row, id, filterValue) => {
-              const value = row.getValue(id) as string | null
-              return  filterValue === " " && value === null || filterValue === value
-          }
+        filterFns: {
+            selectFilter: (row, id, filterValue) => {
+                const value = row.getValue(id) as string | null
+                return filterValue === " " && value === null || filterValue === value
+            }
         },
         meta: {}
     })
+
+    const boundsChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+
+    // Обработчик изменения границ карты
+    const handleBoundsChange = useCallback((bounds: [number, number, number, number]) => {
+        if (boundsChangeTimeoutRef.current) {
+            clearTimeout(boundsChangeTimeoutRef.current);
+        }
+
+        const [fromLng, fromLat, toLng, toLat] = bounds;
+        table.getColumn("latitude")?.setFilterValue({
+            from: fromLat,
+            to: toLat
+        })
+        table.getColumn("longitude")?.setFilterValue({
+            from: fromLng,
+            to: toLng
+        })
+
+        boundsChangeTimeoutRef.current = setTimeout(() => {
+
+
+
+
+            const params = new URLSearchParams(searchParams);
+
+            params.set("from_lat", fromLat.toString());
+            params.set("to_lat", toLat.toString());
+            params.set("from_lng", fromLng.toString());
+            params.set("to_lng", toLng.toString());
+            if (params.size != 0) router.push(pathname + "?" + params.toString());
+            else {
+                router.replace(pathname)
+            }
+        }, 2000);
+    }, []);
+
+    const mapItems = useMemo(() => {
+
+        return table.getFilteredRowModel().rows.map((row) => row.original);
+    }, [table.getFilteredRowModel().rows]);
 
 
     return (
@@ -115,25 +158,23 @@ export default function CollectionTable() {
 
             {/* Содержимое в зависимости от режима отображения */}
             <div className="flex-1 flex" style={{minHeight: 0}}>
-                {/* Отображение таблицы */}
-                {/*{(viewMode === ViewMode.TABLE_ONLY || viewMode === ViewMode.SPLIT) && (*/}
-                {/*    <div className={`${viewMode === ViewMode.SPLIT ? 'w-1/2' : 'w-full'} overflow-auto`}>*/}
-                <DataTable table={table} loading={isLoading} padding={42}/>
-                {/*    </div>*/}
-                {/*)}*/}
 
-                {/*/!* Отображение карты *!/*/}
-                {/*{(viewMode === ViewMode.MAP_ONLY || viewMode === ViewMode.SPLIT) && (*/}
-                {/*    <div className={`${viewMode === ViewMode.SPLIT ? 'w-1/2' : 'w-full'} relative`}>*/}
-                {/*        <CollectionMap*/}
-                {/*            height="100%"*/}
-                {/*            showAllItems={false}*/}
-                {/*            onBoundsChange={handleBoundsChange}*/}
-                {/*            filteredItems={viewMode === ViewMode.SPLIT ? undefined : tableData}*/}
-                {/*            simplified={viewMode === ViewMode.SPLIT}*/}
-                {/*        />*/}
-                {/*    </div>*/}
-                {/*)}*/}
+                <div className={mapState === "open" ? "w-1/2" : "w-full"}>
+                    <DataTable table={table} loading={isLoading} padding={42}/>
+                </div>
+
+                {mapState === "open" && <div className={"w-1/2"}>
+                    <CollectionMap
+                        height="100%"
+                        onBoundsChange={handleBoundsChange}
+                        items={mapItems}
+                        isLoading={isLoading}
+                    />
+
+
+                </div>}
+
+
             </div>
         </div>
     );

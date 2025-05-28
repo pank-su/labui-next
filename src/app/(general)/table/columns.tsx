@@ -4,8 +4,8 @@ import ExpandableText from "@/app/components/expand-text"
 import {formatDate} from "@/utils/formatDate"
 import {useClient} from "@/utils/supabase/client"
 import {useQuery, useUpdateMutation} from "@supabase-cache-helpers/postgrest-react-query"
-import {createColumnHelper, RowData} from "@tanstack/react-table"
-import {Checkbox, Tag} from "antd"
+import {createColumnHelper, Row, RowData} from "@tanstack/react-table"
+import {Tag} from "antd"
 import {useState} from "react"
 import {EditableCell} from "../../components/data-table/editable"
 import {useUser} from "../../components/header"
@@ -15,6 +15,7 @@ import {DataCell} from "../../components/data-table/data-cell"
 import {SelectCell} from "../../components/data-table/select-cell"
 import {loadOrders} from "@/app/(general)/queries";
 import {FilterDate} from "@/app/components/data-table/filters/date-filter";
+import {FilterGeo} from "@/app/components/data-table/filters/geo-filter";
 
 
 const columnHelper = createColumnHelper<FormattedBasicView>()
@@ -31,6 +32,38 @@ const selectFilter = (row: { getValue: (arg0: any) => string | null }, id: any, 
     return filterValue === " " && value === null || filterValue === value
 }
 
+
+const geoFilterFn = (
+    row: Row<FormattedBasicView>,
+    columnId: string,
+    filterValue: any,
+): boolean => {
+
+    const value = row.getValue(columnId) as number | null | undefined
+
+    if (filterValue === null || filterValue === undefined) {
+        return true
+    }
+    if (value === null || value === undefined) {
+        return false
+    }
+
+    const geoFilter = filterValue as FilterGeo
+    const { from, to } = geoFilter
+
+    // 4. Проверяем соответствие значения диапазону [from, to]
+    let passesFrom = true
+    if (from !== null) {
+        passesFrom = value >= from
+    }
+
+    let passesTo = true
+    if (to !== null) {
+        passesTo = value <= to
+    }
+
+    return passesFrom && passesTo
+}
 
 /**
  * Интерфейс для представления тега.
@@ -419,19 +452,19 @@ export default function getColumns() {
                 const fromKey = filter.from
                     ? key(filter.from.year,
                         filter.from.month ?? 1,
-                        filter.from.day   ?? 1)                   // earliest
+                        filter.from.day ?? 1)                   // earliest
                     : null;
 
                 const toKey = filter.to
                     ? key(filter.to.year,
                         filter.to.month ?? 12,
-                        filter.to.day   ?? 31)                    // latest (31 ок, нам важно только «максимум»)
+                        filter.to.day ?? 31)                    // latest (31 ок, нам важно только «максимум»)
                     : null;
 
                 return (fromKey === null || rowKey >= fromKey) &&
-                    (toKey   === null || rowKey <= toKey);
+                    (toKey === null || rowKey <= toKey);
             },
-            meta:{
+            meta: {
                 filterVariant: "date"
             }
         }),
@@ -496,14 +529,16 @@ export default function getColumns() {
                     enableGlobalFilter: false,
                     meta: {
                         filterVariant: "geo"
-                    }
+                    },
+                    filterFn: geoFilterFn
                 }),
                 columnHelper.accessor("longitude", {
                     header: "Долгота",
                     enableGlobalFilter: false,
                     meta: {
                         filterVariant: "geo"
-                    }
+                    },
+                    filterFn: geoFilterFn
                 }),
                 columnHelper.accessor("country", {
                     header: "Страна", cell: info => <ExpandableText>{info.getValue()}</ExpandableText>,

@@ -56,7 +56,7 @@ export function useFilterQuery(id: string, setFilter: (value: string) => void, r
 
         if (params.size != 0) router.push(pathname + "?" + params.toString());
         else {
-            router.push(pathname)
+            router.replace(pathname)
         }
     }, [...deps, debouncedValue])
 

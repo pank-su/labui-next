@@ -1,6 +1,8 @@
 import { CompositeTypes, Tables } from "@/utils/supabase/gen-types";
 
-export type FormattedBasicView = Tables<"basic_view"> 
+export type FormattedBasicView = Tables<"basic_view">
+
+
 
 export function toGenomRow(view: FormattedBasicView): GenomRow {
     return {

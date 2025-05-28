@@ -8,7 +8,8 @@ import CollectionTable from "@/app/(general)/table/table";
 export default async function Page() {
     const supabase = await createClient()
     const queryClient = new QueryClient();
-    // Передаем collectId в функции, если они должны фильтровать по нему
+    // В будущем можно перевести кучу логики на supabase, что позволит оптимизировать всё взаимодействие с ним
+    // Это отдельная большая работа
     const basicViewPromise = prefetchQuery(queryClient, getBasicView(supabase));
     const ordersPromise = prefetchQuery(queryClient, loadOrders(supabase));
 

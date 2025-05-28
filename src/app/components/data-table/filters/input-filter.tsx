@@ -14,8 +14,8 @@ export function InputFilter({column}: { column: Column<any> }) {
 
 
     return (
-        <Space.Compact>
-            <Input value={value} placeholder={"Найти..."} onChange={e => {
+        <Space.Compact className={"w-full"}>
+            <Input className={"w-full"} value={value} placeholder={"Найти..."} onChange={e => {
                 setValue(e.target.value)
 
             }}/>
