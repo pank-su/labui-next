@@ -1,16 +1,16 @@
 "use client"
 
-import { flexRender, Table } from "@tanstack/react-table";
-import { TableHead, TableHeader, TableRow, Table as TableUi } from "../ui/table";
-import { SortedIcon } from "../sorted-filter";
-import { VirtualTableBody } from "./body";
+import {flexRender, Table} from "@tanstack/react-table";
+import {Table as TableUi, TableHead, TableHeader, TableRow} from "../ui/table";
+import {SortedIcon} from "../sorted-filter";
+import {VirtualTableBody} from "./body";
 import useWindowSize from "@/utils/useWindowSize";
-import { useMemo, useRef } from "react";
-import { FloatButton, Spin } from "antd";
-import { useVirtualizer } from "@tanstack/react-virtual";
-import { VerticalAlignBottomOutlined, VerticalAlignTopOutlined } from "@ant-design/icons";
+import {useMemo, useRef} from "react";
+import {FloatButton, Spin} from "antd";
+import {useVirtualizer} from "@tanstack/react-virtual";
+import {VerticalAlignBottomOutlined, VerticalAlignTopOutlined} from "@ant-design/icons";
 import Filter from "./filters/filter";
-import { AnimatePresence, motion } from "framer-motion";
+import {AnimatePresence, motion} from "framer-motion";
 
 
 interface DataTableProps<T> {
@@ -19,15 +19,14 @@ interface DataTableProps<T> {
     padding?: number
 }
 
-export default function DataTable<T>({ table, loading = false, padding = 0}: DataTableProps<T>) {
+export default function DataTable<T>({table, loading = false, padding = 0}: DataTableProps<T>) {
     const windowSize = useWindowSize()
 
     const height = useMemo(() => {
         return windowSize.height - (60 + padding)
     }, [windowSize.height])
 
-    const { rows } = table.getRowModel()
-
+    const {rows} = table.getRowModel()
 
 
     const tableContainerRef = useRef<HTMLDivElement>(null)
@@ -40,7 +39,7 @@ export default function DataTable<T>({ table, loading = false, padding = 0}: Dat
         //measure dynamic row height, except in firefox because it measures table border height incorrectly
         measureElement:
             typeof window !== 'undefined' &&
-                navigator.userAgent.indexOf('Firefox') === -1
+            navigator.userAgent.indexOf('Firefox') === -1
                 ? element => element?.getBoundingClientRect().height
                 : undefined,
         overscan: 10, // было 5
@@ -55,8 +54,8 @@ export default function DataTable<T>({ table, loading = false, padding = 0}: Dat
             position: 'relative', //needed for sticky header,
             height: height
         }}>
-            <Spin spinning={loading} >
-                <TableUi style={{ display: 'grid' }} >
+            <Spin spinning={loading}>
+                <TableUi style={{display: 'grid'}}>
                     <TableHeader style={{
                         display: 'grid',
                         position: 'sticky',
@@ -64,7 +63,7 @@ export default function DataTable<T>({ table, loading = false, padding = 0}: Dat
                         zIndex: 1,
                     }}>
                         {table.getHeaderGroups().map(headerGroup => (
-                            <TableRow key={headerGroup.id} style={{ display: 'flex', width: '100%' }}>
+                            <TableRow key={headerGroup.id} style={{display: 'flex', width: '100%'}}>
                                 {headerGroup.headers.map(header => (
                                     <TableHead
                                         key={header.id}
@@ -89,7 +88,8 @@ export default function DataTable<T>({ table, loading = false, padding = 0}: Dat
                                                     {flexRender(
                                                         header.column.columnDef.header,
                                                         header.getContext())}
-                                                    {header.column.getCanSort() ? <SortedIcon isSorted={header.column.getIsSorted()} /> : <></>}
+                                                    {header.column.getCanSort() ?
+                                                        <SortedIcon isSorted={header.column.getIsSorted()}/> : <></>}
                                                 </div>
 
                                             )}
@@ -100,23 +100,24 @@ export default function DataTable<T>({ table, loading = false, padding = 0}: Dat
                         <TableRow className={"bg-background"} key={"filter"} style={{display: 'flex', width: '100%'}}>
                             {table.getHeaderGroups().at(-1)!!.headers.map(header => {
                                 return <th key={"filter" + header.id}
-                                    style={{
-                                        display: 'flex',
-                                        width: header.getSize(),
-                                    }}>
-                                    <Filter column={header.column} />
+                                           style={{
+                                               display: 'flex',
+                                               width: header.getSize(),
+                                           }}>
+                                    <Filter column={header.column}/>
                                 </th>
                             })}
                         </TableRow>
                     </TableHeader>
-                    <VirtualTableBody table={table} tableContainerRef={tableContainerRef} rowVirtualizer={rowVirtualizer} />
+                    <VirtualTableBody table={table} tableContainerRef={tableContainerRef}
+                                      rowVirtualizer={rowVirtualizer}/>
 
                 </TableUi>
             </Spin>
 
         </div>
 
-        <AnimatedFloatButton rows={rows} scrollPosition={scrollPosition} rowVirtualizer={rowVirtualizer} />
+        <AnimatedFloatButton rows={rows} scrollPosition={scrollPosition} rowVirtualizer={rowVirtualizer}/>
 
     </>;
 }
@@ -134,32 +135,32 @@ interface AnimatedFloatButtonProps {
 }
 
 export const AnimatedFloatButton: React.FC<AnimatedFloatButtonProps> = ({
-    rows,
-    scrollPosition,
-    rowVirtualizer,
-}) => {
+                                                                            rows,
+                                                                            scrollPosition,
+                                                                            rowVirtualizer,
+                                                                        }) => {
     const isBottom = scrollPosition < rows.length / 2;
 
     return (
         <AnimatePresence>
             {rows.length > 30 && (
                 <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    transition={{ duration: 0.3 }}
-                    style={{ position: "fixed", bottom: 20, right: 20 }}
+                    initial={{opacity: 0, scale: 0.8}}
+                    animate={{opacity: 1, scale: 1}}
+                    exit={{opacity: 0, scale: 0.8}}
+                    transition={{duration: 0.3}}
+                    style={{position: "fixed", bottom: 20, right: 20}}
                 >
                     <FloatButton
                         icon={
                             <motion.div
                                 key={isBottom ? "down" : "up"}
-                                initial={{ rotate: -90, opacity: 0 }}
-                                animate={{ rotate: 0, opacity: 1 }}
-                                exit={{ rotate: 90, opacity: 0 }}
-                                transition={{ duration: 0.3 }}
+                                initial={{rotate: -90, opacity: 0}}
+                                animate={{rotate: 0, opacity: 1}}
+                                exit={{rotate: 90, opacity: 0}}
+                                transition={{duration: 0.3}}
                             >
-                                {isBottom ? <VerticalAlignBottomOutlined /> : <VerticalAlignTopOutlined />}
+                                {isBottom ? <VerticalAlignBottomOutlined/> : <VerticalAlignTopOutlined/>}
                             </motion.div>
                         }
                         onClick={() => {

@@ -1,10 +1,10 @@
 "use client"
 
-import React, {useState, useCallback, useMemo, useRef, useEffect} from 'react';
-import {Map, Marker, Popup, NavigationControl} from 'react-map-gl/maplibre';
+import React, {useCallback, useMemo, useRef, useState} from 'react';
+import {Map, Marker, NavigationControl, Popup} from 'react-map-gl/maplibre';
 import {useClient} from '@/utils/supabase/client';
 import {useQuery} from '@supabase-cache-helpers/postgrest-react-query';
-import {Empty, Spin, Button, Typography, List, Card} from 'antd';
+import {Button, Card, Empty, List, Spin, Typography} from 'antd';
 import {FormattedBasicView} from '@/app/(general)/models';
 import {useRouter} from 'next/navigation';
 import useSupercluster from 'use-supercluster';
@@ -195,7 +195,7 @@ const CollectionMap: React.FC<CollectionMapProps> = ({
     // Обработка состояния загрузки
     if (isLoading && !filteredItems) {
         return <div className="flex justify-center items-center" style={{height}}>
-            <Spin size="large" />
+            <Spin size="large"/>
         </div>;
     }
 

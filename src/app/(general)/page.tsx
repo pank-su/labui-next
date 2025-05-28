@@ -1,4 +1,3 @@
-import {cookies} from "next/headers";
 import {createClient} from "@/utils/supabase/server";
 import {dehydrate, HydrationBoundary, QueryClient} from "@tanstack/react-query";
 import {getBasicView, loadOrders} from "@/app/(general)/queries";
@@ -7,11 +6,13 @@ import CollectionTable from "@/app/(general)/table/table";
 
 
 export default async function Page() {
-    const cookieStore = cookies();
     const supabase = await createClient()
     const queryClient = new QueryClient();
-    await prefetchQuery(queryClient, getBasicView(supabase));
-    await prefetchQuery(queryClient, loadOrders(supabase));
+    // Передаем collectId в функции, если они должны фильтровать по нему
+    const basicViewPromise = prefetchQuery(queryClient, getBasicView(supabase));
+    const ordersPromise = prefetchQuery(queryClient, loadOrders(supabase));
+
+    await Promise.all([basicViewPromise, ordersPromise]); // Выполняем параллельно
 
 
     return <HydrationBoundary state={dehydrate(queryClient)}><CollectionTable/></HydrationBoundary>

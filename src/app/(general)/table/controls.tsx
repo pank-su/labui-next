@@ -6,7 +6,7 @@ import {
     SplitCellsOutlined,
     TableOutlined
 } from "@ant-design/icons";
-import {Button, Popconfirm, Tooltip} from "antd";
+import {Button, Popconfirm, Space, Tooltip} from "antd";
 import {Table} from "@tanstack/react-table";
 import {FormattedBasicView} from "@/app/(general)/models";
 import NewId from "@/app/components/data-table/new-id";
@@ -14,7 +14,7 @@ import {useUser} from "@/app/components/header";
 import {download, generateCsv, mkConfig} from "export-to-csv";
 import {useInsertMutation} from "@supabase-cache-helpers/postgrest-react-query";
 import {useClient} from "@/utils/supabase/client";
-import {useRouter, useSearchParams} from "next/navigation";
+import {useRouter} from "next/navigation";
 
 
 export default function CollectionTableControls({table}: {
@@ -56,7 +56,7 @@ export default function CollectionTableControls({table}: {
                     >
                         <Button
                             type="primary"
-                            icon={<PlusOutlined />}
+                            icon={<PlusOutlined/>}
                             disabled={!userLoad.user || userLoad.isLoading}
                         >
                             Добавить запись
@@ -96,7 +96,7 @@ export default function CollectionTableControls({table}: {
 
             {/* Кнопки переключения режимов отображения */}
             <div className="space-x-2">
-                <Button.Group>
+                <Space.Compact>
                     <Tooltip title="Показать только таблицу">
                         <Button
                             type={!false ? "primary" : "default"}
@@ -114,7 +114,7 @@ export default function CollectionTableControls({table}: {
                         />
                     </Tooltip>
 
-                </Button.Group>
+                </Space.Compact>
 
                 <Tooltip title="Открыть карту на весь экран">
                     <Button

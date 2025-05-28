@@ -5,7 +5,7 @@
  * @param day День
  * @returns Отформатированная строка даты или '' если все поля null
  */
-export function formatDate(year: number | null, month: number | null, day: number | null): string{
+export function formatDate(year: number | null, month: number | null, day: number | null): string {
     const parts: string[] = [];
 
     if (day !== null) {
@@ -27,10 +27,10 @@ export function badDateToDate(year: number | null, month: number | null, day: nu
         return null;
     }
 
-    if (month === null){
+    if (month === null) {
         return new Date(year, 0);
     }
-    if (day === null){
+    if (day === null) {
         return new Date(year, month - 1);
     }
     return new Date(year, month - 1, day);

@@ -1,4 +1,3 @@
-
 /**
  * Интерфейс для обработки формы
  */
@@ -7,7 +6,7 @@ interface FormInput {
     password: string
 }
 
-interface SignInResult{
+interface SignInResult {
     success: boolean,
     error: string | null
 }

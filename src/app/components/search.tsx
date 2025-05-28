@@ -1,7 +1,6 @@
-import { SearchOutlined } from "@ant-design/icons";
-import { Space, Mentions, Button, Input } from "antd";
-import { useSearch } from "./search-context";
-import {useEffect, useState} from "react";
+import {SearchOutlined} from "@ant-design/icons";
+import {Button, Input, Space} from "antd";
+import {useState} from "react";
 import {usePathname, useRouter, useSearchParams} from "next/navigation";
 
 export function Search() {
@@ -21,7 +20,7 @@ export function Search() {
         if (query.trim() != "") {
             params.set("q", query);
             router.push(pathname + "?" + params.toString());
-        }else{
+        } else {
             router.push(pathname);
         }
     }
@@ -32,13 +31,13 @@ export function Search() {
             if (e.key === "Enter") {
                 searchHook()
             }
-        }}  onChange={(e) => {
+        }} onChange={(e) => {
             setQuery(e.target.value)
-        }}  />{/* SEARCH */}
-        <Button onClick={()=> {
+        }}/>{/* SEARCH */}
+        <Button onClick={() => {
             searchHook()
         }}>
-            <SearchOutlined  />
+            <SearchOutlined/>
         </Button>
     </Space>
 }

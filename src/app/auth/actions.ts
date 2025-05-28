@@ -1,14 +1,13 @@
 "use server"
 
-import { createClient } from "@/utils/supabase/server"
-import { revalidatePath } from "next/cache"
-import { permanentRedirect, redirect, RedirectType } from "next/navigation"
-
+import {createClient} from "@/utils/supabase/server"
+import {revalidatePath} from "next/cache"
+import {redirect} from "next/navigation"
 
 
 export async function signInAction(formData: FormInput): Promise<SignInResult> {
     const supabase = await createClient()
-    const { error } = await supabase.auth.signInWithPassword({ email: formData.email, password: formData.password })
+    const {error} = await supabase.auth.signInWithPassword({email: formData.email, password: formData.password})
 
     if (error) {
         return {

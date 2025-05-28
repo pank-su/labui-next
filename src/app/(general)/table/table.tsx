@@ -13,7 +13,6 @@ import {
 } from "@tanstack/react-table";
 import {useCallback, useMemo, useState} from "react";
 
-import {useSearchParams} from 'next/navigation';
 import {Database, Tables} from "@/utils/supabase/gen-types";
 import {SupabaseClient} from "@supabase/supabase-js";
 import getColumns from "@/app/(general)/table/columns";
@@ -47,8 +46,8 @@ export default function CollectionTable() {
         isLoading
     } = useQuery(getBasicView(supabase))
 
-    const searchParams = useSearchParams()
-    const search = searchParams.get("q") || ""
+    //const searchParams = useSearchParams()
+    const search =  ""
 
     const upsertItem = useUpsertItem({
         primaryKeys: ["id"],
