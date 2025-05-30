@@ -5,7 +5,8 @@ import {useFilterQuery} from "@/app/components/data-table/filters/utils";
 import {ReloadOutlined} from "@ant-design/icons";
 
 export default function SelectFilter({column}: { column: Column<any> }) {
-    const columnId = column.id;
+
+    const columnId = column.id.includes("_") ? column.id.split("_")[0] : column.id;
 
     const uniqueValues = column.getFacetedUniqueValues()
 

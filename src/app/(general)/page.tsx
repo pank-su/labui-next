@@ -1,17 +1,25 @@
 import {createClient} from "@/utils/supabase/server";
-import {dehydrate, HydrationBoundary, QueryClient} from "@tanstack/react-query";
-import {getBasicView, loadOrders} from "@/app/(general)/queries";
-import {prefetchQuery} from "@supabase-cache-helpers/postgrest-react-query";
+import {dehydrate, HydrationBoundary, QueryClient,} from "@tanstack/react-query";
+import {basicView, orders,} from "@/app/(general)/queries";
 import CollectionTable from "@/app/(general)/table/table";
+import {FormattedBasicViewFilters} from "@/app/(general)/models";
 
 
-export default async function Page() {
+export default async function Page({
+                                       searchParams,
+                                   }: {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+
+    const params = (await searchParams)
+    console.log(params as FormattedBasicViewFilters)
+
     const supabase = await createClient()
     const queryClient = new QueryClient();
     // В будущем можно перевести кучу логики на supabase, что позволит оптимизировать всё взаимодействие с ним
     // Это отдельная большая работа
-    const basicViewPromise = prefetchQuery(queryClient, getBasicView(supabase));
-    const ordersPromise = prefetchQuery(queryClient, loadOrders(supabase));
+    const basicViewPromise = queryClient.prefetchQuery(basicView(supabase, params));
+    const ordersPromise = queryClient.prefetchQuery(orders(supabase));
 
     await Promise.all([basicViewPromise, ordersPromise]); // Выполняем параллельно
 

@@ -1,7 +1,7 @@
 "use client"
 
 import {useClient} from "@/utils/supabase/client";
-import {useQuery, useSubscription, useUpsertItem} from "@supabase-cache-helpers/postgrest-react-query";
+import {useSubscription, useUpsertItem} from "@supabase-cache-helpers/postgrest-react-query";
 import {
     getCoreRowModel,
     getFacetedMinMaxValues,
@@ -18,10 +18,11 @@ import {SupabaseClient} from "@supabase/supabase-js";
 import getColumns from "@/app/(general)/table/columns";
 import DataTable from "@/app/components/data-table/data-table";
 import {FormattedBasicView} from "@/app/(general)/models";
-import {getBasicView} from "@/app/(general)/queries";
+import {basicView} from "@/app/(general)/queries";
 import CollectionTableControls from "@/app/(general)/table/controls";
 import {usePathname, useRouter, useSearchParams} from "next/navigation";
 import CollectionMap from "@/app/components/map/CollectionMap";
+import {useSuspenseQuery} from "@tanstack/react-query";
 
 
 const mapStates = ["closed", "open", "select"] as const;
@@ -39,14 +40,15 @@ export default function CollectionTable() {
 
     const router = useRouter();
     const pathname = usePathname()
+    const searchParams = useSearchParams()
+
 
     // Зачем тут все поля? Чтобы библиотека понимала, что нужно будет обновить, а не пыталась обновлять всё
     const {
         data,
         isLoading
-    } = useQuery(getBasicView(supabase))
+    } = useSuspenseQuery(basicView(supabase, searchParams))
 
-    const searchParams = useSearchParams()
     const search = searchParams.get("q") ?? "";
 
     const param = searchParams.get("map");
@@ -90,7 +92,7 @@ export default function CollectionTable() {
         data: tableData,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
+        // getFilteredRowModel: getFilteredRowModel(),
         getFacetedRowModel: getFacetedRowModel(),
         getFacetedUniqueValues: getFacetedUniqueValues(),
         getFacetedMinMaxValues: getFacetedMinMaxValues(),
@@ -99,6 +101,7 @@ export default function CollectionTable() {
         state: {
             globalFilter: search
         },
+        manualFiltering: true,
         filterFns: {
             selectFilter: (row, id, filterValue) => {
                 const value = row.getValue(id) as string | null
@@ -128,8 +131,6 @@ export default function CollectionTable() {
         })
 
         boundsChangeTimeoutRef.current = setTimeout(() => {
-
-
 
 
             const params = new URLSearchParams(searchParams);

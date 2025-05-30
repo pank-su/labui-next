@@ -13,9 +13,10 @@ import {FormattedBasicView, GenomRow, toGenomRow, Topology} from "../models"
 import {TopologyCell} from "../../components/data-table/topology-cell"
 import {DataCell} from "../../components/data-table/data-cell"
 import {SelectCell} from "../../components/data-table/select-cell"
-import {loadOrders} from "@/app/(general)/queries";
+import {orders as loadOrders} from "@/app/(general)/queries";
 import {FilterDate} from "@/app/components/data-table/filters/date-filter";
 import {FilterGeo} from "@/app/components/data-table/filters/geo-filter";
+import {useSuspenseQuery} from "@tanstack/react-query";
 
 
 const columnHelper = createColumnHelper<FormattedBasicView>()
@@ -128,7 +129,7 @@ export default function getColumns() {
         ['id']
     );
 
-    const {data: orders, isLoading: isOrdersLoading} = useQuery(loadOrders(supabase));
+    const {data: orders, isLoading: isOrdersLoading} = useSuspenseQuery(loadOrders(supabase));
 
     const {data: families, isLoading: isFamiliesLoading} = useQuery(
         supabase.from("family").select("id,name").not('name', 'is', null)

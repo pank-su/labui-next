@@ -35,22 +35,18 @@ export function useFilterQuery(id: string, setFilter: (value: string) => void, r
     }, [value]);
 
     useEffect(() => {
-        if (searchParams.has(id, debouncedValue)) {
-            setFilter(debouncedValue)
-            return;
-        }
 
         const params = new URLSearchParams(searchParams);
 
 
         if (value.trim() === "" && isInvalid(debouncedValue)) {
-            resetFilter()
+            //resetFilter()
             if (!searchParams.has(id)) {
                 return;
             }
             params.delete(id)
         } else {
-            setFilter(debouncedValue)
+            //setFilter(debouncedValue)
             params.set(id, debouncedValue);
         }
 
@@ -62,8 +58,8 @@ export function useFilterQuery(id: string, setFilter: (value: string) => void, r
 
     // Если фильтр был сброшен, то очищаем поле
     useEffect(() => {
-        if (queryValue.trim() === "" && isInvalid(queryValue)) {
-            setValue("")
+        if (queryValue != value){
+            setValue(queryValue)
         }
     }, [queryValue])
 

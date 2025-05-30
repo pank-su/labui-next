@@ -18,10 +18,7 @@ export default function IndexFilter({column}: { column: Column<any> }) {
     const minMax = column.getFacetedMinMaxValues()
 
     const {value, setValue} = useFilterQuery(columnId, (value) => {
-        const filter = parseIndexFilter(value, 1, minMax?.[1] ?? 9999)
-        column.setFilterValue(filter)
     }, () => {
-        column.setFilterValue(undefined)
     }, [minMax?.[1]])
 
     return (
