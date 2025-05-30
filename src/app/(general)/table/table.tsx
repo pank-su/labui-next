@@ -12,6 +12,7 @@ import {
     useReactTable
 } from "@tanstack/react-table";
 import {useCallback, useMemo, useRef} from "react";
+import {useInfiniteQuery} from "@tanstack/react-query";
 
 import {Database, Tables} from "@/utils/supabase/gen-types";
 import {SupabaseClient} from "@supabase/supabase-js";
@@ -22,7 +23,6 @@ import {basicView} from "@/app/(general)/queries";
 import CollectionTableControls from "@/app/(general)/table/controls";
 import {usePathname, useRouter, useSearchParams} from "next/navigation";
 import CollectionMap from "@/app/components/map/CollectionMap";
-import {useSuspenseQuery} from "@tanstack/react-query";
 
 
 const mapStates = ["closed", "open", "select"] as const;
@@ -46,8 +46,15 @@ export default function CollectionTable() {
     // Зачем тут все поля? Чтобы библиотека понимала, что нужно будет обновить, а не пыталась обновлять всё
     const {
         data,
-        isLoading
-    } = useSuspenseQuery(basicView(supabase, searchParams))
+        isLoading,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage
+    } = useInfiniteQuery({
+        ...basicView(supabase, searchParams),
+        getNextPageParam: (lastPage) => lastPage.nextPage,
+        initialPageParam: 0,
+    })
 
     const search = searchParams.get("q") ?? "";
 
@@ -82,7 +89,7 @@ export default function CollectionTable() {
 
     // Данные таблицы
     const tableData = useMemo(() => {
-        return data ?? []
+        return data ? data.pages.flatMap(page => page.data ?? []) : [];
     }, [data])
 
 
@@ -161,7 +168,22 @@ export default function CollectionTable() {
             <div className="flex-1 flex" style={{minHeight: 0}}>
 
                 <div className={mapState === "open" ? "w-1/2" : "w-full"}>
-                    <DataTable table={table} loading={isLoading} padding={42}/>
+                    <DataTable table={table} loading={isLoading || isFetchingNextPage} padding={42}/>
+                    {hasNextPage && (
+                        <div className="flex justify-center p-4">
+                            <button
+                                onClick={() => fetchNextPage()}
+                                disabled={!hasNextPage || isFetchingNextPage}
+                                className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300"
+                            >
+                                {isFetchingNextPage
+                                    ? 'Loading more...'
+                                    : hasNextPage
+                                        ? 'Load More'
+                                        : 'Nothing more to load'}
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {mapState === "open" && <div className={"w-1/2"}>
@@ -169,7 +191,7 @@ export default function CollectionTable() {
                         height="100%"
                         onBoundsChange={handleBoundsChange}
                         items={mapItems}
-                        isLoading={isLoading}
+                        isLoading={isLoading || isFetchingNextPage}
                     />
 
 

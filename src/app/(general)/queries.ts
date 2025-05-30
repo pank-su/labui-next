@@ -11,15 +11,20 @@ import {buildDateFilterString} from "@/app/(general)/utils";
 export const basicView = (client: TypedSupabaseClient, params: {
     [key: string]: string | string[] | undefined
 } | ReadonlyURLSearchParams) => queryOptions({
-    queryKey: ["basic_view"],
-    queryFn: async () => getBasicView(client, params as FormattedBasicViewFilters)
+    queryKey: ["basic_view", params],
+    queryFn: async ({ pageParam = 0 }) => getBasicView(client, params as FormattedBasicViewFilters, pageParam)
 })
 
-export async function getBasicView(client: TypedSupabaseClient, filters: FormattedBasicViewFilters | undefined = undefined) {
+export async function getBasicView(client: TypedSupabaseClient, filters: FormattedBasicViewFilters | undefined = undefined, pageParam: number = 0) {
+    const pageSize = 50;
+    const from = pageParam * pageSize;
+    const to = from + pageSize - 1;
+
     let query = client.from("basic_view").select("id,collect_id,latitude,longitude,order,family,genus,kind,age,sex,voucher_institute,voucher_id,country,region,geo_comment,day,month,year,comment,collectors,tags")
 
     if (!filters) {
-        return (await query).data;
+        const res = await query.range(from, to);
+        return { data: res.data, nextPage: res.data && res.data.length === pageSize ? pageParam + 1 : undefined };
     }
 
     if (filters?.collect_id) {
@@ -53,9 +58,9 @@ export async function getBasicView(client: TypedSupabaseClient, filters: Formatt
         }
     }
 
-    const res = (await query)
+    const res = await query.range(from, to);
     console.log(res.error)
-    return res.data;
+    return { data: res.data, nextPage: res.data && res.data.length === pageSize ? pageParam + 1 : undefined };
 }
 
 
