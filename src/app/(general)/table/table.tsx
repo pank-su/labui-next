@@ -11,8 +11,9 @@ import {
     getSortedRowModel,
     useReactTable
 } from "@tanstack/react-table";
-import {useCallback, useMemo, useRef} from "react";
+import {useCallback, useEffect, useMemo, useRef} from "react";
 import {useInfiniteQuery} from "@tanstack/react-query";
+import {useInView} from "react-intersection-observer";
 
 import {Database, Tables} from "@/utils/supabase/gen-types";
 import {SupabaseClient} from "@supabase/supabase-js";
@@ -54,6 +55,7 @@ export default function CollectionTable() {
         ...basicView(supabase, searchParams),
         getNextPageParam: (lastPage) => lastPage.nextPage,
         initialPageParam: 0,
+        maxPages: 20 
     })
 
     const search = searchParams.get("q") ?? "";
@@ -169,19 +171,11 @@ export default function CollectionTable() {
 
                 <div className={mapState === "open" ? "w-1/2" : "w-full"}>
                     <DataTable table={table} loading={isLoading || isFetchingNextPage} padding={42}/>
-                    {hasNextPage && (
+                    <div ref={ref} /> {/* Sentinel for infinite scroll */}
+                    {/* Optional: Loading spinner for when fetching next page */}
+                    {isFetchingNextPage && (
                         <div className="flex justify-center p-4">
-                            <button
-                                onClick={() => fetchNextPage()}
-                                disabled={!hasNextPage || isFetchingNextPage}
-                                className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-300"
-                            >
-                                {isFetchingNextPage
-                                    ? 'Loading more...'
-                                    : hasNextPage
-                                        ? 'Load More'
-                                        : 'Nothing more to load'}
-                            </button>
+                            <p>Loading more items...</p>
                         </div>
                     )}
                 </div>
