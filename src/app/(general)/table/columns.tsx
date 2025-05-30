@@ -1,7 +1,7 @@
 "use client"
 
 import ExpandableText from "@/app/components/expand-text"
-import {formatDate} from "@/utils/formatDate"
+import {date} from "@/utils/date"
 import {useClient} from "@/utils/supabase/client"
 import {useQuery, useUpdateMutation} from "@supabase-cache-helpers/postgrest-react-query"
 import {createColumnHelper, Row, RowData} from "@tanstack/react-table"
@@ -402,7 +402,7 @@ export default function getColumns() {
                 }),
             ]
         }),
-        columnHelper.accessor(row => formatDate(row.year, row.month, row.day), {
+        columnHelper.accessor(row => date(row.year, row.month, row.day), {
             id: "date",
             header: "Дата",
             size: 220,

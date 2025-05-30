@@ -9,6 +9,8 @@ export interface FormattedBasicViewFilters{
     family?:string,
     genus?:string,
     kind?:string,
+    from_date?:string,
+    to_date?:string,
 }
 
 export function toGenomRow(view: FormattedBasicView): GenomRow {

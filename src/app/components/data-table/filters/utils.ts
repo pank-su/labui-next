@@ -58,7 +58,7 @@ export function useFilterQuery(id: string, setFilter: (value: string) => void, r
 
     // Если фильтр был сброшен, то очищаем поле
     useEffect(() => {
-        if (queryValue != value){
+        if (value.trim() === ""){
             setValue(queryValue)
         }
     }, [queryValue])
@@ -70,45 +70,4 @@ export function useFilterQuery(id: string, setFilter: (value: string) => void, r
 }
 
 
-export type ParsedDate =
-    | { year: number; month?: undefined; day?: undefined }
-    | { year: number; month: number; day?: undefined }
-    | { year: number; month: number; day: number };
-
-export function parseDate(dateStr: string): ParsedDate | null {
-    // Полный формат dd.mm.yyyy
-    const fullRe = /^(?<day>\d{2})\.(?<month>\d{2})\.(?<year>\d{4})$/;
-    // mm.yyyy
-    const mYRe = /^(?<month>\d{2})\.(?<year>\d{4})$/;
-    // yyyy
-    const yRe = /^(?<year>\d{4})$/;
-
-    let m: RegExpExecArray | null;
-
-    if (m = fullRe.exec(dateStr)) {
-        const day = Number(m.groups!.day);
-        const month = Number(m.groups!.month);
-        const year = Number(m.groups!.year);
-        if (month < 1 || month > 12 || day < 1 || day > 31) {
-            throw new Error(`Некорректная дата: "${dateStr}"`);
-        }
-        return {year, month, day};
-    }
-
-    if (m = mYRe.exec(dateStr)) {
-        const month = Number(m.groups!.month);
-        const year = Number(m.groups!.year);
-        if (month < 1 || month > 12) {
-            throw new Error(`Некорректный месяц: "${dateStr}"`);
-        }
-        return {year, month};
-    }
-
-    if (m = yRe.exec(dateStr)) {
-        const year = Number(m.groups!.year);
-        return {year};
-    }
-
-    return null;
-}
 
