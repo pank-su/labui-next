@@ -1,25 +1,45 @@
 import {TypedSupabaseClient} from "@/utils/supabase/typed";
 import {FormattedBasicViewFilters} from "@/app/(general)/models";
 import {parseIndexFilter} from "@/utils/parseIndexFilter";
-import {queryOptions} from "@tanstack/react-query";
+import {infiniteQueryOptions, keepPreviousData, queryOptions} from "@tanstack/react-query";
 import {ReadonlyURLSearchParams} from "next/navigation";
 import {PostgrestFilterBuilder} from "@supabase/postgrest-js";
 import {parseDate} from "@/utils/date";
 import {buildDateFilterString} from "@/app/(general)/utils";
 
+const fetchSize = 50
 
 export const basicView = (client: TypedSupabaseClient, params: {
     [key: string]: string | string[] | undefined
-} | ReadonlyURLSearchParams) => queryOptions({
-    queryKey: ["basic_view"],
-    queryFn: async () => getBasicView(client, params as FormattedBasicViewFilters)
+} | ReadonlyURLSearchParams) => infiniteQueryOptions({
+    queryKey: ["basic_view", params],
+    queryFn: async ({pageParam}) => await getBasicView(client, pageParam, params as FormattedBasicViewFilters),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+        // Более надежная проверка окончания данных
+        const totalFetched = allPages.reduce((sum, page) => sum + (page.data?.length ?? 0), 0);
+        const totalCount = lastPage.count ?? 0;
+
+        // Если получили меньше данных чем запрашивали, или достигли общего количества
+        if (!lastPage.data || lastPage.data.length < fetchSize || totalFetched >= totalCount) {
+            return null;
+        }
+
+        return allPages.length;
+    },
+    refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData,
 })
 
-export async function getBasicView(client: TypedSupabaseClient, filters: FormattedBasicViewFilters | undefined = undefined) {
-    let query = client.from("basic_view").select("id,collect_id,latitude,longitude,order,family,genus,kind,age,sex,voucher_institute,voucher_id,country,region,geo_comment,day,month,year,comment,collectors,tags")
+export async function getBasicView(client: TypedSupabaseClient, page: number, filters: FormattedBasicViewFilters | undefined = undefined) {
+
+    const start = page * fetchSize
+    const finish = start + fetchSize - 1
+
+    let query = client.from("basic_view").select("*", {count: "exact"})
 
     if (!filters) {
-        return (await query).data;
+        return (await query.range(start , finish));
     }
 
     if (filters?.collect_id) {
@@ -53,10 +73,15 @@ export async function getBasicView(client: TypedSupabaseClient, filters: Formatt
         }
     }
 
-    const res = (await query)
+    const res = (await query.range(start , finish))
     console.log(res.error)
-    return res.data;
+
+
+    return res;
 }
+
+
+
 
 
 export const orders = (client: TypedSupabaseClient) => queryOptions({
@@ -68,7 +93,6 @@ export const orders = (client: TypedSupabaseClient) => queryOptions({
 async function loadOrders(client: TypedSupabaseClient) {
     return (await client.from("order").select("id,name").not('name', 'is', null)).data
 }
-
 
 
 /**

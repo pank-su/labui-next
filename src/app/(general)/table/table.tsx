@@ -7,7 +7,6 @@ import {
     getFacetedMinMaxValues,
     getFacetedRowModel,
     getFacetedUniqueValues,
-    getFilteredRowModel,
     getSortedRowModel,
     useReactTable
 } from "@tanstack/react-table";
@@ -17,12 +16,12 @@ import {Database, Tables} from "@/utils/supabase/gen-types";
 import {SupabaseClient} from "@supabase/supabase-js";
 import getColumns from "@/app/(general)/table/columns";
 import DataTable from "@/app/components/data-table/data-table";
-import {FormattedBasicView} from "@/app/(general)/models";
+import {FormattedBasicView, FormattedBasicViewFilters} from "@/app/(general)/models";
 import {basicView} from "@/app/(general)/queries";
 import CollectionTableControls from "@/app/(general)/table/controls";
 import {usePathname, useRouter, useSearchParams} from "next/navigation";
 import CollectionMap from "@/app/components/map/CollectionMap";
-import {useSuspenseQuery} from "@tanstack/react-query";
+import {useQuery, useSuspenseInfiniteQuery} from "@tanstack/react-query";
 
 
 const mapStates = ["closed", "open", "select"] as const;
@@ -35,19 +34,25 @@ async function loadBasicViewItemById(supabase: SupabaseClient<Database>, id: num
 /**
  *  Таблица коллекции с возможностью отображения карты
  */
-export default function CollectionTable() {
+export default function CollectionTable({params}: {params: { [key: string]: string | string[] | undefined }}) {
     const supabase = useClient()
 
     const router = useRouter();
     const pathname = usePathname()
     const searchParams = useSearchParams()
 
-
-    // Зачем тут все поля? Чтобы библиотека понимала, что нужно будет обновить, а не пыталась обновлять всё
     const {
         data,
-        isLoading
-    } = useSuspenseQuery(basicView(supabase, searchParams))
+        isLoading,
+        fetchNextPage,
+        isFetching,
+        hasNextPage
+    } = useSuspenseInfiniteQuery(basicView(supabase, params))
+
+    const tableData = useMemo(
+        () => data?.pages?.filter(page => page.data != null)?.flatMap(page => page.data) ?? [],
+        [data]
+    )
 
     const search = searchParams.get("q") ?? "";
 
@@ -79,11 +84,6 @@ export default function CollectionTable() {
             await upsertItem(basicViewItem) // Элементы коллекции не удаляются
         }
     })
-
-    // Данные таблицы
-    const tableData = useMemo(() => {
-        return data ?? []
-    }, [data])
 
 
     // Таблица использует отфильтрованные данные в режиме разделенного экрана
@@ -161,7 +161,7 @@ export default function CollectionTable() {
             <div className="flex-1 flex" style={{minHeight: 0}}>
 
                 <div className={mapState === "open" ? "w-1/2" : "w-full"}>
-                    <DataTable table={table} loading={isLoading} padding={42}/>
+                    <DataTable table={table} hasNextPage={hasNextPage} fetchedSize={tableData.length} size={data.pages[0].count ?? 0} fetchNextPage={fetchNextPage} isFetching={isFetching} loading={isLoading} padding={42}/>
                 </div>
 
                 {mapState === "open" && <div className={"w-1/2"}>
