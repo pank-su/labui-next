@@ -42,9 +42,6 @@ export default function DataTable<T>({
         return windowSize.height - (60 + padding)
     }, [windowSize.height])
 
-    // Добавляем ref для отслеживания состояния загрузки
-    const isLoadingRef = useRef(false);
-
     const {rows} = table.getRowModel()
 
 
@@ -52,7 +49,7 @@ export default function DataTable<T>({
 
     const fetchMoreOnBottomReached = useCallback(
         async (containerRefElement?: HTMLDivElement | null) => {
-            if (containerRefElement && hasNextPage && !isFetching && !isLoadingRef.current) {
+            if (containerRefElement && hasNextPage && !isFetching) {
                 const {scrollHeight, scrollTop, clientHeight} = containerRefElement
 
                 // Увеличиваем порог и добавляем дополнительные проверки
@@ -60,17 +57,10 @@ export default function DataTable<T>({
                 const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
 
                 if (distanceFromBottom < threshold) {
-                    isLoadingRef.current = true;
-
                     try {
                         await fetchNextPage();
                     } catch (error) {
                         console.error('Error fetching next page:', error);
-                    } finally {
-                        // Добавляем небольшую задержку перед разрешением новых запросов
-                        setTimeout(() => {
-                            isLoadingRef.current = false;
-                        }, 100);
                     }
                 }
             }
@@ -83,12 +73,6 @@ export default function DataTable<T>({
         fetchMoreOnBottomReached(e.currentTarget);
     }, [fetchMoreOnBottomReached]);
 
-    // Сбрасываем флаг при изменении состояния загрузки
-    useEffect(() => {
-        if (!isFetching) {
-            isLoadingRef.current = false;
-        }
-    }, [isFetching]);
     // Important: Keep the row virtualizer in the lowest component possible to avoid unnecessary re-renders.
     const rowVirtualizer = useVirtualizer<HTMLDivElement, HTMLTableRowElement>({
         count: rows.length,

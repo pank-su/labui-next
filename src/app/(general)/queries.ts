@@ -17,15 +17,23 @@ export const basicView = (client: TypedSupabaseClient, params: {
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
         // Более надежная проверка окончания данных
+        console.log("lastPage.data?.length:", lastPage.data?.length);
+        console.log("fetchSize:", fetchSize);
+        console.log("allPages.length:", allPages.length);
         const totalFetched = allPages.reduce((sum, page) => sum + (page.data?.length ?? 0), 0);
-        const totalCount = lastPage.count ?? 0;
+        console.log("totalFetched:", totalFetched);
+        const totalCount = lastPage && lastPage.count !== undefined && lastPage.count !== null ? lastPage.count : 0;
+        console.log("lastPage.count (totalCount):", totalCount);
 
         // Если получили меньше данных чем запрашивали, или достигли общего количества
         if (!lastPage.data || lastPage.data.length < fetchSize || totalFetched >= totalCount) {
+            console.log("Returning: null");
             return null;
         }
 
-        return allPages.length;
+        const nextPageParam = allPages.length;
+        console.log("Returning:", nextPageParam);
+        return nextPageParam;
     },
     refetchOnWindowFocus: false,
     placeholderData: keepPreviousData,
@@ -74,8 +82,11 @@ export async function getBasicView(client: TypedSupabaseClient, page: number, fi
     }
 
     const res = (await query.range(start , finish))
-    console.log(res.error)
 
+    if (res.error || res.data === null) {
+        console.error("Error fetching basic view:", res.error);
+        return { data: [], count: 0, error: res.error };
+    }
 
     return res;
 }
