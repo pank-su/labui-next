@@ -41,6 +41,7 @@ export default function CollectionTable({params}: {params: { [key: string]: stri
     const pathname = usePathname()
     const searchParams = useSearchParams()
 
+    console.log(`[CLIENT] stringified params: ${JSON.stringify(params)}`);
     const {
         data,
         isLoading,

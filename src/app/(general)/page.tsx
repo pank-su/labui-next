@@ -17,10 +17,11 @@ export default async function Page({
     const queryClient = new QueryClient();
     // В будущем можно перевести кучу логики на supabase, что позволит оптимизировать всё взаимодействие с ним
     // Это отдельная большая работа
-    // const basicViewPromise = queryClient.prefetchInfiniteQuery(basicView(supabase, params));
+    console.log(`[SERVER] stringified params: ${JSON.stringify(params)}`);
+    const basicViewPromise = queryClient.prefetchInfiniteQuery(basicView(supabase, params));
     const ordersPromise = queryClient.prefetchQuery(orders(supabase));
 
-    await Promise.all([ordersPromise]); // Выполняем параллельно
+    await Promise.all([basicViewPromise, ordersPromise]); // Выполняем параллельно
 
 
     return <HydrationBoundary state={dehydrate(queryClient)}><CollectionTable params={params} /></HydrationBoundary>
