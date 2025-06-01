@@ -5,32 +5,90 @@ import {Table as TableUi, TableHead, TableHeader, TableRow} from "../ui/table";
 import {SortedIcon} from "../sorted-filter";
 import {VirtualTableBody} from "./body";
 import useWindowSize from "@/utils/useWindowSize";
-import {useMemo, useRef} from "react";
+import {useCallback, useEffect, useMemo, useRef} from "react";
 import {FloatButton, Spin} from "antd";
 import {useVirtualizer} from "@tanstack/react-virtual";
 import {VerticalAlignBottomOutlined, VerticalAlignTopOutlined} from "@ant-design/icons";
 import Filter from "./filters/filter";
 import {AnimatePresence, motion} from "framer-motion";
+import {FetchNextPageOptions, InfiniteQueryObserverResult} from "@tanstack/react-query";
+import {InfiniteData} from "@tanstack/query-core";
 
 
 interface DataTableProps<T> {
-    table: Table<T>
-    loading?: boolean
-    padding?: number
+    table: Table<T>,
+    loading?: boolean,
+    padding?: number,
+    size: number,
+    fetchedSize?: number,
+    fetchNextPage: (options?: FetchNextPageOptions) => Promise<InfiniteQueryObserverResult<InfiniteData<any>>>,
+    isFetching?: boolean,
+    hasNextPage?: boolean
 }
 
-export default function DataTable<T>({table, loading = false, padding = 0}: DataTableProps<T>) {
+export default function DataTable<T>({
+                                         table,
+                                         loading = false,
+                                         padding = 0,
+                                         size,
+                                         fetchedSize = 0,
+                                         fetchNextPage,
+                                         isFetching,
+                                         hasNextPage
+                                     }: DataTableProps<T>) {
     const windowSize = useWindowSize()
 
     const height = useMemo(() => {
         return windowSize.height - (60 + padding)
     }, [windowSize.height])
 
+    // Добавляем ref для отслеживания состояния загрузки
+    const isLoadingRef = useRef(false);
+
     const {rows} = table.getRowModel()
 
 
     const tableContainerRef = useRef<HTMLDivElement>(null)
 
+    const fetchMoreOnBottomReached = useCallback(
+        async (containerRefElement?: HTMLDivElement | null) => {
+            if (containerRefElement && hasNextPage && !isFetching && !isLoadingRef.current) {
+                const {scrollHeight, scrollTop, clientHeight} = containerRefElement
+
+                // Увеличиваем порог и добавляем дополнительные проверки
+                const threshold = 500; // Увеличено с 500
+                const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+
+                if (distanceFromBottom < threshold) {
+                    isLoadingRef.current = true;
+
+                    try {
+                        await fetchNextPage();
+                    } catch (error) {
+                        console.error('Error fetching next page:', error);
+                    } finally {
+                        // Добавляем небольшую задержку перед разрешением новых запросов
+                        setTimeout(() => {
+                            isLoadingRef.current = false;
+                        }, 100);
+                    }
+                }
+            }
+        },
+        [fetchNextPage, isFetching, hasNextPage] // Убираем изменчивые зависимости
+    )
+
+    // Убираем useEffect, используем только onScroll
+    const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+        fetchMoreOnBottomReached(e.currentTarget);
+    }, [fetchMoreOnBottomReached]);
+
+    // Сбрасываем флаг при изменении состояния загрузки
+    useEffect(() => {
+        if (!isFetching) {
+            isLoadingRef.current = false;
+        }
+    }, [isFetching]);
     // Important: Keep the row virtualizer in the lowest component possible to avoid unnecessary re-renders.
     const rowVirtualizer = useVirtualizer<HTMLDivElement, HTMLTableRowElement>({
         count: rows.length,
@@ -50,10 +108,11 @@ export default function DataTable<T>({table, loading = false, padding = 0}: Data
     }, [rowVirtualizer.scrollOffset, rows.length])
 
     return <>
-        <div ref={tableContainerRef} className="overflow-auto" style={{
-            position: 'relative', //needed for sticky header,
-            height: height
-        }}>
+        <div onScroll={handleScroll} ref={tableContainerRef} className="overflow-auto"
+             style={{
+                 position: 'relative', //needed for sticky header,
+                 height: height
+             }}>
             <Spin spinning={loading}>
                 <TableUi style={{display: 'grid'}}>
                     <TableHeader style={{
