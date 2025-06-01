@@ -46,26 +46,33 @@ export default function DataTable<T>({
 
 
     const tableContainerRef = useRef<HTMLDivElement>(null)
+    const isFetchingMoreRef = useRef(false);
 
     const fetchMoreOnBottomReached = useCallback(
         async (containerRefElement?: HTMLDivElement | null) => {
             if (containerRefElement && hasNextPage && !isFetching) {
-                const {scrollHeight, scrollTop, clientHeight} = containerRefElement
+                // Prevent re-entry if this specific handler instance is already fetching
+                if (isFetchingMoreRef.current) {
+                    return;
+                }
 
-                // Увеличиваем порог и добавляем дополнительные проверки
-                const threshold = 500; // Увеличено с 500
+                const {scrollHeight, scrollTop, clientHeight} = containerRefElement;
+                const threshold = 500;
                 const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
 
                 if (distanceFromBottom < threshold) {
+                    isFetchingMoreRef.current = true;
                     try {
                         await fetchNextPage();
                     } catch (error) {
                         console.error('Error fetching next page:', error);
+                    } finally {
+                        isFetchingMoreRef.current = false;
                     }
                 }
             }
         },
-        [fetchNextPage, isFetching, hasNextPage] // Убираем изменчивые зависимости
+        [fetchNextPage, isFetching, hasNextPage]
     )
 
     // Убираем useEffect, используем только onScroll

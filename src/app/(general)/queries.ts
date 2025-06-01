@@ -12,7 +12,7 @@ const fetchSize = 50
 export const basicView = (client: TypedSupabaseClient, params: {
     [key: string]: string | string[] | undefined
 } | ReadonlyURLSearchParams) => infiniteQueryOptions({
-    queryKey: ["basic_view", params],
+    queryKey: ["basic_view", JSON.stringify(params)],
     queryFn: async ({pageParam}) => await getBasicView(client, pageParam, params as FormattedBasicViewFilters),
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
