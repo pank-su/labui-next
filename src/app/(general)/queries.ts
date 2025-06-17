@@ -1,14 +1,14 @@
 import {TypedSupabaseClient} from "@/utils/supabase/typed";
 import {FormattedBasicViewFilters} from "@/app/(general)/models";
-import {parseIndexFilter} from "@/utils/parseIndexFilter";
+import {parseIndexFilter, parseIndexFilterToSupabaseFilter} from "@/utils/parseIndexFilter";
 import {infiniteQueryOptions, keepPreviousData, queryOptions} from "@tanstack/react-query";
 import {ReadonlyURLSearchParams} from "next/navigation";
-import {PostgrestFilterBuilder} from "@supabase/postgrest-js";
 import {parseDate} from "@/utils/date";
 import {buildDateFilterString} from "@/app/(general)/utils";
 
 const fetchSize = 50
 
+// Настройки для запроса коллекции 
 export const basicView = (client: TypedSupabaseClient, params: {
     [key: string]: string | string[] | undefined
 } | ReadonlyURLSearchParams) => infiniteQueryOptions({
@@ -23,7 +23,7 @@ export const basicView = (client: TypedSupabaseClient, params: {
             lastPage.data.length === 0 ||
             lastPage.data.length < fetchSize
         ) {
-            console.log({ message: "ok, end of data" });
+            console.log({message: "ok, end of data"});
             return undefined;
         }
 
@@ -35,56 +35,92 @@ export const basicView = (client: TypedSupabaseClient, params: {
     placeholderData: keepPreviousData,
 })
 
-export async function getBasicView(client: TypedSupabaseClient, page: number, filters: FormattedBasicViewFilters | undefined = undefined) {
 
-    const start = page * fetchSize
-    const finish = start + fetchSize - 1
 
+// Создаём запрос c фильтроми и сортировкой к basic query
+function basicViewQuery(client: TypedSupabaseClient, filters: FormattedBasicViewFilters | undefined,  range: {
+    start: number,
+    end: number
+} | undefined = undefined) {
+    let max;
     let query = client.from("basic_view").select("*", {count: "exact"})
 
+    //
+
+
     if (!filters) {
-        return (await query.range(start , finish));
+        if (range) {
+            query = query.range(range.start, range.end)
+        }
+        return query
     }
-
-    if (filters?.collect_id) {
-        query = query.textSearch("collect_id", filters.collect_id)
-    }
-    // Применяем фильтры к дате
-    applyDateRangeFiltersToQuery(query, filters.from_date, filters.to_date)
+    // применяем фильтры
+    /* очень хочется выделить в отдельную функцию, но будут проблемы с типами */
 
 
-    const taxonomyFields: (keyof Pick<
-        FormattedBasicViewFilters,
-        "order" | "family" | "genus" | "kind"
-    >)[] = ["order", "family", "genus", "kind"];
+    const textSearchFields = ["collect_id", "comment", "geocomment"] as const;
+    textSearchFields.forEach(field => {
+        if (filters[field]) {
+
+            query = query.textSearch(field, filters[field])
+        }
+
+    })
+
+
+    // Фильтры по таксономии
+    const taxonomyFields = ["order", "family", "genus", "kind"] as const;
     taxonomyFields.forEach((field) => {
         if (filters[field]) {
             if (filters[field] === " ") {
                 query = query.is(field + "->>name", null);
             } else {
-
                 query = query.filter(field + "->>name", "eq", filters[field]) // 'order_name', 'family_name' etc.
             }
         }
     });
 
-    if (filters?.id) {
-        const {data} = await client.from("basic_view").select("id.max()").single()
 
-        const ids = parseIndexFilter(filters.id as string, 1, data?.max ?? 10000);
-        if (ids.length > 0) {
-            query = query.in("id", ids)
+    // Применяем фильтры к дате
+    query = applyDateRangeFiltersToQuery(query, filters.from_date, filters.to_date)
+
+    // Фильтры для значений с выбором
+    const selectFields = ["sex", "age", "country", "region", "voucher"] as const;
+
+    selectFields.forEach((field) => {
+        if (filters[field]) {
+            if (field == "voucher") {
+                query = query.eq("voucher_institute", filters[field])
+
+            } else {
+                query = query.eq(field, filters[field])
+            }
+
         }
+    })
+
+    // Фильтр по id
+    if (filters?.id) {
+        query = query.or(parseIndexFilterToSupabaseFilter(filters.id,))
+
     }
-
-    const res = (await query.range(start , finish))
-
-
-    return res;
+    if (range) {
+        query = query.range(range.start, range.end)
+    }
+    return query;
 }
 
+// Запрос коллекции 
+export async function getBasicView(client: TypedSupabaseClient, page: number, filters: FormattedBasicViewFilters | undefined = undefined) {
+
+    const start = page * fetchSize
+    const finish = start + fetchSize - 1
+
+    const query = ( basicViewQuery(client, filters, {start: start, end: finish}))
 
 
+    return query;
+}
 
 
 export const orders = (client: TypedSupabaseClient) => queryOptions({
@@ -105,11 +141,12 @@ async function loadOrders(client: TypedSupabaseClient) {
  * @param toDateStr Строка конечной даты (может быть "ГГГГ", "ММ.ГГГГ", "ДД.ММ.ГГГГ").
  * @returns Модифицированный экземпляр PostgrestFilterBuilder.
  */
-export function applyDateRangeFiltersToQuery( // Переименовал обратно для соответствия
-    initialQuery: PostgrestFilterBuilder<any, any, any>,
+// Исправляем applyDateRangeFiltersToQuery
+export function applyDateRangeFiltersToQuery(
+    initialQuery: any, // Используем any
     fromDateStr?: string,
     toDateStr?: string
-): PostgrestFilterBuilder<any, any, any> {
+): any { // Возвращаем any
     let query = initialQuery;
     const fromDate = fromDateStr ? parseDate(fromDateStr) : null;
     const toDate = toDateStr ? parseDate(toDateStr) : null;
@@ -123,7 +160,6 @@ export function applyDateRangeFiltersToQuery( // Переименовал обр
             monthComparison: "gt",
             dayComparison: "gte",
         });
-        //console.log("DEBUG: fromDate filter string:", filterString);
         query = query.or(filterString);
     }
 
@@ -134,14 +170,10 @@ export function applyDateRangeFiltersToQuery( // Переименовал обр
             monthComparison: "lt",
             dayComparison: "lte",
         });
-        //console.log("DEBUG: toDate filter string:", filterString);
         query = query.or(filterString);
     }
 
     if (isAnyDateFilterApplied) {
-        // Гарантируем, что записи без указанного года не будут включены,
-        // если применялся хотя бы один фильтр по дате.
-        // Это важно, так как все условия фильтрации оперируют с полем 'year'.
         query = query.not("year", "is", null);
     }
 

@@ -4,6 +4,7 @@ import {orders} from "@/app/(general)/queries";
 import CollectionTable from "@/app/(general)/table/table";
 
 
+// Страница с таблицей коллекции
 export default async function Page({
                                        searchParams,
                                    }: {

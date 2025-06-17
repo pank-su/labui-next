@@ -2,6 +2,7 @@ import { CompositeTypes, Tables } from "@/utils/supabase/gen-types";
 
 export type FormattedBasicView = Tables<"basic_view"> & {size?: number};
 
+// Тип для query фильтров по коллекции
 export interface FormattedBasicViewFilters{
     id?:string,
     collect_id?:string,
@@ -11,6 +12,13 @@ export interface FormattedBasicViewFilters{
     kind?:string,
     from_date?:string,
     to_date?:string,
+    sex?: string,
+    age?: string,
+    country?:string
+    region?:string
+    voucher?: string,
+    comment?: string,
+    geocomment?:string
 }
 
 export function toGenomRow(view: FormattedBasicView): GenomRow {
