@@ -5,7 +5,7 @@ import {Table as TableUi, TableHead, TableHeader, TableRow} from "../ui/table";
 import {SortedIcon} from "../sorted-filter";
 import {VirtualTableBody} from "./body";
 import useWindowSize from "@/utils/useWindowSize";
-import {useCallback, useEffect, useMemo, useRef} from "react";
+import {useCallback, useMemo, useRef} from "react";
 import {FloatButton, Spin} from "antd";
 import {useVirtualizer} from "@tanstack/react-virtual";
 import {VerticalAlignBottomOutlined, VerticalAlignTopOutlined} from "@ant-design/icons";
@@ -42,8 +42,6 @@ export default function DataTable<T>({
         return windowSize.height - (60 + padding)
     }, [windowSize.height])
 
-    // Добавляем ref для отслеживания состояния загрузки
-    const isLoadingRef = useRef(false);
 
     const {rows} = table.getRowModel()
 
@@ -51,27 +49,16 @@ export default function DataTable<T>({
     const tableContainerRef = useRef<HTMLDivElement>(null)
 
     const fetchMoreOnBottomReached = useCallback(
-        async (containerRefElement?: HTMLDivElement | null) => {
-            if (containerRefElement && hasNextPage && !isFetching && !isLoadingRef.current) {
-                const {scrollHeight, scrollTop, clientHeight} = containerRefElement
+        (containerRefElement?: HTMLDivElement | null) => {
+            if (!containerRefElement) return;
 
-                // Увеличиваем порог и добавляем дополнительные проверки
-                const threshold = 500; // Увеличено с 500
+            if (hasNextPage && !isFetching) {
+                const {scrollHeight, scrollTop, clientHeight} = containerRefElement;
+                const threshold = 500;
                 const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
 
                 if (distanceFromBottom < threshold) {
-                    isLoadingRef.current = true;
-
-                    try {
-                        await fetchNextPage();
-                    } catch (error) {
-                        console.error('Error fetching next page:', error);
-                    } finally {
-                        // Добавляем небольшую задержку перед разрешением новых запросов
-                        setTimeout(() => {
-                            isLoadingRef.current = false;
-                        }, 100);
-                    }
+                    fetchNextPage();
                 }
             }
         },
@@ -83,12 +70,7 @@ export default function DataTable<T>({
         fetchMoreOnBottomReached(e.currentTarget);
     }, [fetchMoreOnBottomReached]);
 
-    // Сбрасываем флаг при изменении состояния загрузки
-    useEffect(() => {
-        if (!isFetching) {
-            isLoadingRef.current = false;
-        }
-    }, [isFetching]);
+
     // Important: Keep the row virtualizer in the lowest component possible to avoid unnecessary re-renders.
     const rowVirtualizer = useVirtualizer<HTMLDivElement, HTMLTableRowElement>({
         count: rows.length,
@@ -103,9 +85,6 @@ export default function DataTable<T>({
         overscan: 10, // было 5
     })
 
-    const scrollPosition = useMemo(() => {
-        return rowVirtualizer.getVirtualIndexes()[0]
-    }, [rowVirtualizer.scrollOffset, rows.length])
 
     return <>
         <div onScroll={handleScroll} ref={tableContainerRef} className="overflow-auto"
@@ -172,11 +151,13 @@ export default function DataTable<T>({
                                       rowVirtualizer={rowVirtualizer}/>
 
                 </TableUi>
+                {isFetching && <div>Fetching More...</div>}
+
             </Spin>
 
         </div>
 
-        <AnimatedFloatButton rows={rows} scrollPosition={scrollPosition} rowVirtualizer={rowVirtualizer}/>
+        {/*<AnimatedFloatButton rows={rows} scrollPosition={scrollPosition} rowVirtualizer={rowVirtualizer}/>*/}
 
     </>;
 }

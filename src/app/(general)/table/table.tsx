@@ -1,7 +1,7 @@
 "use client"
 
 import {useClient} from "@/utils/supabase/client";
-import {useSubscription, useUpsertItem} from "@supabase-cache-helpers/postgrest-react-query";
+import {useSubscription, useUpdateMutation, useUpsertItem} from "@supabase-cache-helpers/postgrest-react-query";
 import {
     getCoreRowModel,
     getFacetedMinMaxValues,
@@ -10,18 +10,22 @@ import {
     getSortedRowModel,
     useReactTable
 } from "@tanstack/react-table";
-import {useCallback, useMemo, useRef} from "react";
+import {useCallback, useMemo, useRef, useState} from "react";
+import {orders as loadOrders} from "@/app/(general)/queries";
 
 import {Database, Tables} from "@/utils/supabase/gen-types";
 import {SupabaseClient} from "@supabase/supabase-js";
 import getColumns from "@/app/(general)/table/columns";
 import DataTable from "@/app/components/data-table/data-table";
-import {FormattedBasicView, FormattedBasicViewFilters} from "@/app/(general)/models";
+import {FormattedBasicView, GenomRow, toGenomRow, Topology} from "../models"
 import {basicView} from "@/app/(general)/queries";
 import CollectionTableControls from "@/app/(general)/table/controls";
 import {usePathname, useRouter, useSearchParams} from "next/navigation";
 import CollectionMap from "@/app/components/map/CollectionMap";
-import {useQuery, useSuspenseInfiniteQuery} from "@tanstack/react-query";
+import { useSuspenseInfiniteQuery, useSuspenseQuery} from "@tanstack/react-query";
+import {useUser} from "@/app/components/header";
+import {useQuery} from "@supabase-cache-helpers/postgrest-react-query"
+
 
 
 const mapStates = ["closed", "open", "select"] as const;
@@ -41,13 +45,18 @@ export default function CollectionTable({params}: {params: { [key: string]: stri
     const pathname = usePathname()
     const searchParams = useSearchParams()
 
+    const queryOptions = useMemo(
+        () => basicView(supabase, params),
+        [supabase, params] // Зависимости: объект будет создан заново только если изменится supabase или params
+    );
+
     const {
         data,
         isLoading,
         fetchNextPage,
         isFetching,
         hasNextPage
-    } = useSuspenseInfiniteQuery(basicView(supabase, params))
+    } = useSuspenseInfiniteQuery(queryOptions)
 
     const tableData = useMemo(
         () => data?.pages?.filter(page => page.data != null)?.flatMap(page => page.data) ?? [],
@@ -66,6 +75,87 @@ export default function CollectionTable({params}: {params: { [key: string]: stri
         table: "basic_view",
         schema: "public"
     })
+
+    const [editedGenomRow, setEditedGenomRow] = useState<GenomRow | null>(null)
+    const {user} = useUser()
+
+    const handleEdit = useCallback((row: FormattedBasicView) => {
+        setEditedGenomRow(toGenomRow(row));
+    }, []);
+
+    const {mutateAsync: update} = useUpdateMutation(
+        supabase.from("collection"),
+        ['id']
+    );
+
+    const {data: orders, isLoading: isOrdersLoading} = useSuspenseQuery(loadOrders(supabase));
+
+    const {data: families, isLoading: isFamiliesLoading} = useQuery(
+        supabase.from("family").select("id,name").not('name', 'is', null)
+            .eq('order_id', editedGenomRow?.order?.id || -1),
+        {enabled: !!editedGenomRow?.order?.id}
+    );
+    const {data: genera, isLoading: isGeneraLoading} = useQuery(
+        supabase.from("genus").select("id,name").not('name', 'is', null)
+            .eq('family_id', editedGenomRow?.family?.id || -1),
+        {enabled: !!editedGenomRow?.family?.id}
+    );
+    const {data: kinds, isLoading: isKindsLoading} = useQuery(
+        supabase.from("kind").select("id,name").not('name', 'is', null)
+            .eq('genus_id', editedGenomRow?.genus?.id || -1),
+        {enabled: !!editedGenomRow?.genus?.id}
+    );
+
+    const handleFieldChange = (field: string, value: Topology | undefined) => {
+        if (!editedGenomRow) return;
+
+        const updatedRow = {...editedGenomRow};
+        switch (field) {
+            case 'order':
+                updatedRow.order = value;
+                updatedRow.family = undefined;
+                updatedRow.genus = undefined;
+                updatedRow.kind = undefined;
+                break;
+            case 'family':
+                updatedRow.family = value;
+                updatedRow.genus = undefined;
+                updatedRow.kind = undefined;
+                break;
+            case 'genus':
+                updatedRow.genus = value;
+                updatedRow.kind = undefined;
+                break;
+            case 'kind':
+                updatedRow.kind = value;
+                break;
+        }
+
+        setEditedGenomRow(updatedRow);
+    };
+
+    const handleSave = async () => {
+        if (editedGenomRow) {
+            console.log(editedGenomRow)
+            await supabase.rpc("update_collection_taxonomy_by_ids", {
+                col_id: editedGenomRow.rowId!,
+                order_id: editedGenomRow.order?.id ?? undefined,
+                family_id: editedGenomRow.family?.id ?? undefined,
+                genus_id: editedGenomRow.genus?.id ?? undefined,
+                kind_id: editedGenomRow.kind?.id ?? undefined
+            })
+            setEditedGenomRow(null)
+
+        }
+    };
+
+    const handleCancel = () => {
+        setEditedGenomRow(null);
+    };
+
+
+
+
 
     // Supabase не поддерживает realtime для представлений
     // поэтому просто будет получать все изменения в таблице
@@ -86,9 +176,32 @@ export default function CollectionTable({params}: {params: { [key: string]: stri
     })
 
 
+    const columns = useMemo(() => getColumns({
+        user,
+        editedGenomRow,
+        orders: orders || [],
+        families: families || [],
+        genera: genera || [],
+        kinds: kinds || [],
+        isOrdersLoading,
+        isFamiliesLoading,
+        isGeneraLoading,
+        isKindsLoading,
+        onEdit: handleEdit,
+        onFieldChange: handleFieldChange,
+        onSave: handleSave,
+        onCancel: handleCancel,
+        onUpdate: update,
+    }), [
+        user, editedGenomRow, orders, families, genera, kinds,
+        isOrdersLoading, isFamiliesLoading, isGeneraLoading, isKindsLoading,
+        handleEdit, handleFieldChange, handleSave, handleCancel, update
+    ]);
+
+
     // Таблица использует отфильтрованные данные в режиме разделенного экрана
     const table = useReactTable({
-        columns: getColumns(),
+        columns: columns,
         data: tableData,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),

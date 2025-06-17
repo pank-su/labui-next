@@ -16,18 +16,22 @@ export const basicView = (client: TypedSupabaseClient, params: {
     queryFn: async ({pageParam}) => await getBasicView(client, pageParam, params as FormattedBasicViewFilters),
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
-        // Более надежная проверка окончания данных
-        const totalFetched = allPages.reduce((sum, page) => sum + (page.data?.length ?? 0), 0);
-        const totalCount = lastPage.count ?? 0;
 
         // Если получили меньше данных чем запрашивали, или достигли общего количества
-        if (!lastPage.data || lastPage.data.length < fetchSize || totalFetched >= totalCount) {
-            return null;
+        if (
+            !lastPage.data ||
+            lastPage.data.length === 0 ||
+            lastPage.data.length < fetchSize
+        ) {
+            console.log({ message: "ok, end of data" });
+            return undefined;
         }
 
         return allPages.length;
     },
     refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
     placeholderData: keepPreviousData,
 })
 
@@ -74,7 +78,6 @@ export async function getBasicView(client: TypedSupabaseClient, page: number, fi
     }
 
     const res = (await query.range(start , finish))
-    console.log(res.error)
 
 
     return res;

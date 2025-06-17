@@ -2,21 +2,15 @@
 
 import ExpandableText from "@/app/components/expand-text"
 import {date} from "@/utils/date"
-import {useClient} from "@/utils/supabase/client"
-import {useQuery, useUpdateMutation} from "@supabase-cache-helpers/postgrest-react-query"
 import {createColumnHelper, Row, RowData} from "@tanstack/react-table"
 import {Tag} from "antd"
-import {useState} from "react"
 import {EditableCell} from "../../components/data-table/editable"
-import {useUser} from "../../components/header"
 import {FormattedBasicView, GenomRow, toGenomRow, Topology} from "../models"
 import {TopologyCell} from "../../components/data-table/topology-cell"
 import {DataCell} from "../../components/data-table/data-cell"
 import {SelectCell} from "../../components/data-table/select-cell"
-import {orders as loadOrders} from "@/app/(general)/queries";
 import {FilterDate} from "@/app/components/data-table/filters/date-filter";
 import {FilterGeo} from "@/app/components/data-table/filters/geo-filter";
-import {useSuspenseQuery} from "@tanstack/react-query";
 
 
 const columnHelper = createColumnHelper<FormattedBasicView>()
@@ -50,7 +44,7 @@ const geoFilterFn = (
     }
 
     const geoFilter = filterValue as FilterGeo
-    const { from, to } = geoFilter
+    const {from, to} = geoFilter
 
     // 4. Проверяем соответствие значения диапазону [from, to]
     let passesFrom = true
@@ -118,81 +112,42 @@ function formatSex(sex: string | null): string {
 }
 
 
-export default function getColumns() {
-    const [editedGenomRow, setEditedGenomRow] = useState<GenomRow | null>(null)
-    const supabase = useClient()
-    const {user} = useUser()
+export default function getColumns(options: {
+    user: any;
+    editedGenomRow: GenomRow | null;
+    orders: any[];
+    families: any[];
+    genera: any[];
+    kinds: any[];
+    isOrdersLoading: boolean;
+    isFamiliesLoading: boolean;
+    isGeneraLoading: boolean;
+    isKindsLoading: boolean;
+    onEdit: (row: FormattedBasicView) => void;
+    onFieldChange: (field: string, value: Topology | undefined) => void;
+    onSave: () => void;
+    onCancel: () => void;
+    onUpdate: (payload: any) => Promise<any>;
+}) {
 
+    const {
+        user,
+        editedGenomRow,
+        orders,
+        families,
+        genera,
+        kinds,
+        isOrdersLoading,
+        isFamiliesLoading,
+        isGeneraLoading,
+        isKindsLoading,
+        onEdit,
+        onFieldChange,
+        onSave,
+        onCancel,
+        onUpdate: update,
+    } = options;
 
-    const {mutateAsync: update} = useUpdateMutation(
-        supabase.from("collection"),
-        ['id']
-    );
-
-    const {data: orders, isLoading: isOrdersLoading} = useSuspenseQuery(loadOrders(supabase));
-
-    const {data: families, isLoading: isFamiliesLoading} = useQuery(
-        supabase.from("family").select("id,name").not('name', 'is', null)
-            .eq('order_id', editedGenomRow?.order?.id || -1),
-        {enabled: !!editedGenomRow?.order?.id}
-    );
-    const {data: genera, isLoading: isGeneraLoading} = useQuery(
-        supabase.from("genus").select("id,name").not('name', 'is', null)
-            .eq('family_id', editedGenomRow?.family?.id || -1),
-        {enabled: !!editedGenomRow?.family?.id}
-    );
-    const {data: kinds, isLoading: isKindsLoading} = useQuery(
-        supabase.from("kind").select("id,name").not('name', 'is', null)
-            .eq('genus_id', editedGenomRow?.genus?.id || -1),
-        {enabled: !!editedGenomRow?.genus?.id}
-    );
-
-    const handleFieldChange = (field: string, value: Topology | undefined) => {
-        if (!editedGenomRow) return;
-
-        const updatedRow = {...editedGenomRow};
-        switch (field) {
-            case 'order':
-                updatedRow.order = value;
-                updatedRow.family = undefined;
-                updatedRow.genus = undefined;
-                updatedRow.kind = undefined;
-                break;
-            case 'family':
-                updatedRow.family = value;
-                updatedRow.genus = undefined;
-                updatedRow.kind = undefined;
-                break;
-            case 'genus':
-                updatedRow.genus = value;
-                updatedRow.kind = undefined;
-                break;
-            case 'kind':
-                updatedRow.kind = value;
-                break;
-        }
-
-        setEditedGenomRow(updatedRow);
-    };
-
-    const handleSave = async () => {
-        if (editedGenomRow) {
-            console.log(editedGenomRow)
-            await supabase.rpc("update_collection_taxonomy_by_ids", {
-                col_id: editedGenomRow.rowId!,
-                order_id: editedGenomRow.order?.id ?? undefined,
-                family_id: editedGenomRow.family?.id ?? undefined,
-                genus_id: editedGenomRow.genus?.id ?? undefined,
-                kind_id: editedGenomRow.kind?.id ?? undefined
-            })
-            setEditedGenomRow(null)
-
-        }
-    };
-
-    const handleCancel = () => {
-        setEditedGenomRow(null);
-    };
 
     const getFieldProps = (field: 'order' | 'family' | 'genus' | 'kind') => {
         let options: { id: number, name: string | null }[] = [];
@@ -218,7 +173,6 @@ export default function getColumns() {
 
         return {options, isDisabled};
     };
-
 
     return [
         /* Вернуть, когда будет смысл
@@ -292,12 +246,12 @@ export default function getColumns() {
                                 isEditing={isEditing}
                                 options={options}
                                 isDisabled={isDisabled}
-                                onEdit={setEditedGenomRow}
-                                onChange={handleFieldChange}
+                                onEdit={() => onEdit(info.row.original)}
+                                onChange={onFieldChange}
                                 showActions={false}
-                                onSave={handleSave}
+                                onSave={onSave}
                                 isLoading={isOrdersLoading}
-                                onCancel={handleCancel}
+                                onCancel={onCancel}
                             />
                         );
                     },
@@ -322,13 +276,12 @@ export default function getColumns() {
                                 isEditing={isEditing}
                                 options={options}
                                 isDisabled={isDisabled}
-                                onEdit={setEditedGenomRow}
-                                onChange={handleFieldChange}
+                                onEdit={() => onEdit(info.row.original)}
+                                onChange={onFieldChange}
                                 showActions={false}
-                                onSave={handleSave}
+                                onSave={onSave}
                                 isLoading={isFamiliesLoading}
-
-                                onCancel={handleCancel}
+                                onCancel={onCancel}
                             />
                         );
                     },
@@ -353,13 +306,12 @@ export default function getColumns() {
                                 isEditing={isEditing}
                                 options={options}
                                 isDisabled={isDisabled}
-                                onEdit={setEditedGenomRow}
-                                onChange={handleFieldChange}
+                                onEdit={() => onEdit(info.row.original)}
+                                onChange={onFieldChange}
                                 showActions={false}
-                                onSave={handleSave}
+                                onSave={onSave}
                                 isLoading={isGeneraLoading}
-
-                                onCancel={handleCancel}
+                                onCancel={onCancel}
                             />
                         );
                     }, header: "Род",
@@ -383,13 +335,12 @@ export default function getColumns() {
                                 isEditing={isEditing}
                                 options={options}
                                 isDisabled={isDisabled}
-                                onEdit={setEditedGenomRow}
-                                onChange={handleFieldChange}
-                                showActions={true}
-                                onSave={handleSave}
+                                onEdit={() => onEdit(info.row.original)}
+                                onChange={onFieldChange}
+                                showActions={false}
+                                onSave={onSave}
                                 isLoading={isKindsLoading}
-
-                                onCancel={handleCancel}
+                                onCancel={onCancel}
                             />
                         );
                     }, header: "Вид",
