@@ -23,7 +23,7 @@ export const basicView = (client: TypedSupabaseClient, params: {
             lastPage.data.length === 0 ||
             lastPage.data.length < fetchSize
         ) {
-            console.log({ message: "ok, end of data" });
+            console.log({message: "ok, end of data"});
             return undefined;
         }
 
@@ -42,49 +42,59 @@ export async function getBasicView(client: TypedSupabaseClient, page: number, fi
 
     let query = client.from("basic_view").select("*", {count: "exact"})
 
-    if (!filters) {
-        return (await query.range(start , finish));
-    }
+    if (filters) {
+        // применяем фильтры
+        /* очень хочется выделить в отдельную функцию, но будут проблемы с типами */
 
-    if (filters?.collect_id) {
-        query = query.textSearch("collect_id", filters.collect_id)
-    }
-    // Применяем фильтры к дате
-    applyDateRangeFiltersToQuery(query, filters.from_date, filters.to_date)
+        if (filters?.id) {
+            const {data} = await client.from("basic_view").select("id.max()").single()
 
-
-    const taxonomyFields: (keyof Pick<
-        FormattedBasicViewFilters,
-        "order" | "family" | "genus" | "kind"
-    >)[] = ["order", "family", "genus", "kind"];
-    taxonomyFields.forEach((field) => {
-        if (filters[field]) {
-            if (filters[field] === " ") {
-                query = query.is(field + "->>name", null);
-            } else {
-
-                query = query.filter(field + "->>name", "eq", filters[field]) // 'order_name', 'family_name' etc.
+            const ids = parseIndexFilter(filters.id as string, 1, data?.max ?? 10000);
+            if (ids.length > 0) {
+                query = query.in("id", ids)
             }
         }
-    });
 
-    if (filters?.id) {
-        const {data} = await client.from("basic_view").select("id.max()").single()
-
-        const ids = parseIndexFilter(filters.id as string, 1, data?.max ?? 10000);
-        if (ids.length > 0) {
-            query = query.in("id", ids)
+        if (filters?.collect_id) {
+            query = query.textSearch("collect_id", filters.collect_id)
         }
+
+
+        const taxonomyFields: (keyof Pick<
+            FormattedBasicViewFilters,
+            "order" | "family" | "genus" | "kind"
+        >)[] = ["order", "family", "genus", "kind"];
+        taxonomyFields.forEach((field) => {
+            if (filters[field]) {
+                if (filters[field] === " ") {
+                    query = query.is(field + "->>name", null);
+                } else {
+
+                    query = query.filter(field + "->>name", "eq", filters[field]) // 'order_name', 'family_name' etc.
+                }
+            }
+        });
+
+
+        // Применяем фильтры к дате
+        applyDateRangeFiltersToQuery(query, filters.from_date, filters.to_date)
+
+        if (filters.sex) {
+            query.eq("sex", filters.sex)
+        }
+        if (filters.age) {
+            query.eq("age", filters.age)
+        }
+
+
     }
 
-    const res = (await query.range(start , finish))
+
+    const res = (await query.range(start, finish))
 
 
     return res;
 }
-
-
-
 
 
 export const orders = (client: TypedSupabaseClient) => queryOptions({

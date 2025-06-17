@@ -11,6 +11,8 @@ export interface FormattedBasicViewFilters{
     kind?:string,
     from_date?:string,
     to_date?:string,
+    sex?: string,
+    age?: string
 }
 
 export function toGenomRow(view: FormattedBasicView): GenomRow {
