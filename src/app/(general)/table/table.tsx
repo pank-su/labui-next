@@ -274,7 +274,7 @@ export default function CollectionTable({params}: {params: { [key: string]: stri
             <div className="flex-1 flex" style={{minHeight: 0}}>
 
                 <div className={mapState === "open" ? "w-1/2" : "w-full"}>
-                    <DataTable table={table} hasNextPage={hasNextPage} fetchedSize={tableData.length} size={data.pages[0].count ?? 0} fetchNextPage={fetchNextPage} isFetching={isFetching} loading={isLoading} padding={42}/>
+                    <DataTable filters={params} tableName={"basic_view"} table={table} hasNextPage={hasNextPage} fetchedSize={tableData.length} size={data.pages[0].count ?? 0} fetchNextPage={fetchNextPage} isFetching={isFetching} loading={isLoading} padding={42}/>
                 </div>
 
                 {mapState === "open" && <div className={"w-1/2"}>

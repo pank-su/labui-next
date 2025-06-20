@@ -1,6 +1,6 @@
 import {TypedSupabaseClient} from "@/utils/supabase/typed";
 import {FormattedBasicViewFilters} from "@/app/(general)/models";
-import {parseIndexFilter, parseIndexFilterToSupabaseFilter} from "@/utils/parseIndexFilter";
+import {parseIndexFilterToSupabaseFilter} from "@/utils/parseIndexFilter";
 import {infiniteQueryOptions, keepPreviousData, queryOptions} from "@tanstack/react-query";
 import {ReadonlyURLSearchParams} from "next/navigation";
 import {parseDate} from "@/utils/date";
@@ -36,12 +36,8 @@ export const basicView = (client: TypedSupabaseClient, params: {
 })
 
 
-
 // Создаём запрос c фильтроми и сортировкой к basic query
-function basicViewQuery(client: TypedSupabaseClient, filters: FormattedBasicViewFilters | undefined,  range: {
-    start: number,
-    end: number
-} | undefined = undefined) {
+function basicViewQuery(client: TypedSupabaseClient, filters: FormattedBasicViewFilters | undefined) {
     let max;
     let query = client.from("basic_view").select("*", {count: "exact"})
 
@@ -49,9 +45,7 @@ function basicViewQuery(client: TypedSupabaseClient, filters: FormattedBasicView
 
 
     if (!filters) {
-        if (range) {
-            query = query.range(range.start, range.end)
-        }
+
         return query
     }
     // применяем фильтры
@@ -104,9 +98,7 @@ function basicViewQuery(client: TypedSupabaseClient, filters: FormattedBasicView
         query = query.or(parseIndexFilterToSupabaseFilter(filters.id,))
 
     }
-    if (range) {
-        query = query.range(range.start, range.end)
-    }
+
     return query;
 }
 
@@ -116,10 +108,7 @@ export async function getBasicView(client: TypedSupabaseClient, page: number, fi
     const start = page * fetchSize
     const finish = start + fetchSize - 1
 
-    const query = ( basicViewQuery(client, filters, {start: start, end: finish}))
-
-
-    return query;
+    return (basicViewQuery(client, filters).range(start, finish));
 }
 
 
@@ -131,6 +120,26 @@ export const orders = (client: TypedSupabaseClient) => queryOptions({
 
 async function loadOrders(client: TypedSupabaseClient) {
     return (await client.from("order").select("id,name").not('name', 'is', null)).data
+}
+
+
+export function values(client: TypedSupabaseClient, tableName: string, columnId: string, filters: {
+    [key: string]: string | string[] | undefined
+} | undefined = undefined) {
+    return queryOptions({
+        queryKey: [tableName, columnId, filters],
+        queryFn: async () => {
+            switch (tableName) {
+                case "basic_view":
+                   return basicViewQuery(client, filters as (FormattedBasicViewFilters | undefined)).select(`value:${columnId}, count()`).overrideTypes<{
+                       value: string | null, count: number
+
+                   }[]>();
+
+            }
+        },
+    })
+
 }
 
 
@@ -179,3 +188,5 @@ export function applyDateRangeFiltersToQuery(
 
     return query;
 }
+
+

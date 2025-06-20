@@ -96,7 +96,7 @@ export function parseIndexFilterToSupabaseFilter(input: string, fieldName: strin
 
         } else {
             // Иначе это одиночная страница, если она валидна — добавляем
-            const page = parseInt(part, 10);
+            const page = parseInt(part);
             if (!Number.isNaN(page)) {
                 rez.push(`${fieldName}.eq.${page}`);
             }

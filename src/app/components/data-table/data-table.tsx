@@ -6,11 +6,9 @@ import {SortedIcon} from "../sorted-filter";
 import {VirtualTableBody} from "./body";
 import useWindowSize from "@/utils/useWindowSize";
 import {useCallback, useMemo, useRef} from "react";
-import {FloatButton, Spin} from "antd";
+import {Spin} from "antd";
 import {useVirtualizer} from "@tanstack/react-virtual";
-import {VerticalAlignBottomOutlined, VerticalAlignTopOutlined} from "@ant-design/icons";
 import Filter from "./filters/filter";
-import {AnimatePresence, motion} from "framer-motion";
 import {FetchNextPageOptions, InfiniteQueryObserverResult} from "@tanstack/react-query";
 import {InfiniteData} from "@tanstack/query-core";
 
@@ -24,9 +22,14 @@ interface DataTableProps<T> {
     fetchNextPage: (options?: FetchNextPageOptions) => Promise<InfiniteQueryObserverResult<InfiniteData<any>>>,
     isFetching?: boolean,
     hasNextPage?: boolean
+    tableName?: string,
+    filters: {
+        [key: string]: string | string[] | undefined
+    }
 }
 
 export default function DataTable<T>({
+                                         tableName,
                                          table,
                                          loading = false,
                                          padding = 0,
@@ -34,7 +37,7 @@ export default function DataTable<T>({
                                          fetchedSize = 0,
                                          fetchNextPage,
                                          isFetching,
-                                         hasNextPage
+                                         hasNextPage, filters
                                      }: DataTableProps<T>) {
     const windowSize = useWindowSize()
 
@@ -142,7 +145,7 @@ export default function DataTable<T>({
                                                display: 'flex',
                                                width: header.getSize(),
                                            }}>
-                                    <Filter column={header.column}/>
+                                    <Filter filters={filters} column={header.column} tableName={tableName || ""} />
                                 </th>
                             })}
                         </TableRow>
@@ -156,63 +159,5 @@ export default function DataTable<T>({
             </Spin>
 
         </div>
-
-        {/*<AnimatedFloatButton rows={rows} scrollPosition={scrollPosition} rowVirtualizer={rowVirtualizer}/>*/}
-
     </>;
 }
-
-
-/**
- * Анимированная кнопка для спуска вниз или вверх
- */
-interface AnimatedFloatButtonProps {
-    rows: any[];
-    scrollPosition: number;
-    rowVirtualizer: {
-        scrollToIndex: (index: number) => void;
-    };
-}
-
-export const AnimatedFloatButton: React.FC<AnimatedFloatButtonProps> = ({
-                                                                            rows,
-                                                                            scrollPosition,
-                                                                            rowVirtualizer,
-                                                                        }) => {
-    const isBottom = scrollPosition < rows.length / 2;
-
-    return (
-        <AnimatePresence>
-            {rows.length > 30 && (
-                <motion.div
-                    initial={{opacity: 0, scale: 0.8}}
-                    animate={{opacity: 1, scale: 1}}
-                    exit={{opacity: 0, scale: 0.8}}
-                    transition={{duration: 0.3}}
-                    style={{position: "fixed", bottom: 20, right: 20}}
-                >
-                    <FloatButton
-                        icon={
-                            <motion.div
-                                key={isBottom ? "down" : "up"}
-                                initial={{rotate: -90, opacity: 0}}
-                                animate={{rotate: 0, opacity: 1}}
-                                exit={{rotate: 90, opacity: 0}}
-                                transition={{duration: 0.3}}
-                            >
-                                {isBottom ? <VerticalAlignBottomOutlined/> : <VerticalAlignTopOutlined/>}
-                            </motion.div>
-                        }
-                        onClick={() => {
-                            if (isBottom) {
-                                rowVirtualizer.scrollToIndex(rows.length - 1);
-                            } else {
-                                rowVirtualizer.scrollToIndex(0);
-                            }
-                        }}
-                    />
-                </motion.div>
-            )}
-        </AnimatePresence>
-    );
-};
