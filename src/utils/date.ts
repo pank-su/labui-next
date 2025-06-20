@@ -8,13 +8,13 @@
 export function date(year: number | null, month: number | null, day: number | null): string {
     const parts: string[] = [];
 
-    if (day !== null) {
+    if (day) {
         parts.push(day.toString().padStart(2, '0'));
     }
-    if (month !== null) {
+    if (month) {
         parts.push(month.toString().padStart(2, '0'));
     }
-    if (year !== null) {
+    if (year) {
         parts.push(year.toString());
     }
 

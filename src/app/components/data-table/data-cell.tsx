@@ -26,15 +26,15 @@ export const DataCell: React.FC<DateCellProps> = ({
                                                       disabled = false,
                                                   }) => {
     const [edit, setEdit] = useState(false);
-    const [yearValue, setYearValue] = useState<string>(year !== null ? year.toString() : '');
-    const [monthValue, setMonthValue] = useState<string>(month !== null ? month.toString() : '');
-    const [dayValue, setDayValue] = useState<string>(day !== null ? day.toString() : '');
+    const [yearValue, setYearValue] = useState<string>(year ? year.toString() : '');
+    const [monthValue, setMonthValue] = useState<string>(month  ? month.toString() : '');
+    const [dayValue, setDayValue] = useState<string>(day? day.toString() : '');
 
     // Обновляем локальное состояние при изменении props
     useEffect(() => {
-        setYearValue(year !== null ? year.toString() : '');
-        setMonthValue(month !== null ? month.toString() : '');
-        setDayValue(day !== null ? day.toString() : '');
+        setYearValue(year ? year.toString() : '');
+        setMonthValue(month  ? month.toString() : '');
+        setDayValue(day ? day.toString() : '');
     }, [year, month, day]);
 
     const handleSave = async () => {
