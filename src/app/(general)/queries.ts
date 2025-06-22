@@ -38,7 +38,6 @@ export const basicView = (client: TypedSupabaseClient, params: {
 
 // Создаём запрос c фильтроми и сортировкой к basic query
 function basicViewQuery(client: TypedSupabaseClient, filters: FormattedBasicViewFilters | undefined) {
-    let max;
     let query = client.from("basic_view").select("*", {count: "exact"})
 
     //
@@ -52,11 +51,23 @@ function basicViewQuery(client: TypedSupabaseClient, filters: FormattedBasicView
     /* очень хочется выделить в отдельную функцию, но будут проблемы с типами */
 
 
-    const textSearchFields = ["collect_id", "comment", "geocomment"] as const;
+    // Возможно, верну позже, сейчас не очень привычная его работа
+    const textSearchFields = [] as const;
     textSearchFields.forEach(field => {
         if (filters[field]) {
 
-            query = query.textSearch(field, filters[field])
+            query = query.textSearch(field, filters[field], {
+                config: "russian",
+            })
+        }
+
+    })
+
+    const likeFields = ["collect_id", "voucher_id","comment", "geo_comment"] as const;
+    likeFields.forEach(field => {
+        if (filters[field]) {
+
+            query = query.like(field, `%${filters[field]}%`)
         }
 
     })

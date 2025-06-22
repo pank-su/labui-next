@@ -18,7 +18,8 @@ export interface FormattedBasicViewFilters{
     region?:string
     voucher?: string,
     comment?: string,
-    geocomment?:string
+    geo_comment?:string,
+    voucher_id?:string 
 }
 
 export function toGenomRow(view: FormattedBasicView): GenomRow {
