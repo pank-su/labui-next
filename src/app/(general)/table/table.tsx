@@ -291,6 +291,9 @@ export default function CollectionTable({params}: { params: { [key: string]: str
 
 
             </div>
+            <div className="absolute bottom-4 left-4 px-3 py-2 text-sm text-gray-600 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border z-50">
+                Загружено {tableData.length} из {data.pages[0].count ?? 0} записей
+            </div>
         </div>
     );
 }
