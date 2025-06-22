@@ -63,11 +63,11 @@ function basicViewQuery(client: TypedSupabaseClient, filters: FormattedBasicView
 
     })
 
-    const likeFields = ["collect_id", "voucher_id","comment", "geo_comment"] as const;
+    const likeFields = ["collect_id", "voucher_id", "comment", "geo_comment"] as const;
     likeFields.forEach(field => {
         if (filters[field]) {
 
-            query = query.like(field, `%${filters[field]}%`)
+            query = query.ilike(field, `%${filters[field]}%`)
         }
 
     })
@@ -104,10 +104,25 @@ function basicViewQuery(client: TypedSupabaseClient, filters: FormattedBasicView
         }
     })
 
+
     // Фильтр по id
     if (filters?.id) {
         query = query.or(parseIndexFilterToSupabaseFilter(filters.id,))
 
+    }
+
+    const otherFields = []
+
+    // Поиск
+    if (filters?.q) {
+        const queryString = filters.q.trim().toLowerCase()
+
+        query = query.or([...selectFields, ...(taxonomyFields.map((field) => `${field}->>name`)), ...likeFields].map(field => {
+            if (field == "voucher") {
+                return `voucher_institute.ilike.%${queryString}%`
+            } else return `${field}.ilike.%${queryString}%`
+        }).join(","))
+        //query.ilike("")
     }
 
     return query;
@@ -120,6 +135,10 @@ export async function getBasicView(client: TypedSupabaseClient, page: number, fi
     const finish = start + fetchSize - 1
 
     return (basicViewQuery(client, filters).range(start, finish));
+}
+
+export async function getBasicViewModelCsv(client: TypedSupabaseClient, filters: FormattedBasicViewFilters | undefined = undefined) {
+    return (basicViewQuery(client, filters).csv())
 }
 
 
@@ -142,10 +161,10 @@ export function values(client: TypedSupabaseClient, tableName: string, columnId:
         queryFn: async () => {
             switch (tableName) {
                 case "basic_view":
-                   return basicViewQuery(client, filters as (FormattedBasicViewFilters | undefined)).select(`value:${columnId}, count()`).overrideTypes<{
-                       value: string | null, count: number
+                    return basicViewQuery(client, filters as (FormattedBasicViewFilters | undefined)).select(`value:${columnId}, count()`).overrideTypes<{
+                        value: string | null, count: number
 
-                   }[]>();
+                    }[]>();
 
             }
         },

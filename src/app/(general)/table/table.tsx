@@ -28,6 +28,7 @@ import {usePathname, useRouter, useSearchParams} from "next/navigation";
 import CollectionMap from "@/app/components/map/CollectionMap";
 import {useSuspenseInfiniteQuery, useSuspenseQuery} from "@tanstack/react-query";
 import {useUser} from "@/app/components/header";
+import {Spin} from "antd";
 
 
 const mapStates = ["closed", "open", "select"] as const;
@@ -57,7 +58,8 @@ export default function CollectionTable({params}: { params: { [key: string]: str
         isLoading,
         fetchNextPage,
         isFetching,
-        hasNextPage
+        hasNextPage,
+
     } = useSuspenseInfiniteQuery(queryOptions)
 
     const tableData = useMemo(
@@ -65,7 +67,6 @@ export default function CollectionTable({params}: { params: { [key: string]: str
         [data]
     )
 
-    const search = searchParams.get("q") ?? "";
 
     const param = searchParams.get("map");
     const mapState: "closed" | "open" | "select" = mapStates.includes(param as MapState)
@@ -210,9 +211,7 @@ export default function CollectionTable({params}: { params: { [key: string]: str
         getFacetedMinMaxValues: getFacetedMinMaxValues(),
         //debugTable: true,
         autoResetPageIndex: false,
-        state: {
-            globalFilter: search
-        },
+
         manualFiltering: true,
         filterFns: {
             selectFilter: (row, id, filterValue) => {
@@ -267,7 +266,7 @@ export default function CollectionTable({params}: { params: { [key: string]: str
     return (
         <div className="h-full flex flex-col">
 
-            <CollectionTableControls table={table}/>
+            <CollectionTableControls filters={params} table={table}/>
 
             {/* Содержимое в зависимости от режима отображения */}
             <div className="flex-1 flex" style={{minHeight: 0}}>
@@ -291,8 +290,10 @@ export default function CollectionTable({params}: { params: { [key: string]: str
 
 
             </div>
-            <div className="absolute bottom-4 left-4 px-3 py-2 text-sm text-gray-600 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border z-50">
+            <div
+                className="absolute bottom-4 left-4 px-3 py-2 text-sm text-gray-600 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border z-50">
                 Загружено {tableData.length} из {data.pages[0].count ?? 0} записей
+                {isFetching && <><span className="mx-1"/> <Spin size={"small"}/></>}
             </div>
         </div>
     );

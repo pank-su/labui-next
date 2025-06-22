@@ -11,10 +11,6 @@ export function Search() {
     const search = searchParams.get("q") ?? "";
 
 
-
-
-    // const {setSearch, search} = useSearch()
-
     const [query, setQuery] = useState<string>(search)
 
     const searchHook = () => {

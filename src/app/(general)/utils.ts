@@ -58,3 +58,27 @@ export function buildDateFilterString(
 
     return orConditions.join(",");
 }
+
+
+// Скачивание csv файла
+export const downloadCSV = (csvString: string, filename: string) => {
+    // Создаем Blob с CSV данными
+    const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+
+    // Создаем URL для blob
+    const url = URL.createObjectURL(blob);
+
+    // Создаем временную ссылку для скачивания
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", filename);
+    link.style.visibility = "hidden";
+
+    // Добавляем в DOM, кликаем и удаляем
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // Освобождаем память
+    URL.revokeObjectURL(url);
+};

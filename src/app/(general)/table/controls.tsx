@@ -1,24 +1,18 @@
-import {
-    DownloadOutlined,
-    EnvironmentOutlined,
-    PlusOutlined,
-    ReloadOutlined,
-    SplitCellsOutlined,
-    TableOutlined
-} from "@ant-design/icons";
-import {Button, Popconfirm, Space, Tooltip} from "antd";
+import {DownloadOutlined, EnvironmentOutlined, PlusOutlined, ReloadOutlined} from "@ant-design/icons";
+import {Button, Popconfirm, Tooltip} from "antd";
 import {Table} from "@tanstack/react-table";
 import {FormattedBasicView} from "@/app/(general)/models";
 import NewId from "@/app/components/data-table/new-id";
 import {useUser} from "@/app/components/header";
-import {download, generateCsv, mkConfig} from "export-to-csv";
 import {useInsertMutation} from "@supabase-cache-helpers/postgrest-react-query";
 import {useClient} from "@/utils/supabase/client";
 import {useRouter} from "next/navigation";
+import {getBasicViewModelCsv} from "@/app/(general)/queries";
+import {downloadCSV} from "@/app/(general)/utils";
 
 
-export default function CollectionTableControls({table}: {
-    table: Table<FormattedBasicView>
+export default function CollectionTableControls({table, filters}: {
+    table: Table<FormattedBasicView>, filters: { [key: string]: string | string[] | undefined }
 }) {
 
 
@@ -26,7 +20,6 @@ export default function CollectionTableControls({table}: {
 
     const supabase = useClient()
 
-    const csvConfig = mkConfig({useKeysAsHeaders: true});
 
 
     const userLoad = useUser();
@@ -76,37 +69,29 @@ export default function CollectionTableControls({table}: {
                     <Button
                         type="text"
                         icon={<DownloadOutlined/>}
-                        onClick={() => {
-                            const rows = table.getRowModel().rows.map(row => ({
-                                ...row.original,
-                                collectors: row.original.collectors?.map((collector) => `${collector.last_name} ${collector.first_name} ${collector.second_name}`).join(","),
-                                tags: row.original.tags?.map((t) => t.name).join(","),
-                                order: row.original.order?.name,
-                                family: row.original.family?.name,
-                                genus: row.original.genus?.name,
-                                kind: row.original.kind?.name
-                            }));
-
-                            const csv = generateCsv(csvConfig)(rows);
-                            download(csvConfig)(csv);
+                        onClick={async () => {
+                            const csv = await getBasicViewModelCsv(supabase, filters)
+                            if (csv.data) {
+                                downloadCSV(csv.data, "collection.csv")
+                            }
                         }}
                     />
                 </Tooltip>
             </div>
 
             {/* Кнопки переключения режимов отображения */}
-            <div className="space-x-2">
-                <Tooltip title="Открыть карту на весь экран">
-                    <Button
-                        type="primary"
-                        ghost
-                        icon={<EnvironmentOutlined/>}
-                        onClick={() => router.push('/map')}
-                    >
-                        Карта
-                    </Button>
-                </Tooltip>
-            </div>
+            {/*<div className="space-x-2">*/}
+            {/*    <Tooltip title="Открыть карту на весь экран">*/}
+            {/*        <Button*/}
+            {/*            type="primary"*/}
+            {/*            ghost*/}
+            {/*            icon={<EnvironmentOutlined/>}*/}
+            {/*            onClick={() => router.push('/map')}*/}
+            {/*        >*/}
+            {/*            Карта*/}
+            {/*        </Button>*/}
+            {/*    </Tooltip>*/}
+            {/*</div>*/}
         </div>
     </>
 }
