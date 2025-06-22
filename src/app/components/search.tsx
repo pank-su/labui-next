@@ -17,12 +17,12 @@ export function Search() {
         const params = new URLSearchParams(searchParams);
         if (query.trim() != "") {
             params.set("q", query);
-            if (params.size != 0) router.push(pathname + "?" + params.toString());
-            else {
-                router.push(pathname)
-            }
-        } else {
-            router.push(pathname);
+        }else{
+            params.delete("q")
+        }
+        if (params.size != 0) router.push(pathname + "?" + params.toString());
+        else {
+            router.push(pathname)
         }
     }
 

@@ -1,5 +1,5 @@
 import {TypedSupabaseClient} from "@/utils/supabase/typed";
-import {FormattedBasicViewFilters} from "@/app/(general)/models";
+import {FormattedBasicViewFilters, GeoBasicView} from "@/app/(general)/models";
 import {parseIndexFilterToSupabaseFilter} from "@/utils/parseIndexFilter";
 import {infiniteQueryOptions, keepPreviousData, queryOptions} from "@tanstack/react-query";
 import {ReadonlyURLSearchParams} from "next/navigation";
@@ -156,8 +156,10 @@ async function loadOrders(client: TypedSupabaseClient) {
 export function values(client: TypedSupabaseClient, tableName: string, columnId: string, filters: {
     [key: string]: string | string[] | undefined
 } | undefined = undefined) {
+    const {from_lat, to_lat, from_lng, to_lng, ...cleanFilters} = filters || {}
+
     return queryOptions({
-        queryKey: [tableName, columnId, filters],
+        queryKey: [tableName, columnId,  cleanFilters as (FormattedBasicViewFilters | undefined)],
         queryFn: async () => {
             switch (tableName) {
                 case "basic_view":
@@ -170,6 +172,25 @@ export function values(client: TypedSupabaseClient, tableName: string, columnId:
         },
     })
 
+}
+
+
+export async function getGeoBasicView(client: TypedSupabaseClient, filters: {
+    [key: string]: string | string[] | undefined
+} | undefined = undefined) {
+    const result = await basicViewQuery(client, filters)
+        .select("id,collect_id,order,family,genus,kind,latitude,longitude");
+    return result.data as GeoBasicView[] || [];
+}
+export function geoBasicView(client: TypedSupabaseClient, filters: {
+    [key: string]: string | string[] | undefined
+} | undefined = undefined) {
+    const {from_lat, to_lat, from_lng, to_lng, ...cleanFilters} = filters || {}
+
+    return queryOptions({
+        queryKey: ["geo_basic_view", cleanFilters],
+        queryFn: async () =>  getGeoBasicView(client, filters),
+    })
 }
 
 

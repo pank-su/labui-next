@@ -1,6 +1,19 @@
-import { CompositeTypes, Tables } from "@/utils/supabase/gen-types";
+import {CompositeTypes, Database, Tables} from "@/utils/supabase/gen-types";
 
 export type FormattedBasicView = Tables<"basic_view"> & {size?: number};
+
+export interface GeoBasicView {
+    id: number;
+    collect_id?: string;
+    order?: Database["public"]["CompositeTypes"]["topology_type"]
+    family?: Database["public"]["CompositeTypes"]["topology_type"]
+    genus?: Database["public"]["CompositeTypes"]["topology_type"]
+    kind?: Database["public"]["CompositeTypes"]["topology_type"]
+    sex?: string,
+    age?: string
+    latitude: number
+    longitude: number
+}
 
 // Тип для query фильтров по коллекции
 export interface FormattedBasicViewFilters{
@@ -23,6 +36,13 @@ export interface FormattedBasicViewFilters{
 
 
     q?: string,
+}
+
+export interface GeoFilters{
+    from_lng: number,
+    from_lat: number,
+    to_lng: number,
+    to_lat: number,
 }
 
 export function toGenomRow(view: FormattedBasicView): GenomRow {

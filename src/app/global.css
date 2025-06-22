@@ -59,3 +59,7 @@
         @apply font-sans antialiased bg-background text-foreground;
     }
 }
+
+.maplibregl-popup-content {
+    padding: 0 !important;
+}

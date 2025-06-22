@@ -3,7 +3,7 @@
 import React, { useCallback, useMemo, useRef, useState } from "react"
 import { Map, Marker, NavigationControl, Popup } from "react-map-gl/maplibre"
 import {Button, Card, Empty, List, Spin, Typography} from "antd"
-import { FormattedBasicView } from "@/app/(general)/models"
+import {GeoBasicView} from "@/app/(general)/models"
 import { useRouter } from "next/navigation"
 import useSupercluster from "use-supercluster"
 import "maplibre-gl/dist/maplibre-gl.css"
@@ -13,7 +13,7 @@ const { Text } = Typography
 interface CollectionMapProps {
     height?: string
     onBoundsChange?: (bounds: [number, number, number, number]) => void
-    items: FormattedBasicView[] // Элементы для отображения (обязательный)
+    items: GeoBasicView[]
     isLoading?: boolean
 }
 
@@ -22,7 +22,7 @@ interface PointFeature {
     properties: {
         cluster?: boolean
         itemId: number
-        item: FormattedBasicView
+        item: GeoBasicView
     }
     geometry: {
         type: "Point"
@@ -30,23 +30,19 @@ interface PointFeature {
     }
 }
 
-/**
- * Компонент для отображения элементов коллекции на карте
- * с поддержкой кластеризации близких элементов.
- * Данные передаются через items.
- */
-const CollectionMap: React.FC<CollectionMapProps> = ({
-                                                         height = "600px",
-                                                         onBoundsChange,
-                                                         items,
-                                                         isLoading = false
-                                                     }) => {
-    const router = useRouter() // Оставлен, может пригодиться для действий в попапах
+export const MapFilter: React.FC<CollectionMapProps> = ({
+                                                            height = "600px",
+                                                            onBoundsChange,
+                                                            items,
+                                                            isLoading = false
+                                                        }) => {
+    const router = useRouter()
     const mapRef = useRef<any>(null)
 
-    const [popupInfo, setPopupInfo] = useState<FormattedBasicView | null>(null)
+    // Добавляем debounce для onBoundsChange
+    const boundsChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
     const [pointItems, setPointItems] = useState<{
-        items: FormattedBasicView[]
+        items: GeoBasicView[]
         longitude: number
         latitude: number
     } | null>(null)
@@ -55,7 +51,6 @@ const CollectionMap: React.FC<CollectionMapProps> = ({
     >(undefined)
     const [zoom, setZoom] = useState(3)
 
-    // Используем переданные элементы
     const data = useMemo(() => {
         return items || []
     }, [items])
@@ -73,8 +68,14 @@ const CollectionMap: React.FC<CollectionMapProps> = ({
         setBounds(newBounds)
         setZoom(map.getZoom())
 
+        // Debounce для onBoundsChange
         if (onBoundsChange) {
-            onBoundsChange(newBounds)
+            if (boundsChangeTimeoutRef.current) {
+                clearTimeout(boundsChangeTimeoutRef.current)
+            }
+            boundsChangeTimeoutRef.current = setTimeout(() => {
+                onBoundsChange(newBounds)
+            }, 300)
         }
     }, [onBoundsChange])
 
@@ -137,7 +138,6 @@ const CollectionMap: React.FC<CollectionMapProps> = ({
                     longitude,
                     latitude,
                 })
-                setPopupInfo(null)
             } else {
                 const expansionZoom = Math.min(
                     supercluster.getClusterExpansionZoom(clusterId) || 0,
@@ -154,10 +154,40 @@ const CollectionMap: React.FC<CollectionMapProps> = ({
         [supercluster],
     )
 
-    const handleMarkerClick = useCallback((item: FormattedBasicView) => {
-        setPopupInfo(item)
-        setPointItems(null)
+    const handleMarkerClick = useCallback((item: GeoBasicView) => {
+        setPointItems({
+            items: [item],
+            longitude: item.longitude!,
+            latitude: item.latitude!,
+        })
     }, [])
+
+    // Мемоизируем кластеры для предотвращения мигания
+    const memoizedClusters = useMemo(() => {
+        return clusters.map((cluster) => {
+            const [longitude, latitude] = cluster.geometry.coordinates
+            const properties = cluster.properties
+            const isCluster = properties.cluster
+            const pointCount = isCluster ? (properties as any).point_count : 1
+            const size = Math.min((pointCount / points.length) * 100, 40) + 20
+
+            // Используем стабильный ключ
+            const key = isCluster
+                ? `cluster-${(cluster as any).id}`
+                : `point-${properties.itemId}`
+
+            return {
+                key,
+                longitude,
+                latitude,
+                isCluster,
+                pointCount,
+                size,
+                clusterId: (cluster as any).id,
+                item: properties.item
+            }
+        })
+    }, [clusters, points.length])
 
     if (isLoading){
         return <div
@@ -194,7 +224,7 @@ const CollectionMap: React.FC<CollectionMapProps> = ({
         )
     }
 
-    const formatTaxonomy = (item: FormattedBasicView) => {
+    const formatTaxonomy = (item: GeoBasicView) => {
         const parts = []
         if (item.order?.name) parts.push(item.order.name)
         if (item.family?.name) parts.push(item.family.name)
@@ -203,16 +233,12 @@ const CollectionMap: React.FC<CollectionMapProps> = ({
         return parts.join(" > ")
     }
 
-    const formatLocation = (item: FormattedBasicView) => {
+    const formatAdditionalInfo = (item: GeoBasicView) => {
         const parts = []
-        if (item.country) parts.push(item.country)
-        if (item.region) parts.push(item.region)
+        if (item.sex) parts.push(`Пол: ${item.sex}`)
+        if (item.age) parts.push(`Возраст: ${item.age}`)
         return parts.join(", ")
     }
-
-    // const openItemDetails = (id: number) => { // Если понадобится кнопка в попапе
-    //     router.push(`/collection/${id}`);
-    // };
 
     return (
         <div style={{ height, width: "100%" }}>
@@ -229,74 +255,37 @@ const CollectionMap: React.FC<CollectionMapProps> = ({
             >
                 <NavigationControl position="top-right" />
 
-                {clusters.map((cluster) => {
-                    const [longitude, latitude] = cluster.geometry.coordinates
-                    const properties = cluster.properties
-                    const isCluster = properties.cluster
-                    const pointCount = isCluster ? (properties as any).point_count : 1
-                    const size =
-                        Math.min((pointCount / points.length) * 100, 40) + 20
-
-                    return (
-                        <Marker
-                            key={`cluster-${(cluster as any).id || Math.random()}`}
-                            longitude={longitude}
-                            latitude={latitude}
-                            onClick={() => {
-                                if (isCluster) {
-                                    handleClusterClick(
-                                        (cluster as any).id,
-                                        longitude,
-                                        latitude,
-                                    )
-                                } else {
-                                    handleMarkerClick(properties.item)
-                                }
+                {memoizedClusters.map((clusterData) => (
+                    <Marker
+                        key={clusterData.key}
+                        longitude={clusterData.longitude}
+                        latitude={clusterData.latitude}
+                        onClick={() => {
+                            if (clusterData.isCluster) {
+                                handleClusterClick(
+                                    clusterData.clusterId,
+                                    clusterData.longitude,
+                                    clusterData.latitude,
+                                )
+                            } else {
+                                handleMarkerClick(clusterData.item)
+                            }
+                        }}
+                    >
+                        <div
+                            className="flex items-center justify-center rounded-full text-white font-semibold cursor-pointer"
+                            style={{
+                                width: `${clusterData.size}px`,
+                                height: `${clusterData.size}px`,
+                                backgroundColor: "#1890ff",
+                                border: "2px solid white",
+                                boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
                             }}
                         >
-                            <div
-                                className="flex items-center justify-center rounded-full text-white font-semibold cursor-pointer"
-                                style={{
-                                    width: `${size}px`,
-                                    height: `${size}px`,
-                                    backgroundColor: "#1890ff",
-                                    border: "2px solid white",
-                                    boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
-                                }}
-                            >
-                                {pointCount}
-                            </div>
-                        </Marker>
-                    )
-                })}
-
-                {popupInfo && (
-                    <Popup
-                        longitude={popupInfo.longitude!}
-                        latitude={popupInfo.latitude!}
-                        anchor="bottom"
-                        closeOnClick={false}
-                        onClose={() => setPopupInfo(null)}
-                        maxWidth="300px"
-                    >
-                        <div className="p-2">
-                            <div className="font-bold text-lg">ID: {popupInfo.id}</div>
-                            <div className="text-sm">{formatTaxonomy(popupInfo)}</div>
-                            <div className="text-sm text-gray-600">
-                                {formatLocation(popupInfo)}
-                            </div>
-                            <div className="mt-2">
-                <span className="text-xs text-gray-500">
-                  {popupInfo.latitude}, {popupInfo.longitude}
-                </span>
-                            </div>
-                            {/* Пример кнопки для перехода, если понадобится */}
-                            {/* <Button size="small" onClick={() => openItemDetails(popupInfo.id!)} className="mt-2">
-                                Детали
-                            </Button> */}
+                            {clusterData.pointCount}
                         </div>
-                    </Popup>
-                )}
+                    </Marker>
+                ))}
 
                 {pointItems && (
                     <Popup
@@ -305,10 +294,13 @@ const CollectionMap: React.FC<CollectionMapProps> = ({
                         anchor="bottom"
                         closeOnClick={false}
                         onClose={() => setPointItems(null)}
+                        closeButton={false}
                         maxWidth="350px"
                     >
                         <Card
-                            title={`Элементы в точке (${pointItems.items.length})`}
+                            title={pointItems.items.length === 1
+                                ? `Элемент`
+                                : `Элементы в точке (${pointItems.items.length})`}
                             size="small"
                             style={{ maxHeight: "400px", overflow: "auto" }}
                             extra={
@@ -328,22 +320,20 @@ const CollectionMap: React.FC<CollectionMapProps> = ({
                                         <div className="w-full">
                                             <div className="flex justify-between items-center">
                                                 <Text strong>ID: {item.id}</Text>
-                                                {/* Пример кнопки для перехода, если понадобится */}
-                                                {/* <Button type="link" size="small" onClick={() => openItemDetails(item.id!)}>
-                                                    Детали
-                                                </Button> */}
                                             </div>
-                                            <div className="text-sm">{formatTaxonomy(item)}</div>
-                                            <div className="text-xs text-gray-500">
-                                                {formatLocation(item)}
-                                            </div>
+                                            <div className="text-sm mb-1">{formatTaxonomy(item)}</div>
+                                            {formatAdditionalInfo(item) && (
+                                                <div className="text-xs text-gray-600">
+                                                    {formatAdditionalInfo(item)}
+                                                </div>
+                                            )}
                                         </div>
                                     </List.Item>
                                 )}
                                 itemLayout="vertical"
                                 size="small"
                                 bordered={false}
-                                split={true}
+                                split={pointItems.items.length > 1}
                             />
                         </Card>
                     </Popup>
@@ -352,5 +342,3 @@ const CollectionMap: React.FC<CollectionMapProps> = ({
         </div>
     )
 }
-
-export default CollectionMap

@@ -2,7 +2,7 @@
 
 import {useClient} from "@/utils/supabase/client";
 import {
-    useQuery,
+    useQuery as useTableQuery,
     useSubscription,
     useUpdateMutation,
     useUpsertItem
@@ -16,7 +16,7 @@ import {
     useReactTable
 } from "@tanstack/react-table";
 import {useCallback, useMemo, useRef, useState} from "react";
-import {basicView, orders as loadOrders} from "@/app/(general)/queries";
+import {basicView, geoBasicView, orders as loadOrders} from "@/app/(general)/queries";
 
 import {Database, Tables} from "@/utils/supabase/gen-types";
 import {SupabaseClient} from "@supabase/supabase-js";
@@ -25,14 +25,14 @@ import DataTable from "@/app/components/data-table/data-table";
 import {FormattedBasicView, GenomRow, toGenomRow, Topology} from "../models"
 import CollectionTableControls from "@/app/(general)/table/controls";
 import {usePathname, useRouter, useSearchParams} from "next/navigation";
-import CollectionMap from "@/app/components/map/CollectionMap";
-import {useSuspenseInfiniteQuery, useSuspenseQuery} from "@tanstack/react-query";
+import {MapFilter} from "@/app/(general)/table/map-filter";
+import {useQuery, useSuspenseInfiniteQuery, useSuspenseQuery} from "@tanstack/react-query";
 import {useUser} from "@/app/components/header";
 import {Spin} from "antd";
+import {MapState, mapStates} from "@/app/components/data-table/filters/utils";
 
 
-const mapStates = ["closed", "open", "select"] as const;
-type MapState = typeof mapStates[number];
+
 
 async function loadBasicViewItemById(supabase: SupabaseClient<Database>, id: number) {
     return ((await supabase.from("basic_view").select("*").eq("id", id)).data as FormattedBasicView[])[0]
@@ -68,10 +68,19 @@ export default function CollectionTable({params}: { params: { [key: string]: str
     )
 
 
-    const param = searchParams.get("map");
-    const mapState: "closed" | "open" | "select" = mapStates.includes(param as MapState)
-        ? (param as MapState)
-        : "closed";
+    const mapState = useMemo(() => {
+        const mapParam = params["map"];
+        return mapStates.includes(mapParam as MapState)
+            ? (mapParam as MapState)
+            : "closed";
+    }, [params]);
+
+    const mapQuery = useMemo(() => geoBasicView(supabase, params)
+        , [params, supabase]);
+
+    const {data: mapItems, isLoading: mapItemsLoading} = useQuery(geoBasicView(supabase, params))
+
+
 
     const upsertItem = useUpsertItem({
         primaryKeys: ["id"],
@@ -93,17 +102,17 @@ export default function CollectionTable({params}: { params: { [key: string]: str
 
     const {data: orders, isLoading: isOrdersLoading} = useSuspenseQuery(loadOrders(supabase));
 
-    const {data: families, isLoading: isFamiliesLoading} = useQuery(
+    const {data: families, isLoading: isFamiliesLoading} = useTableQuery(
         supabase.from("family").select("id,name").not('name', 'is', null)
             .eq('order_id', editedGenomRow?.order?.id || -1),
         {enabled: !!editedGenomRow?.order?.id}
     );
-    const {data: genera, isLoading: isGeneraLoading} = useQuery(
+    const {data: genera, isLoading: isGeneraLoading} = useTableQuery(
         supabase.from("genus").select("id,name").not('name', 'is', null)
             .eq('family_id', editedGenomRow?.family?.id || -1),
         {enabled: !!editedGenomRow?.family?.id}
     );
-    const {data: kinds, isLoading: isKindsLoading} = useQuery(
+    const {data: kinds, isLoading: isKindsLoading} = useTableQuery(
         supabase.from("kind").select("id,name").not('name', 'is', null)
             .eq('genus_id', editedGenomRow?.genus?.id || -1),
         {enabled: !!editedGenomRow?.genus?.id}
@@ -244,23 +253,33 @@ export default function CollectionTable({params}: { params: { [key: string]: str
         boundsChangeTimeoutRef.current = setTimeout(() => {
 
 
-            const params = new URLSearchParams(searchParams);
+            const searchParams = new URLSearchParams();
 
-            params.set("from_lat", fromLat.toString());
-            params.set("to_lat", toLat.toString());
-            params.set("from_lng", fromLng.toString());
-            params.set("to_lng", toLng.toString());
-            if (params.size != 0) router.push(pathname + "?" + params.toString());
+            // Так как дурацкий URLSearchParams не принимает params
+            Object.entries(params).forEach(([key, value]) => {
+                if (value !== undefined) {
+                    if (Array.isArray(value)) {
+                        // Если значение - массив, добавляем каждый элемент
+                        value.forEach(v => searchParams.append(key, v));
+                    } else {
+                        // Если значение - строка
+                        searchParams.set(key, value);
+                    }
+                }
+            });
+            console.log(params)
+            searchParams.set("from_lat", fromLat.toString());
+            searchParams.set("to_lat", toLat.toString());
+            searchParams.set("from_lng", fromLng.toString());
+            searchParams.set("to_lng", toLng.toString());
+            if (searchParams.size != 0) router.push(pathname + "?" + searchParams.toString());
             else {
                 router.replace(pathname)
             }
         }, 2000);
-    }, []);
+    }, [params]);
 
-    const mapItems = useMemo(() => {
 
-        return table.getFilteredRowModel().rows.map((row) => row.original);
-    }, [table.getFilteredRowModel().rows]);
 
 
     return (
@@ -278,11 +297,11 @@ export default function CollectionTable({params}: { params: { [key: string]: str
                 </div>
 
                 {mapState === "open" && <div className={"w-1/2"}>
-                    <CollectionMap
+                    <MapFilter
                         height="100%"
                         onBoundsChange={handleBoundsChange}
-                        items={mapItems}
-                        isLoading={isLoading}
+                        items={mapItems || []}
+                        isLoading={mapItemsLoading}
                     />
 
 

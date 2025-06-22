@@ -2,7 +2,7 @@
 
 import {useClient} from "@/utils/supabase/client";
 import {FormattedBasicView} from "../(general)/models";
-import CollectionMap from "@/app/components/map/CollectionMap";
+import MapFilter from "@/app/(general)/table/map-filter";
 import {Database} from "@/utils/supabase/gen-types";
 
 /**
@@ -44,7 +44,7 @@ export default function Map() {
 
 
     return (
-        <CollectionMap
+        <Map
             height="100vh"
 
             items={items as FormattedBasicView[]}
