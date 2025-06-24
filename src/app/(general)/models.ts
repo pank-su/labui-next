@@ -1,4 +1,5 @@
 import {CompositeTypes, Database, Tables} from "@/utils/supabase/gen-types";
+import GeoFilter from "@/app/components/data-table/filters/geo-filter";
 
 export type FormattedBasicView = Tables<"basic_view"> & {size?: number};
 
@@ -16,7 +17,7 @@ export interface GeoBasicView {
 }
 
 // Тип для query фильтров по коллекции
-export interface FormattedBasicViewFilters{
+export type FormattedBasicViewFilters = {
     id?:string,
     collect_id?:string,
     order?:string,
@@ -38,11 +39,33 @@ export interface FormattedBasicViewFilters{
     q?: string,
 }
 
-export interface GeoFilters{
-    from_lng: number,
-    from_lat: number,
-    to_lng: number,
-    to_lat: number,
+export interface GeoFilters {
+    from_lng: number | string;
+    from_lat: number | string;
+    to_lng: number | string;
+    to_lat: number | string;
+    zoom: number | string;
+    map: MapState
+}
+
+// Вспомогательная функция для проверки является ли объект GeoFilters
+export function isGeoFilters(obj: any): obj is GeoFilters {
+    return (
+        obj &&
+        typeof obj === 'object' &&
+        obj.from_lng !== undefined &&
+        obj.from_lat !== undefined &&
+        obj.to_lng !== undefined &&
+        obj.to_lat !== undefined &&
+        obj.zoom !== undefined &&
+        obj.map !== undefined &&
+        !isNaN(Number(obj.from_lng)) &&
+        !isNaN(Number(obj.from_lat)) &&
+        !isNaN(Number(obj.to_lng)) &&
+        !isNaN(Number(obj.to_lat)) &&
+        !isNaN(Number(obj.zoom)) &&
+        mapStates.includes(obj.map as MapState)
+    );
 }
 
 export function toGenomRow(view: FormattedBasicView): GenomRow {
@@ -64,3 +87,5 @@ export interface GenomRow {
     kind?: Topology | null
 }
 
+export const mapStates = ["closed", "open", "select"] as const;
+export type MapState = typeof mapStates[number];

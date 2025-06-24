@@ -71,5 +71,3 @@ export function useFilterQuery(id: string, setFilter: (value: string) => void, r
 
 
 
-export const mapStates = ["closed", "open", "select"] as const;
-export type MapState = typeof mapStates[number];

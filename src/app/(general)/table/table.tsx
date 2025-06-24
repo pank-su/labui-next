@@ -22,14 +22,13 @@ import {Database, Tables} from "@/utils/supabase/gen-types";
 import {SupabaseClient} from "@supabase/supabase-js";
 import getColumns from "@/app/(general)/table/columns";
 import DataTable from "@/app/components/data-table/data-table";
-import {FormattedBasicView, GenomRow, toGenomRow, Topology} from "../models"
+import {FormattedBasicView, GenomRow, isGeoFilters, MapState, mapStates, toGenomRow, Topology} from "../models"
 import CollectionTableControls from "@/app/(general)/table/controls";
 import {usePathname, useRouter, useSearchParams} from "next/navigation";
 import {MapFilter} from "@/app/(general)/table/map-filter";
 import {useQuery, useSuspenseInfiniteQuery, useSuspenseQuery} from "@tanstack/react-query";
 import {useUser} from "@/app/components/header";
 import {Spin} from "antd";
-import {MapState, mapStates} from "@/app/components/data-table/filters/utils";
 
 
 
@@ -73,7 +72,7 @@ export default function CollectionTable({params}: { params: { [key: string]: str
         return mapStates.includes(mapParam as MapState)
             ? (mapParam as MapState)
             : "closed";
-    }, [params]);
+    }, [params["map"]]);
 
     const mapQuery = useMemo(() => geoBasicView(supabase, params)
         , [params, supabase]);
@@ -233,9 +232,27 @@ export default function CollectionTable({params}: { params: { [key: string]: str
 
     const boundsChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+    const [mapInitialized, setMapInitialized] = useState(false);
+
+    const startBounds = useMemo(() => {
+        if (isGeoFilters(params)){
+            return [params.from_lng, params.from_lat, params.to_lng, params.to_lat].map((val) => Number(val)) as [number, number, number, number];
+        }
+    }, [params.from_lng, params.from_lat, params.to_lng, params.to_lat]) // Убираем mapInitialized
+
+    const zoom = useMemo(() => {
+        if (isGeoFilters(params)){
+            return Number(params.zoom)
+        }
+    }, [params.zoom]) // Убираем mapInitialized
 
     // Обработчик изменения границ карты
-    const handleBoundsChange = useCallback((bounds: [number, number, number, number]) => {
+    const handleBoundsChange = useCallback((bounds: [number, number, number, number], zoom: number) => {
+
+        if (!mapInitialized) {
+            setMapInitialized(true);
+        }
+
         if (boundsChangeTimeoutRef.current) {
             clearTimeout(boundsChangeTimeoutRef.current);
         }
@@ -267,17 +284,17 @@ export default function CollectionTable({params}: { params: { [key: string]: str
                     }
                 }
             });
-            console.log(params)
             searchParams.set("from_lat", fromLat.toString());
             searchParams.set("to_lat", toLat.toString());
             searchParams.set("from_lng", fromLng.toString());
             searchParams.set("to_lng", toLng.toString());
+            searchParams.set("zoom", zoom.toString());
             if (searchParams.size != 0) router.push(pathname + "?" + searchParams.toString());
             else {
                 router.replace(pathname)
             }
-        }, 2000);
-    }, [params]);
+        }, 500);
+    }, [params, mapInitialized]);
 
 
 
@@ -302,7 +319,9 @@ export default function CollectionTable({params}: { params: { [key: string]: str
                         onBoundsChange={handleBoundsChange}
                         items={mapItems || []}
                         isLoading={mapItemsLoading}
-                    />
+                        startBounds={startBounds}
+                        startZoom={zoom}
+                        />
 
 
                 </div>}

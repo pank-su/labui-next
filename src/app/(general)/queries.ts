@@ -1,5 +1,5 @@
 import {TypedSupabaseClient} from "@/utils/supabase/typed";
-import {FormattedBasicViewFilters, GeoBasicView} from "@/app/(general)/models";
+import {FormattedBasicViewFilters, GeoBasicView, GeoFilters, isGeoFilters} from "@/app/(general)/models";
 import {parseIndexFilterToSupabaseFilter} from "@/utils/parseIndexFilter";
 import {infiniteQueryOptions, keepPreviousData, queryOptions} from "@tanstack/react-query";
 import {ReadonlyURLSearchParams} from "next/navigation";
@@ -11,9 +11,9 @@ const fetchSize = 50
 // Настройки для запроса коллекции 
 export const basicView = (client: TypedSupabaseClient, params: {
     [key: string]: string | string[] | undefined
-} | ReadonlyURLSearchParams) => infiniteQueryOptions({
+} ) => infiniteQueryOptions({
     queryKey: ["basic_view", params],
-    queryFn: async ({pageParam}) => await getBasicView(client, pageParam, params as FormattedBasicViewFilters),
+    queryFn: async ({pageParam}) => await getBasicView(client, pageParam, params ),
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
 
@@ -40,10 +40,17 @@ export const basicView = (client: TypedSupabaseClient, params: {
 function basicViewQuery(client: TypedSupabaseClient, filters: FormattedBasicViewFilters | undefined) {
     let query = client.from("basic_view").select("*", {count: "exact"})
 
-    //
 
+    if (isGeoFilters(filters)){
 
-    if (!filters) {
+        query = query.gte('longitude', Number(filters.from_lng))
+            .lte('longitude', Number(filters.to_lng))
+            .gte('latitude', Number(filters.from_lat))
+            .lte('latitude', Number(filters.to_lat));
+    }
+
+    if (!filters ) {
+
 
         return query
     }
@@ -125,6 +132,9 @@ function basicViewQuery(client: TypedSupabaseClient, filters: FormattedBasicView
         //query.ilike("")
     }
 
+    // Геофильтры
+
+
     return query;
 }
 
@@ -156,10 +166,9 @@ async function loadOrders(client: TypedSupabaseClient) {
 export function values(client: TypedSupabaseClient, tableName: string, columnId: string, filters: {
     [key: string]: string | string[] | undefined
 } | undefined = undefined) {
-    const {from_lat, to_lat, from_lng, to_lng, ...cleanFilters} = filters || {}
 
     return queryOptions({
-        queryKey: [tableName, columnId,  cleanFilters as (FormattedBasicViewFilters | undefined)],
+        queryKey: [tableName, columnId,  filters as (FormattedBasicViewFilters | undefined)],
         queryFn: async () => {
             switch (tableName) {
                 case "basic_view":
@@ -185,11 +194,14 @@ export async function getGeoBasicView(client: TypedSupabaseClient, filters: {
 export function geoBasicView(client: TypedSupabaseClient, filters: {
     [key: string]: string | string[] | undefined
 } | undefined = undefined) {
-    const {from_lat, to_lat, from_lng, to_lng, ...cleanFilters} = filters || {}
+    const {from_lat, to_lat, from_lng, to_lng, zoom, map, ...cleanFilters} = filters || {}
+
+
+
 
     return queryOptions({
         queryKey: ["geo_basic_view", cleanFilters],
-        queryFn: async () =>  getGeoBasicView(client, filters),
+        queryFn: async () =>  getGeoBasicView(client, cleanFilters),
     })
 }
 
