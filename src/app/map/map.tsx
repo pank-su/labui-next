@@ -2,7 +2,6 @@
 
 import {useClient} from "@/utils/supabase/client";
 import {FormattedBasicView} from "../(general)/models";
-import MapFilter from "@/app/(general)/table/map-filter";
 import {Database} from "@/utils/supabase/gen-types";
 
 /**
@@ -44,11 +43,6 @@ export default function Map() {
 
 
     return (
-        <Map
-            height="100vh"
-
-            items={items as FormattedBasicView[]}
-            isLoading={isPending}
-        />
+        <></>
     );
 }
