@@ -18,7 +18,7 @@ const columnHelper = createColumnHelper<FormattedBasicView>()
 declare module '@tanstack/react-table' {
     //allows us to define custom properties for our columns
     export interface ColumnMeta<TData extends RowData, TValue> {
-        filterVariant?: 'index' | 'input' | 'date' | 'select' | 'geo' | "checkbox"
+        filterVariant?: 'index' | 'input' | 'date' | 'select' | 'geo' | "checkbox" | "multiple-select"
     }
 }
 
@@ -541,6 +541,10 @@ export default function getColumns(options: {
                 })
             ]
         }),
+        columnHelper.accessor("collectors", {
+            header: "Коллекторы",
+            cell: info => <></>
+        }),
         columnHelper.accessor("tags", {
             header: "Тэги",
             cell: info => {
@@ -549,8 +553,12 @@ export default function getColumns(options: {
                     color={tag.color ?? "blue"} >{(tag).name}</Tag></Tooltip>)}
                 </>
             },
-            size: 100
+            size: 100,
+            meta: {
+                filterVariant: "multiple-select"
+            }
         }),
+
         columnHelper.accessor("comment", {
             header: "Комментарий",
             cell: info => <EditableCell cellValue={info.getValue()}
@@ -560,6 +568,7 @@ export default function getColumns(options: {
             meta: {
                 filterVariant: "input"
             }
-        })
+        }),
+
     ]
 }
