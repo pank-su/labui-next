@@ -3348,6 +3348,12 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "collector_to_collection_collection_null_fk"
+            columns: ["collection_id"]
+            referencedRelation: "csv_export_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "collector_to_collection_collector_null_fk"
             columns: ["collector_id"]
             referencedRelation: "collector"
@@ -3516,16 +3522,19 @@ export type Database = {
       }
       tags: {
         Row: {
+          color: string
           description: string | null
           id: number
           name: string
         }
         Insert: {
+          color?: string
           description?: string | null
           id?: number
           name: string
         }
         Update: {
+          color?: string
           description?: string | null
           id?: number
           name?: string
@@ -3559,6 +3568,12 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "tags_to_collection_col_id_fkey"
+            columns: ["col_id"]
+            referencedRelation: "csv_export_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "tags_to_collection_tag_id_fkey"
             columns: ["tag_id"]
             referencedRelation: "tags"
@@ -3587,6 +3602,7 @@ export type Database = {
         Row: {
           age: string | null
           collect_id: string | null
+          collector_ids: number[] | null
           collectors:
               | Database["public"]["CompositeTypes"]["collector_type"][]
               | null
@@ -3604,10 +3620,35 @@ export type Database = {
           order: Database["public"]["CompositeTypes"]["topology_type"] | null
           region: string | null
           sex: string | null
+          tag_ids: number[] | null
           tags: Database["public"]["CompositeTypes"]["tag_type"][] | null
           voucher_id: string | null
           voucher_institute: string | null
           year: number | null
+        }
+        Relationships: []
+      }
+      csv_export_view: {
+        Row: {
+          collect_id: string | null
+          id: number | null
+          Ваучер_ID: string | null
+          Вид: string | null
+          Возраст: string | null
+          Геокомментарий: string | null
+          Дата: string | null
+          Долгота: number | null
+          Институт: string | null
+          Коллекторы: string | null
+          Комментарий: string | null
+          Отряд: string | null
+          Пол: string | null
+          Регион: string | null
+          Род: string | null
+          Семейство: string | null
+          Страна: string | null
+          Тэги: string | null
+          Широта: number | null
         }
         Relationships: []
       }
@@ -3831,6 +3872,8 @@ export type Database = {
       tag_type: {
         id: number | null
         name: string | null
+        description: string | null
+        color: string | null
       }
       topology_type: {
         id: number | null
@@ -4274,7 +4317,7 @@ export type Database = {
   }
 }
 
-export type DefaultSchema = Database[Extract<keyof Database, "public">]
+type DefaultSchema = Database[Extract<keyof Database, "public">]
 
 export type Tables<
     DefaultSchemaTableNameOrOptions extends
