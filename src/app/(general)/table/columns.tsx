@@ -3,7 +3,7 @@
 import ExpandableText from "@/app/components/expand-text"
 import {date} from "@/utils/date"
 import {createColumnHelper, Row, RowData} from "@tanstack/react-table"
-import {Tag} from "antd"
+import {Tag, Tooltip} from "antd"
 import {EditableCell} from "../../components/data-table/editable"
 import {FormattedBasicView, GenomRow, toGenomRow, Topology} from "../models"
 import {TopologyCell} from "../../components/data-table/topology-cell"
@@ -545,7 +545,8 @@ export default function getColumns(options: {
             header: "Тэги",
             cell: info => {
                 let tags = info.getValue()
-                return <> {tags?.map((tag) => <Tag color="blue" key={(tag).id}>{(tag).name}</Tag>)}
+                return <> {tags?.map((tag) => <Tooltip key={(tag).id} title={(tag.description)} color={tag.color ?? "blue"}><Tag
+                    color={tag.color ?? "blue"} >{(tag).name}</Tag></Tooltip>)}
                 </>
             },
             size: 100
