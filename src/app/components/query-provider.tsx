@@ -11,7 +11,7 @@ export const ReactQueryClientProvider = ({children}: { children: React.ReactNode
                         refetchOnWindowFocus: false,
                         refetchOnReconnect: false,
                         staleTime: Infinity,
-                        gcTime: Infinity,
+                        gcTime: 0,
                     },
                 },
             })

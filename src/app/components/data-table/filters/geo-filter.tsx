@@ -3,6 +3,7 @@ import {Column} from "@tanstack/react-table";
 import {Button, Input, Space, Tooltip} from "antd";
 import {useFilterQuery} from "@/app/components/data-table/filters/utils";
 import {useEffect, useState} from "react";
+import {usePathname, useRouter, useSearchParams} from "next/navigation";
 
 export type FilterGeo = {
     from: number | null;
@@ -11,6 +12,15 @@ export type FilterGeo = {
 
 
 export default function GeoFilter({column}: { column: Column<any> }) {
+
+    const router = useRouter();
+    const pathname = usePathname()
+
+    const searchParams = useSearchParams()
+
+    const queryValue = searchParams.get("map") ?? "";
+    const mapState = queryValue === "open" ? "open" : "closed";
+
 
     const columnId = column.id;
 
@@ -35,6 +45,15 @@ export default function GeoFilter({column}: { column: Column<any> }) {
         <Input placeholder={"До"} value={toValue} disabled
                onChange={(e) => setToValue(e.currentTarget.value)}/>
         {column.id === "longitude" &&
-            <Tooltip title={"Фильтровать по карте"}><Button icon={<EnvironmentOutlined/>}/></Tooltip>}
+            <Tooltip title={"Фильтровать по карте"}><Button onClick={ () => {
+                const params = new URLSearchParams(searchParams);
+                params.set("map", mapState == "open" ? "closed" : "open");
+                if (params.size != 0) router.push(pathname + "?" + params.toString());
+                else {
+                    router.replace(pathname)
+                }
+            }
+
+            } icon={<EnvironmentOutlined/>}/></Tooltip>}
     </Space.Compact>
 }

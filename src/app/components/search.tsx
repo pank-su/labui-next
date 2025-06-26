@@ -11,22 +11,18 @@ export function Search() {
     const search = searchParams.get("q") ?? "";
 
 
-
-
-    // const {setSearch, search} = useSearch()
-
     const [query, setQuery] = useState<string>(search)
 
     const searchHook = () => {
         const params = new URLSearchParams(searchParams);
         if (query.trim() != "") {
             params.set("q", query);
-            if (params.size != 0) router.push(pathname + "?" + params.toString());
-            else {
-                router.push(pathname)
-            }
-        } else {
-            router.push(pathname);
+        }else{
+            params.delete("q")
+        }
+        if (params.size != 0) router.push(pathname + "?" + params.toString());
+        else {
+            router.push(pathname)
         }
     }
 

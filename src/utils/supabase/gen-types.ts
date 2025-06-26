@@ -3173,77 +3173,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      additional_document_xml: {
-        Row: {
-          document_urn: string
-          element_key: string
-          g_user_id: number
-          geneious_major_version_1: number
-          geneious_major_version_2: number
-          xml_element: string
-        }
-        Insert: {
-          document_urn: string
-          element_key: string
-          g_user_id: number
-          geneious_major_version_1?: number
-          geneious_major_version_2?: number
-          xml_element: string
-        }
-        Update: {
-          document_urn?: string
-          element_key?: string
-          g_user_id?: number
-          geneious_major_version_1?: number
-          geneious_major_version_2?: number
-          xml_element?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "additional_document_xml_document_urn_fkey"
-            columns: ["document_urn"]
-            referencedRelation: "annotated_document"
-            referencedColumns: ["urn"]
-          },
-          {
-            foreignKeyName: "additional_document_xml_g_user_id_fkey"
-            columns: ["g_user_id"]
-            referencedRelation: "g_user"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      additional_xml_timestamp: {
-        Row: {
-          document_urn: string
-          g_user_id: number
-          modified: string | null
-        }
-        Insert: {
-          document_urn: string
-          g_user_id: number
-          modified?: string | null
-        }
-        Update: {
-          document_urn?: string
-          g_user_id?: number
-          modified?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "additional_xml_timestamp_document_urn_fkey"
-            columns: ["document_urn"]
-            referencedRelation: "annotated_document"
-            referencedColumns: ["urn"]
-          },
-          {
-            foreignKeyName: "additional_xml_timestamp_g_user_id_fkey"
-            columns: ["g_user_id"]
-            referencedRelation: "g_user"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       age: {
         Row: {
           id: number
@@ -3258,43 +3187,6 @@ export type Database = {
           name?: string | null
         }
         Relationships: []
-      }
-      annotated_document: {
-        Row: {
-          document_xml: string
-          folder_id: number
-          id: number
-          modified: string
-          plugin_document_xml: string
-          reference_count: number
-          urn: string
-        }
-        Insert: {
-          document_xml: string
-          folder_id: number
-          id: number
-          modified: string
-          plugin_document_xml: string
-          reference_count: number
-          urn: string
-        }
-        Update: {
-          document_xml?: string
-          folder_id?: number
-          id?: number
-          modified?: string
-          plugin_document_xml?: string
-          reference_count?: number
-          urn?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "annotated_document_folder_id_fkey"
-            columns: ["folder_id"]
-            referencedRelation: "folder"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       audit_logs: {
         Row: {
@@ -3322,40 +3214,6 @@ export type Database = {
           table_name?: string
         }
         Relationships: []
-      }
-      boolean_search_field_value: {
-        Row: {
-          annotated_document_id: number
-          id: number
-          search_field_code: string
-          value: boolean
-        }
-        Insert: {
-          annotated_document_id: number
-          id: number
-          search_field_code: string
-          value: boolean
-        }
-        Update: {
-          annotated_document_id?: number
-          id?: number
-          search_field_code?: string
-          value?: boolean
-        }
-        Relationships: [
-          {
-            foreignKeyName: "boolean_search_field_value_annotated_document_id_fkey"
-            columns: ["annotated_document_id"]
-            referencedRelation: "annotated_document"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "boolean_search_field_value_search_field_code_fkey"
-            columns: ["search_field_code"]
-            referencedRelation: "search_field"
-            referencedColumns: ["code"]
-          },
-        ]
       }
       collection: {
         Row: {
@@ -3490,6 +3348,12 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "collector_to_collection_collection_null_fk"
+            columns: ["collection_id"]
+            referencedRelation: "csv_export_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "collector_to_collection_collector_null_fk"
             columns: ["collector_id"]
             referencedRelation: "collector"
@@ -3512,154 +3376,6 @@ export type Database = {
         }
         Relationships: []
       }
-      date_search_field_value: {
-        Row: {
-          annotated_document_id: number
-          id: number
-          search_field_code: string
-          value: string
-        }
-        Insert: {
-          annotated_document_id: number
-          id: number
-          search_field_code: string
-          value: string
-        }
-        Update: {
-          annotated_document_id?: number
-          id?: number
-          search_field_code?: string
-          value?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "date_search_field_value_annotated_document_id_fkey"
-            columns: ["annotated_document_id"]
-            referencedRelation: "annotated_document"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "date_search_field_value_search_field_code_fkey"
-            columns: ["search_field_code"]
-            referencedRelation: "search_field"
-            referencedColumns: ["code"]
-          },
-        ]
-      }
-      document_file_data: {
-        Row: {
-          data: unknown | null
-          id: number
-          last_needed: string | null
-          local_file_path: string | null
-          local_file_size: number | null
-        }
-        Insert: {
-          data?: unknown | null
-          id: number
-          last_needed?: string | null
-          local_file_path?: string | null
-          local_file_size?: number | null
-        }
-        Update: {
-          data?: unknown | null
-          id?: number
-          last_needed?: string | null
-          local_file_path?: string | null
-          local_file_size?: number | null
-        }
-        Relationships: []
-      }
-      document_read: {
-        Row: {
-          annotated_document_id: number
-          g_user_id: number
-        }
-        Insert: {
-          annotated_document_id: number
-          g_user_id: number
-        }
-        Update: {
-          annotated_document_id?: number
-          g_user_id?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "document_read_annotated_document_id_fkey"
-            columns: ["annotated_document_id"]
-            referencedRelation: "annotated_document"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "document_read_g_user_id_fkey"
-            columns: ["g_user_id"]
-            referencedRelation: "g_user"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      document_to_file_data: {
-        Row: {
-          document_urn: string
-          file_data_id: number
-        }
-        Insert: {
-          document_urn: string
-          file_data_id: number
-        }
-        Update: {
-          document_urn?: string
-          file_data_id?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "document_to_file_data_document_urn_fkey"
-            columns: ["document_urn"]
-            referencedRelation: "annotated_document"
-            referencedColumns: ["urn"]
-          },
-          {
-            foreignKeyName: "document_to_file_data_file_data_id_fkey"
-            columns: ["file_data_id"]
-            referencedRelation: "document_file_data"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      double_search_field_value: {
-        Row: {
-          annotated_document_id: number
-          id: number
-          search_field_code: string
-          value: number
-        }
-        Insert: {
-          annotated_document_id: number
-          id: number
-          search_field_code: string
-          value: number
-        }
-        Update: {
-          annotated_document_id?: number
-          id?: number
-          search_field_code?: string
-          value?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "double_search_field_value_annotated_document_id_fkey"
-            columns: ["annotated_document_id"]
-            referencedRelation: "annotated_document"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "double_search_field_value_search_field_code_fkey"
-            columns: ["search_field_code"]
-            referencedRelation: "search_field"
-            referencedColumns: ["code"]
-          },
-        ]
-      }
       family: {
         Row: {
           id: number
@@ -3681,197 +3397,6 @@ export type Database = {
             foreignKeyName: "family_order_null_fk"
             columns: ["order_id"]
             referencedRelation: "order"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      float_search_field_value: {
-        Row: {
-          annotated_document_id: number
-          id: number
-          search_field_code: string
-          value: number
-        }
-        Insert: {
-          annotated_document_id: number
-          id: number
-          search_field_code: string
-          value: number
-        }
-        Update: {
-          annotated_document_id?: number
-          id?: number
-          search_field_code?: string
-          value?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "float_search_field_value_annotated_document_id_fkey"
-            columns: ["annotated_document_id"]
-            referencedRelation: "annotated_document"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "float_search_field_value_search_field_code_fkey"
-            columns: ["search_field_code"]
-            referencedRelation: "search_field"
-            referencedColumns: ["code"]
-          },
-        ]
-      }
-      folder: {
-        Row: {
-          g_group_id: number
-          id: number
-          modified: string
-          name: string | null
-          parent_folder_id: number | null
-          visible: boolean
-        }
-        Insert: {
-          g_group_id: number
-          id: number
-          modified: string
-          name?: string | null
-          parent_folder_id?: number | null
-          visible: boolean
-        }
-        Update: {
-          g_group_id?: number
-          id?: number
-          modified?: string
-          name?: string | null
-          parent_folder_id?: number | null
-          visible?: boolean
-        }
-        Relationships: [
-          {
-            foreignKeyName: "folder_g_group_id_fkey"
-            columns: ["g_group_id"]
-            referencedRelation: "g_group"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "folder_parent_folder_id_fkey"
-            columns: ["parent_folder_id"]
-            referencedRelation: "folder"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      folder_view: {
-        Row: {
-          document_urn: string
-          folder_id: number
-          modified: string
-        }
-        Insert: {
-          document_urn: string
-          folder_id: number
-          modified: string
-        }
-        Update: {
-          document_urn?: string
-          folder_id?: number
-          modified?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "folder_view_folder_id_fkey"
-            columns: ["folder_id"]
-            referencedRelation: "folder"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      g_group: {
-        Row: {
-          id: number
-          name: string
-        }
-        Insert: {
-          id: number
-          name: string
-        }
-        Update: {
-          id?: number
-          name?: string
-        }
-        Relationships: []
-      }
-      g_role: {
-        Row: {
-          id: number
-          name: string
-        }
-        Insert: {
-          id: number
-          name: string
-        }
-        Update: {
-          id?: number
-          name?: string
-        }
-        Relationships: []
-      }
-      g_user: {
-        Row: {
-          id: number
-          primary_group_id: number
-          username: string
-        }
-        Insert: {
-          id: number
-          primary_group_id: number
-          username: string
-        }
-        Update: {
-          id?: number
-          primary_group_id?: number
-          username?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "g_user_primary_group_id_fkey"
-            columns: ["primary_group_id"]
-            referencedRelation: "g_group"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      g_user_group_role: {
-        Row: {
-          g_group_id: number
-          g_role_id: number
-          g_user_id: number
-        }
-        Insert: {
-          g_group_id: number
-          g_role_id: number
-          g_user_id: number
-        }
-        Update: {
-          g_group_id?: number
-          g_role_id?: number
-          g_user_id?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "g_user_group_role_g_group_id_fkey"
-            columns: ["g_group_id"]
-            referencedRelation: "g_group"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "g_user_group_role_g_role_id_fkey"
-            columns: ["g_role_id"]
-            referencedRelation: "g_role"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "g_user_group_role_g_user_id_fkey"
-            columns: ["g_user_id"]
-            referencedRelation: "g_user"
             referencedColumns: ["id"]
           },
         ]
@@ -3901,99 +3426,6 @@ export type Database = {
           },
         ]
       }
-      hidden_folder_to_user: {
-        Row: {
-          hidden_folder_id: number
-          user_id: number | null
-        }
-        Insert: {
-          hidden_folder_id: number
-          user_id?: number | null
-        }
-        Update: {
-          hidden_folder_id?: number
-          user_id?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "hidden_folder_to_user_hidden_folder_id_fkey"
-            columns: ["hidden_folder_id"]
-            referencedRelation: "folder"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "hidden_folder_to_user_user_id_fkey"
-            columns: ["user_id"]
-            referencedRelation: "g_user"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      indexing_queue: {
-        Row: {
-          document_id: number
-          g_user_id: number | null
-          reserved: string | null
-        }
-        Insert: {
-          document_id: number
-          g_user_id?: number | null
-          reserved?: string | null
-        }
-        Update: {
-          document_id?: number
-          g_user_id?: number | null
-          reserved?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "indexing_queue_document_id_fkey"
-            columns: ["document_id"]
-            referencedRelation: "annotated_document"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "indexing_queue_g_user_id_fkey"
-            columns: ["g_user_id"]
-            referencedRelation: "g_user"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      integer_search_field_value: {
-        Row: {
-          annotated_document_id: number
-          id: number
-          search_field_code: string
-          value: number
-        }
-        Insert: {
-          annotated_document_id: number
-          id: number
-          search_field_code: string
-          value: number
-        }
-        Update: {
-          annotated_document_id?: number
-          id?: number
-          search_field_code?: string
-          value?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "integer_search_field_value_annotated_document_id_fkey"
-            columns: ["annotated_document_id"]
-            referencedRelation: "annotated_document"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "integer_search_field_value_search_field_code_fkey"
-            columns: ["search_field_code"]
-            referencedRelation: "search_field"
-            referencedColumns: ["code"]
-          },
-        ]
-      }
       kind: {
         Row: {
           genus_id: number
@@ -4009,70 +3441,6 @@ export type Database = {
           genus_id?: number
           id?: number
           name?: string | null
-        }
-        Relationships: []
-      }
-      long_search_field_value: {
-        Row: {
-          annotated_document_id: number
-          id: number
-          search_field_code: string
-          value: number
-        }
-        Insert: {
-          annotated_document_id: number
-          id: number
-          search_field_code: string
-          value: number
-        }
-        Update: {
-          annotated_document_id?: number
-          id?: number
-          search_field_code?: string
-          value?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "long_search_field_value_annotated_document_id_fkey"
-            columns: ["annotated_document_id"]
-            referencedRelation: "annotated_document"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "long_search_field_value_search_field_code_fkey"
-            columns: ["search_field_code"]
-            referencedRelation: "search_field"
-            referencedColumns: ["code"]
-          },
-        ]
-      }
-      metadata: {
-        Row: {
-          identifier: string
-          value: string | null
-        }
-        Insert: {
-          identifier: string
-          value?: string | null
-        }
-        Update: {
-          identifier?: string
-          value?: string | null
-        }
-        Relationships: []
-      }
-      next_table_id: {
-        Row: {
-          next_id: number | null
-          table_name: string
-        }
-        Insert: {
-          next_id?: number | null
-          table_name: string
-        }
-        Update: {
-          next_id?: number | null
-          table_name?: string
         }
         Relationships: []
       }
@@ -4137,21 +3505,6 @@ export type Database = {
           },
         ]
       }
-      search_field: {
-        Row: {
-          code: string
-          field_xml: string
-        }
-        Insert: {
-          code: string
-          field_xml: string
-        }
-        Update: {
-          code?: string
-          field_xml?: string
-        }
-        Relationships: []
-      }
       sex: {
         Row: {
           id: number
@@ -4167,80 +3520,21 @@ export type Database = {
         }
         Relationships: []
       }
-      special_element: {
-        Row: {
-          folder_id: number
-          modified: string
-          name: string
-          xml: string
-        }
-        Insert: {
-          folder_id: number
-          modified: string
-          name: string
-          xml: string
-        }
-        Update: {
-          folder_id?: number
-          modified?: string
-          name?: string
-          xml?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "special_element_folder_id_fkey"
-            columns: ["folder_id"]
-            referencedRelation: "folder"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      string_search_field_value: {
-        Row: {
-          annotated_document_id: number
-          id: number
-          search_field_code: string
-          value: string
-        }
-        Insert: {
-          annotated_document_id: number
-          id: number
-          search_field_code: string
-          value: string
-        }
-        Update: {
-          annotated_document_id?: number
-          id?: number
-          search_field_code?: string
-          value?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "string_search_field_value_annotated_document_id_fkey"
-            columns: ["annotated_document_id"]
-            referencedRelation: "annotated_document"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "string_search_field_value_search_field_code_fkey"
-            columns: ["search_field_code"]
-            referencedRelation: "search_field"
-            referencedColumns: ["code"]
-          },
-        ]
-      }
       tags: {
         Row: {
+          color: string
           description: string | null
           id: number
           name: string
         }
         Insert: {
+          color?: string
           description?: string | null
           id?: number
           name: string
         }
         Update: {
+          color?: string
           description?: string | null
           id?: number
           name?: string
@@ -4274,6 +3568,12 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "tags_to_collection_col_id_fkey"
+            columns: ["col_id"]
+            referencedRelation: "csv_export_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "tags_to_collection_tag_id_fkey"
             columns: ["tag_id"]
             referencedRelation: "tags"
@@ -4302,6 +3602,7 @@ export type Database = {
         Row: {
           age: string | null
           collect_id: string | null
+          collector_ids: number[] | null
           collectors:
               | Database["public"]["CompositeTypes"]["collector_type"][]
               | null
@@ -4319,10 +3620,35 @@ export type Database = {
           order: Database["public"]["CompositeTypes"]["topology_type"] | null
           region: string | null
           sex: string | null
+          tag_ids: number[] | null
           tags: Database["public"]["CompositeTypes"]["tag_type"][] | null
           voucher_id: string | null
           voucher_institute: string | null
           year: number | null
+        }
+        Relationships: []
+      }
+      csv_export_view: {
+        Row: {
+          collect_id: string | null
+          id: number | null
+          Ваучер_ID: string | null
+          Вид: string | null
+          Возраст: string | null
+          Геокомментарий: string | null
+          Дата: string | null
+          Долгота: number | null
+          Институт: string | null
+          Коллекторы: string | null
+          Комментарий: string | null
+          Отряд: string | null
+          Пол: string | null
+          Регион: string | null
+          Род: string | null
+          Семейство: string | null
+          Страна: string | null
+          Тэги: string | null
+          Широта: number | null
         }
         Relationships: []
       }
@@ -4546,6 +3872,8 @@ export type Database = {
       tag_type: {
         id: number | null
         name: string | null
+        description: string | null
+        color: string | null
       }
       topology_type: {
         id: number | null

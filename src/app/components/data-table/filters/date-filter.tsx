@@ -1,8 +1,9 @@
 import {Column} from "@tanstack/react-table";
 import {Button, Input, Space} from "antd";
 import {MinusOutlined} from "@ant-design/icons";
-import {parseDate, ParsedDate, useFilterQuery} from "@/app/components/data-table/filters/utils";
+import {useFilterQuery} from "@/app/components/data-table/filters/utils";
 import {useEffect, useState} from "react";
+import {parseDate, ParsedDate} from "@/utils/date";
 
 export type FilterDate = {
     from: ParsedDate | null;
