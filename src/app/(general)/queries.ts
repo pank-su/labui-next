@@ -1,8 +1,7 @@
 import {TypedSupabaseClient} from "@/utils/supabase/typed";
-import {FormattedBasicViewFilters, GeoBasicView, GeoFilters, isGeoFilters} from "@/app/(general)/models";
+import {FormattedBasicViewFilters, GeoBasicView, isGeoFilters} from "@/app/(general)/models";
 import {parseIndexFilterToSupabaseFilter} from "@/utils/parseIndexFilter";
 import {infiniteQueryOptions, keepPreviousData, queryOptions} from "@tanstack/react-query";
-import {ReadonlyURLSearchParams} from "next/navigation";
 import {parseDate} from "@/utils/date";
 import {buildDateFilterString} from "@/app/(general)/utils";
 
@@ -11,9 +10,9 @@ const fetchSize = 50
 // Настройки для запроса коллекции 
 export const basicView = (client: TypedSupabaseClient, params: {
     [key: string]: string | string[] | undefined
-} ) => infiniteQueryOptions({
+}) => infiniteQueryOptions({
     queryKey: ["basic_view", params],
-    queryFn: async ({pageParam}) => await getBasicView(client, pageParam, params ),
+    queryFn: async ({pageParam}) => await getBasicView(client, pageParam, params),
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
 
@@ -38,10 +37,9 @@ export const basicView = (client: TypedSupabaseClient, params: {
 
 // Создаём запрос c фильтроми и сортировкой к basic query
 function basicViewQuery(client: TypedSupabaseClient, filters: FormattedBasicViewFilters | undefined) {
-    let query = client.from("basic_view").select("*", {count: "exact"})
+    let query = client.from("basic_view").select("id,collect_id,order,family,genus,kind,age,sex,voucher_institute,voucher_id,latitude,longitude,country,region,geo_comment,day,month,year,comment,collectors,tags", {count: "exact"})
 
-
-    if (isGeoFilters(filters)){
+    if (isGeoFilters(filters)) {
 
         query = query.gte('longitude', Number(filters.from_lng))
             .lte('longitude', Number(filters.to_lng))
@@ -49,7 +47,7 @@ function basicViewQuery(client: TypedSupabaseClient, filters: FormattedBasicView
             .lte('latitude', Number(filters.to_lat));
     }
 
-    if (!filters ) {
+    if (!filters) {
 
 
         return query
@@ -118,6 +116,12 @@ function basicViewQuery(client: TypedSupabaseClient, filters: FormattedBasicView
 
     }
 
+    if (filters.tags) {
+        const tags = filters.tags.split(",")
+
+        query = query.contains("tag_ids", tags.map(Number));
+    }
+
     const otherFields = []
 
     // Поиск
@@ -148,7 +152,9 @@ export async function getBasicView(client: TypedSupabaseClient, page: number, fi
 }
 
 export async function getBasicViewModelCsv(client: TypedSupabaseClient, filters: FormattedBasicViewFilters | undefined = undefined) {
-    return (basicViewQuery(client, filters).csv())
+    const queryResult = await basicViewQuery(client, filters);
+    const ids = queryResult.data?.map(({ id }) => id).filter(Boolean) || [];
+    return (client.from("csv_export_view").select("*").in("id", ids).csv())
 }
 
 
@@ -168,7 +174,7 @@ export function values(client: TypedSupabaseClient, tableName: string, columnId:
 } | undefined = undefined) {
 
     return queryOptions({
-        queryKey: [tableName, columnId,  filters as (FormattedBasicViewFilters | undefined)],
+        queryKey: [tableName, columnId, filters as (FormattedBasicViewFilters | undefined)],
         queryFn: async () => {
             switch (tableName) {
                 case "basic_view":
@@ -191,17 +197,16 @@ export async function getGeoBasicView(client: TypedSupabaseClient, filters: {
         .select("id,collect_id,order,family,genus,kind,latitude,longitude");
     return result.data as GeoBasicView[] || [];
 }
+
 export function geoBasicView(client: TypedSupabaseClient, filters: {
     [key: string]: string | string[] | undefined
 } | undefined = undefined) {
     const {from_lat, to_lat, from_lng, to_lng, zoom, map, ...cleanFilters} = filters || {}
 
 
-
-
     return queryOptions({
         queryKey: ["geo_basic_view", cleanFilters],
-        queryFn: async () =>  getGeoBasicView(client, cleanFilters),
+        queryFn: async () => getGeoBasicView(client, cleanFilters),
     })
 }
 
