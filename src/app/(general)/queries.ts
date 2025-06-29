@@ -35,7 +35,7 @@ export const basicView = (client: TypedSupabaseClient, params: {
 })
 
 
-// Создаём запрос c фильтроми и сортировкой к basic query
+// Создаём запрос c фильтроми к basic query
 function basicViewQuery(client: TypedSupabaseClient, filters: FormattedBasicViewFilters | undefined) {
     let query = client.from("basic_view").select("id,collect_id,order,family,genus,kind,age,sex,voucher_institute,voucher_id,latitude,longitude,country,region,geo_comment,day,month,year,comment,collectors,tags", {count: "exact"})
 
@@ -144,8 +144,38 @@ function basicViewQuery(client: TypedSupabaseClient, filters: FormattedBasicView
 
     // Геофильтры
 
-
     return query;
+}
+
+// Применяем сортировку только для getBasicView
+function applyBasicViewSorting(query: any, filters: FormattedBasicViewFilters | undefined) {
+    if (filters?.sort_field && filters?.sort_direction) {
+        const sortField = filters.sort_field;
+        const sortDirection = filters.sort_direction === 'asc';
+        
+        // Для полей таксономии используем вложенную сортировку
+        if (['order', 'family', 'genus', 'kind'].includes(sortField)) {
+            return query.order(`${sortField}->>name`, { ascending: sortDirection });
+        }
+        // Если пришло поле с _name, преобразуем обратно в синтаксис PostgREST
+        if (sortField.endsWith('_name') && ['order_name', 'family_name', 'genus_name', 'kind_name'].includes(sortField)) {
+            const baseField = sortField.replace('_name', '');
+            return query.order(`${baseField}->>name`, { ascending: sortDirection });
+        } 
+        // Для даты используем составную сортировку
+        else if (sortField === 'date') {
+            return query
+                .order('year', { ascending: sortDirection, nullsFirst: false })
+                .order('month', { ascending: sortDirection, nullsFirst: false })
+                .order('day', { ascending: sortDirection, nullsFirst: false });
+        } 
+        else {
+            return query.order(sortField, { ascending: sortDirection });
+        }
+    } else {
+        // Сортировка по умолчанию по id
+        return query.order('id', { ascending: true });
+    }
 }
 
 // Запрос коллекции 
@@ -154,7 +184,10 @@ export async function getBasicView(client: TypedSupabaseClient, page: number, fi
     const start = page * fetchSize
     const finish = start + fetchSize - 1
 
-    return (basicViewQuery(client, filters).range(start, finish));
+    let query = basicViewQuery(client, filters);
+    query = applyBasicViewSorting(query, filters);
+    
+    return query.range(start, finish);
 }
 
 export async function getBasicViewModelCsv(client: TypedSupabaseClient, filters: FormattedBasicViewFilters | undefined = undefined) {

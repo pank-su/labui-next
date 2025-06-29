@@ -123,7 +123,7 @@ export default function DataTable<T>({
                                                         (header.column.getCanSort()
                                                             ? 'cursor-pointer select-none'
                                                             : '')}
-                                                    onClick={header.column.getToggleSortingHandler()}
+                                                    onClick={header.column.getCanSort() ? header.column.getToggleSortingHandler() : undefined}
                                                 >
 
                                                     {flexRender(

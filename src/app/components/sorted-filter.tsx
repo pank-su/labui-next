@@ -1,4 +1,4 @@
-import {SortAscendingOutlined, SortDescendingOutlined} from "@ant-design/icons"
+import {UpOutlined, DownOutlined} from "@ant-design/icons"
 import {SortDirection} from "@tanstack/react-table"
 
 
@@ -9,8 +9,8 @@ interface SortedIconProps {
 export function SortedIcon({isSorted}: SortedIconProps) {
     if (!isSorted) return <></>
     if (isSorted === "asc") {
-        return <SortAscendingOutlined style={{color: '#1677ff'}}/>
+        return <UpOutlined style={{color: '#1677ff'}}/>
     }
-    return <SortDescendingOutlined style={{color: '#1677ff'}}/>
+    return <DownOutlined style={{color: '#1677ff'}}/>
 }
 

@@ -34,8 +34,10 @@ export type FormattedBasicViewFilters = {
     comment?: string,
     geo_comment?:string,
     voucher_id?:string,
-    tags?:string
-
+    tags?:string,
+    collectors?:string,
+    sort_field?: string,
+    sort_direction?: 'asc' | 'desc',
 
     q?: string,
 }

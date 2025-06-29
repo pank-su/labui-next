@@ -207,6 +207,19 @@ export default function CollectionTable({params}: { params: { [key: string]: str
     ]);
 
 
+    const initialSortingState = useMemo(() => {
+        if (params.sort_field && params.sort_direction && typeof params.sort_field === 'string') {
+            return [{
+                id: params.sort_field,
+                desc: params.sort_direction === 'desc'
+            }];
+        }
+        return [{
+            id: 'id',
+            desc: false
+        }];
+    }, [params.sort_field, params.sort_direction]);
+
     // Таблица использует отфильтрованные данные в режиме разделенного экрана
     const table = useReactTable({
         columns: columns,
@@ -221,11 +234,41 @@ export default function CollectionTable({params}: { params: { [key: string]: str
         autoResetPageIndex: false,
 
         manualFiltering: true,
+        manualSorting: true,
+        enableSortingRemoval: false,
+        state: {
+            sorting: initialSortingState
+        },
         filterFns: {
             selectFilter: (row, id, filterValue) => {
                 const value = row.getValue(id) as string | null
                 return filterValue === " " && value === null || filterValue === value
             }
+        },
+        onSortingChange: (updater) => {
+            const currentSorting = table.getState().sorting;
+            const newSorting = typeof updater === 'function' ? updater(currentSorting) : updater;
+            
+            const newParams = new URLSearchParams();
+            
+            Object.entries(params).forEach(([key, value]) => {
+                if (value !== undefined && !['sort_field', 'sort_direction'].includes(key)) {
+                    if (Array.isArray(value)) {
+                        value.forEach(v => newParams.append(key, v));
+                    } else {
+                        newParams.set(key, value);
+                    }
+                }
+            });
+
+            if (Array.isArray(newSorting) && newSorting.length > 0) {
+                const firstSort = newSorting[0];
+                newParams.set('sort_field', firstSort.id);
+                newParams.set('sort_direction', firstSort.desc ? 'desc' : 'asc');
+            }
+
+            const newUrl = newParams.toString() ? `${pathname}?${newParams.toString()}` : pathname;
+            router.push(newUrl);
         },
         meta: {}
     })
