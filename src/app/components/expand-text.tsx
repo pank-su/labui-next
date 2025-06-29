@@ -1,10 +1,10 @@
-import { MouseEventHandler, useState } from "react";
+import {MouseEventHandler, useState} from "react";
 
 
-export default function ExpandableText({ onDoubleClick, children}: {
+export default function ExpandableText({onDoubleClick, children}: {
     onDoubleClick?: MouseEventHandler<HTMLDivElement>,
     children: React.ReactNode,
-    
+
 }) {
     const [expanded, setExpanded] = useState(false);
 

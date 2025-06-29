@@ -1,6 +1,6 @@
-import { Button, Select, Space } from "antd";
-import { useState, useEffect } from "react";
-import { CheckOutlined, CloseOutlined } from "@ant-design/icons";
+import {Button, Select, Space} from "antd";
+import {useEffect, useState} from "react";
+import {CheckOutlined} from "@ant-design/icons";
 
 interface SelectOption {
     value?: number | null;
@@ -19,15 +19,15 @@ interface SelectCellProps {
 }
 
 export const SelectCell: React.FC<SelectCellProps> = ({
-    value = null,
-    displayValue,
-    options,
-    rowId,
-    isEditing,
-    onSave,
-    onCancel,
-    placeholder = "Выбрать...",
-}) => {
+                                                          value = null,
+                                                          displayValue,
+                                                          options,
+                                                          rowId,
+                                                          isEditing,
+                                                          onSave,
+                                                          onCancel,
+                                                          placeholder = "Выбрать...",
+                                                      }) => {
     const [edit, setEdit] = useState(false);
     const [currentValue, setCurrentValue] = useState<number | null>(value);
 
@@ -67,7 +67,7 @@ export const SelectCell: React.FC<SelectCellProps> = ({
 
                 <Button
                     onClick={handleSave}
-                    icon={<CheckOutlined />}
+                    icon={<CheckOutlined/>}
                     type="primary"
                 />
             </Space.Compact>

@@ -1,16 +1,18 @@
-import { Avatar, Dropdown, Skeleton } from "antd";
-import { MenuProps } from "antd/lib";
-import {  useMemo } from "react";
-import { singOutAction } from "../auth/actions";
-import { useClient } from "@/utils/supabase/client";
-import { useQuery } from "@supabase-cache-helpers/postgrest-react-query";
+import {Avatar, Dropdown, Skeleton} from "antd";
+import {MenuProps} from "antd/lib";
+import {useMemo} from "react";
+import {singOutAction} from "../auth/actions";
+import {useClient} from "@/utils/supabase/client";
+import {useQuery} from "@supabase-cache-helpers/postgrest-react-query";
 
 
 const items: MenuProps['items'] = [
     {
         key: '2',
         danger: true,
-        label: (<form><button formAction={singOutAction}>Выйти</button></form>)
+        label: (<form>
+            <button formAction={singOutAction}>Выйти</button>
+        </form>)
     }
 ]
 
@@ -29,7 +31,7 @@ export default function ProfileAvatar() {
     const {data, isPending} = useQuery(supabase.from("profiles").select())
 
     const avatarUrl = useMemo(() => {
-        if (!data){
+        if (!data) {
             return null
         }
         return data[0]?.avatar ?? generateAvatar(data[0]?.id)
@@ -37,13 +39,13 @@ export default function ProfileAvatar() {
 
 
     if (isPending) {
-        return <Skeleton.Avatar />
+        return <Skeleton.Avatar/>
     }
     return (
-    <Dropdown menu={{
-        items
-    }} arrow>
-        <Avatar src={avatarUrl} onClick={(e) => e?.preventDefault()}/>
-    </Dropdown>
+        <Dropdown menu={{
+            items
+        }} arrow>
+            <Avatar src={avatarUrl} onClick={(e) => e?.preventDefault()}/>
+        </Dropdown>
     )
 }

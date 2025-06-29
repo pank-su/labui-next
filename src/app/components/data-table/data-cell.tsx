@@ -1,7 +1,6 @@
-import { Button, Input, Space, Tooltip } from "antd";
-import { useEffect, useState } from "react";
-import { CheckOutlined, CloseOutlined } from "@ant-design/icons";
-import { formatDate } from "@/utils/formatDate";
+import {Button, Input, Space} from "antd";
+import {useEffect, useState} from "react";
+import {CheckOutlined, CloseOutlined} from "@ant-design/icons";
 
 interface DateCellProps {
     value: string; // Отформатированная строка даты
@@ -15,27 +14,27 @@ interface DateCellProps {
     disabled?: boolean;
 }
 
-export const DateCell: React.FC<DateCellProps> = ({
-    value,
-    year,
-    month,
-    day,
-    rowId,
-    isEditing,
-    onSave,
-    onCancel,
-    disabled = false,
-}) => {
+export const DataCell: React.FC<DateCellProps> = ({
+                                                      value,
+                                                      year,
+                                                      month,
+                                                      day,
+                                                      rowId,
+                                                      isEditing,
+                                                      onSave,
+                                                      onCancel,
+                                                      disabled = false,
+                                                  }) => {
     const [edit, setEdit] = useState(false);
-    const [yearValue, setYearValue] = useState<string>(year !== null ? year.toString() : '');
-    const [monthValue, setMonthValue] = useState<string>(month !== null ? month.toString() : '');
-    const [dayValue, setDayValue] = useState<string>(day !== null ? day.toString() : '');
+    const [yearValue, setYearValue] = useState<string>(year ? year.toString() : '');
+    const [monthValue, setMonthValue] = useState<string>(month  ? month.toString() : '');
+    const [dayValue, setDayValue] = useState<string>(day? day.toString() : '');
 
     // Обновляем локальное состояние при изменении props
     useEffect(() => {
-        setYearValue(year !== null ? year.toString() : '');
-        setMonthValue(month !== null ? month.toString() : '');
-        setDayValue(day !== null ? day.toString() : '');
+        setYearValue(year ? year.toString() : '');
+        setMonthValue(month  ? month.toString() : '');
+        setDayValue(day ? day.toString() : '');
     }, [year, month, day]);
 
     const handleSave = async () => {
@@ -71,7 +70,7 @@ export const DateCell: React.FC<DateCellProps> = ({
                         placeholder="DD"
                         value={dayValue}
                         onChange={(e) => setDayValue(e.target.value)}
-                        style={{ width: '30%' }}
+                        style={{width: '30%'}}
                         maxLength={2}
                         disabled={disabled}
                         status={!isValidDay ? 'error' : ''}
@@ -88,7 +87,7 @@ export const DateCell: React.FC<DateCellProps> = ({
                         placeholder="MM"
                         value={monthValue}
                         onChange={(e) => setMonthValue(e.target.value)}
-                        style={{ width: '30%' }}
+                        style={{width: '30%'}}
                         maxLength={2}
                         disabled={disabled}
                         status={!isValidMonth ? 'error' : ''}
@@ -105,7 +104,7 @@ export const DateCell: React.FC<DateCellProps> = ({
                         placeholder="YYYY"
                         value={yearValue}
                         onChange={(e) => setYearValue(e.target.value)}
-                        style={{ width: '40%' }}
+                        style={{width: '40%'}}
                         maxLength={4}
                         disabled={disabled}
                         status={!isValidYear ? 'error' : ''}
@@ -123,16 +122,16 @@ export const DateCell: React.FC<DateCellProps> = ({
                 <Space.Compact size="small" className="w-full">
                     <Button
                         onClick={handleCancel}
-                        icon={<CloseOutlined />}
+                        icon={<CloseOutlined/>}
                         danger
-                        style={{ width: '50%' }}
+                        style={{width: '50%'}}
                     />
                     <Button
                         onClick={handleSave}
-                        icon={<CheckOutlined />}
+                        icon={<CheckOutlined/>}
                         type="primary"
                         disabled={!canSave}
-                        style={{ width: '50%' }}
+                        style={{width: '50%'}}
                     />
                 </Space.Compact>
             </Space>

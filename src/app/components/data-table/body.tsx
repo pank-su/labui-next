@@ -1,10 +1,8 @@
 "use client"
 
-import { flexRender, Row, Table } from "@tanstack/react-table"
-import { useVirtualizer, VirtualItem, Virtualizer } from "@tanstack/react-virtual"
-import { TableCell, TableRow } from "@/app/components/ui/table"
-import { useMemo } from "react"
-
+import {flexRender, Row, Table} from "@tanstack/react-table"
+import {VirtualItem, Virtualizer} from "@tanstack/react-virtual"
+import {TableCell, TableRow} from "@/app/components/ui/table"
 
 
 interface VirtualTableBodyProps<T> {
@@ -13,8 +11,8 @@ interface VirtualTableBodyProps<T> {
     rowVirtualizer: Virtualizer<HTMLDivElement, HTMLTableRowElement>
 }
 
-export function VirtualTableBody<T>({ table, tableContainerRef, rowVirtualizer }: VirtualTableBodyProps<T>) {
-    const { rows } = table.getRowModel()
+export function VirtualTableBody<T>({table, tableContainerRef, rowVirtualizer}: VirtualTableBodyProps<T>) {
+    const {rows} = table.getRowModel()
 
     return (
         <tbody
@@ -24,17 +22,17 @@ export function VirtualTableBody<T>({ table, tableContainerRef, rowVirtualizer }
                 position: 'relative', //needed for absolute positioning of rows
             }}
         >
-            {rowVirtualizer.getVirtualItems().map(virtualRow => {
-                const row = rows[virtualRow.index] as Row<T>
-                return (
-                    <VirtualTableBodyRow
-                        key={row.id}
-                        row={row}
-                        virtualRow={virtualRow}
-                        rowVirtualizer={rowVirtualizer}
-                    />
-                )
-            })}
+        {rowVirtualizer.getVirtualItems().map(virtualRow => {
+            const row = rows[virtualRow.index] as Row<T>
+            return (
+                <VirtualTableBodyRow
+                    key={row.id}
+                    row={row}
+                    virtualRow={virtualRow}
+                    rowVirtualizer={rowVirtualizer}
+                />
+            )
+        })}
         </tbody>
     )
 }
@@ -45,7 +43,7 @@ interface VirtualTableBodyRowProps<T> {
     rowVirtualizer: Virtualizer<HTMLDivElement, HTMLTableRowElement>
 }
 
-export function VirtualTableBodyRow<T>({ row, virtualRow, rowVirtualizer }: VirtualTableBodyRowProps<T>) {
+export function VirtualTableBodyRow<T>({row, virtualRow, rowVirtualizer}: VirtualTableBodyRowProps<T>) {
     return (
         <TableRow
             data-index={virtualRow.index} //needed for dynamic row height measurement

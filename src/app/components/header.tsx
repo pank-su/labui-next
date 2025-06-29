@@ -1,21 +1,20 @@
 "use client"
 
-import { Avatar, Select, Skeleton } from "antd";
+import {Select, Skeleton} from "antd";
 import Navigation from "./navigation";
-import { Search } from "./search";
-import { useEffect, useMemo, useState } from "react";
+import {Search} from "./search";
+import {Suspense} from "react";
 import AuthBtn from "./auth-btn";
-import { User } from "@supabase/supabase-js";
 import ProfileAvatar from "./profile-avatar";
-import { useClient } from "@/utils/supabase/client";
-import { useQuery } from "@tanstack/react-query";
-import { usePathname } from "next/navigation";
+import {useClient} from "@/utils/supabase/client";
+import {useQuery} from "@tanstack/react-query";
+import {usePathname} from "next/navigation";
 
 
 const options = [
-    { value: "", label: "Коллекция" },
-    { value: "collectors", label: "Коллекторы" },
-    { value: "institutes", label: "Ваучерные институты" },
+    {value: "", label: "Коллекция"},
+    {value: "collectors", label: "Коллекторы"},
+    {value: "institutes", label: "Ваучерные институты"},
 ]
 
 export default function Header() {
@@ -24,15 +23,17 @@ export default function Header() {
 
     return (
         <div className="w-full h-full px-8 flex justify-between items-center">
-            <AuthOrAvatar />
-            <Navigation />
-            <Search />
+            <AuthOrAvatar/>
+            <Navigation/>
+            <Suspense>
+                <Search/>
+            </Suspense>
             <Select
                 defaultValue={pathname.slice(1)}
                 options={options}
                 className="w-32"
-                dropdownStyle={{ minWidth: '150px' }}
-                dropdownRender={(menu) => (
+                styles={{popup: {root: {minWidth: "150px"}}}}
+                popupRender={(menu) => (
                     <div>
                         {options.map((option) => (
                             <a
@@ -52,10 +53,10 @@ export default function Header() {
 
 export function useUser() {
     const supabase = useClient();
-    const { data, isLoading } = useQuery({ 
-        queryKey: ["supabase-get-user"], 
+    const {data, isLoading} = useQuery({
+        queryKey: ["supabase-get-user"],
         gcTime: 0,
-        queryFn: () => supabase.auth.getUser() 
+        queryFn: () => supabase.auth.getUser()
     });
 
     return {
@@ -68,14 +69,14 @@ export function useUser() {
  * Кнопка или аватар авторизации
  */
 function AuthOrAvatar() {
-    const { user, isLoading } = useUser();
+    const {user, isLoading} = useUser();
 
     if (isLoading) {
-        return <Skeleton.Avatar active />;
+        return <Skeleton.Avatar active/>;
     }
     if (!user) {
-        return <AuthBtn />;
+        return <AuthBtn/>;
     }
 
-    return <ProfileAvatar />
+    return <ProfileAvatar/>
 }

@@ -1,10 +1,10 @@
 "use client"
 
-import { LockOutlined, MailOutlined } from "@ant-design/icons";
-import { Button, Card, Flex, Form, Input, notification } from "antd";
-import { useEffect, useState } from "react";
-import { signInAction } from "./actions";
-import { useRouter } from "next/navigation";
+import {LockOutlined, MailOutlined} from "@ant-design/icons";
+import {Button, Card, Flex, Form, Input, notification} from "antd";
+import {useEffect, useState} from "react";
+import {signInAction} from "./actions";
+import {useRouter} from "next/navigation";
 
 
 function LoginForm() {
@@ -19,7 +19,7 @@ function LoginForm() {
         if (actionResult.success) {
             router.replace("/")
         } else {
-            api.error({ message: "Ошибка при входе", description: "Неверный логин или пароль" })
+            api.error({message: "Ошибка при входе", description: "Неверный логин или пароль"})
         }
         setLoading(false)
     };
@@ -29,12 +29,12 @@ function LoginForm() {
     const values = Form.useWatch([], form);
 
     useEffect(() => {
-        form.validateFields({ validateOnly: true }).then(() => setIsValid(true)).catch(() => setIsValid(false))
+        form.validateFields({validateOnly: true}).then(() => setIsValid(true)).catch(() => setIsValid(false))
     }, [form, values])
 
     return (
         <>
-        {contextHolder}
+            {contextHolder}
             <Card title="Авторизация" className="shadow">
                 <Form
                     form={form}
@@ -52,24 +52,24 @@ function LoginForm() {
                             }
                         ]
                     }>
-                        <Input prefix={<MailOutlined />} placeholder="Почта" />
+                        <Input prefix={<MailOutlined/>} placeholder="Почта"/>
                     </Form.Item>
                     <Form.Item name="password"
-                        rules={[
-                            {
-                                required: true,
-                                message: 'Пожалуйста введите свой пароль!',
-                            },
-                            {
-                                min: 6,
-                                message: "Пароль должен быть больше 6 символов"
-                            }
-                        ]}
-                        hasFeedback
+                               rules={[
+                                   {
+                                       required: true,
+                                       message: 'Пожалуйста введите свой пароль!',
+                                   },
+                                   {
+                                       min: 6,
+                                       message: "Пароль должен быть больше 6 символов"
+                                   }
+                               ]}
+                               hasFeedback
                     >
-                        <Input.Password prefix={<LockOutlined />} placeholder="Пароль" />
+                        <Input.Password prefix={<LockOutlined/>} placeholder="Пароль"/>
                     </Form.Item>
-                    <Form.Item >
+                    <Form.Item>
                         <Button block type="primary" htmlType="submit" disabled={!isValid} loading={loading}>
                             Войти
                         </Button>
@@ -82,7 +82,7 @@ function LoginForm() {
 export default function LoginPage() {
     return (
         <Flex className="h-screen" justify="center" align="center">
-            <LoginForm />
+            <LoginForm/>
         </Flex>
     )
 }

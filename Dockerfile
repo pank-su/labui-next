@@ -13,8 +13,8 @@ RUN bun install
 # Копируем исходный код приложения
 COPY . .
 
-# Собираем приложение Next.js (команда "next build" должна быть прописана в package.json)
-RUN bun run next build
+# Собираем приложение
+RUN bun run build
 
 
 # Stage 2: Финальный образ для продакшена
@@ -25,8 +25,8 @@ WORKDIR /app
 # Копируем собранное приложение из предыдущего этапа
 COPY --from=builder /app ./
 
-# Открываем порт 3000 (по умолчанию Next.js использует этот порт)
+# Открываем порт 3000
 EXPOSE 3000
 
 # Запускаем приложение
-CMD ["bun", "run", "next", "start"]
+CMD ["bun", "run", "start"]

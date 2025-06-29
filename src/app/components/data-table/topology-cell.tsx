@@ -1,14 +1,14 @@
-import { Button, Input, Modal, Select, Space } from "antd";
-import { GenomRow, Topology } from "../../(general)/models";
-import { useEffect, useState } from "react";
-import { CheckOutlined } from "@ant-design/icons";
-import { useInsertMutation } from "@supabase-cache-helpers/postgrest-react-query";
-import { useClient } from "@/utils/supabase/client";
+import {Button, Input, Modal, Select, Space} from "antd";
+import {GenomRow, Topology} from "../../(general)/models";
+import {useState} from "react";
+import {CheckOutlined} from "@ant-design/icons";
+import {useInsertMutation} from "@supabase-cache-helpers/postgrest-react-query";
+import {useClient} from "@/utils/supabase/client";
 
 interface TopologyCellProps {
     genomRow: GenomRow;
     field: 'order' | 'family' | 'genus' | 'kind';
-    value: Topology | undefined;
+    value: string | null;
     options: { id: number, name: string | null }[];
     isDisabled: boolean;
     isEditing: boolean;
@@ -21,26 +21,26 @@ interface TopologyCellProps {
 }
 
 export const TopologyCell: React.FC<TopologyCellProps> = ({
-    genomRow,
-    field,
-    value,
-    options,
-    isDisabled,
-    isEditing,
-    onEdit,
-    isLoading,
-    onChange,
-    showActions = false,
-    onSave,
-    onCancel
-}) => {
+                                                              genomRow,
+                                                              field,
+                                                              value,
+                                                              options,
+                                                              isDisabled,
+                                                              isEditing,
+                                                              onEdit,
+                                                              isLoading,
+                                                              onChange,
+                                                              showActions = false,
+                                                              onSave,
+                                                              onCancel
+                                                          }) => {
     const [isAddNewModalVisible, setIsAddNewModalVisible] = useState(false);
     const [newItemName, setNewItemName] = useState("");
     const [search, setSearch] = useState("")
 
     const supabase = useClient()
 
-    const { mutateAsync: insertItem, isPending } = useInsertMutation(
+    const {mutateAsync: insertItem, isPending} = useInsertMutation(
         supabase.from(field),
         ["id"],
         "id"
@@ -50,7 +50,7 @@ export const TopologyCell: React.FC<TopologyCellProps> = ({
         if (!newItemName.trim()) return;
 
         try {
-            let insertData: any = { name: newItemName };
+            let insertData: any = {name: newItemName};
 
             // Добавляем ID родительского элемента, если необходимо
             switch (field) {
@@ -89,7 +89,6 @@ export const TopologyCell: React.FC<TopologyCellProps> = ({
     }
 
 
-
     // Получение всех полей для редактирования
     const startEditing = () => {
         onEdit(genomRow)
@@ -110,9 +109,9 @@ export const TopologyCell: React.FC<TopologyCellProps> = ({
                     searchValue={search}
                     onSearch={setSearch}
                     loading={isLoading}
-                    
+
                     onChange={(newId, option) => {
-                        
+
                         if (!Array.isArray(option) && option != null && option.value === "add-new") {
                             setNewItemName(search)
                             setIsAddNewModalVisible(true);
@@ -140,7 +139,7 @@ export const TopologyCell: React.FC<TopologyCellProps> = ({
                             value: item.id,
                             label: item.name
                         })),
-                        { value: "add-new", label: `＋ Добавить` }
+                        {value: "add-new", label: `＋ Добавить`}
                     ]
                     }
                 />
@@ -148,7 +147,7 @@ export const TopologyCell: React.FC<TopologyCellProps> = ({
                 {showActions && (
                     <Button
                         onClick={onSave}
-                        icon={<CheckOutlined />}
+                        icon={<CheckOutlined/>}
                     />
 
 
@@ -169,9 +168,10 @@ export const TopologyCell: React.FC<TopologyCellProps> = ({
                     confirmLoading={isPending}
                 >
                     <div className="mb-2">
-                        Введите название для нового элемента{field === 'family' ? ` в отряде ${genomRow.order?.name || ''}` :
-                            field === 'genus' ? ` в семействе ${genomRow.family?.name || ''}` :
-                                field === 'kind' ? ` в роде ${genomRow.genus?.name || ''}` : ''}
+                        Введите название для нового
+                        элемента{field === 'family' ? ` в отряде ${genomRow.order?.name || ''}` :
+                        field === 'genus' ? ` в семействе ${genomRow.family?.name || ''}` :
+                            field === 'kind' ? ` в роде ${genomRow.genus?.name || ''}` : ''}
                     </div>
                     <Input
                         placeholder="Название"
@@ -190,7 +190,7 @@ export const TopologyCell: React.FC<TopologyCellProps> = ({
             className="cursor-pointer w-full"
             onDoubleClick={startEditing}
         >
-            {value?.name || ''}
+            {value || ' '}
         </div>
     );
 };
