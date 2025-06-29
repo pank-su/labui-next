@@ -106,3 +106,45 @@ export function parseIndexFilterToSupabaseFilter(input: string, fieldName: strin
     return `${rez.join(',')}`;
 
 }
+
+/**
+ * Преобразует массив ID в компактную строку с диапазонами
+ * Например: [1,2,3,5,6,7,10] -> "1-3,5-7,10"
+ */
+export function compressIdsToRanges(ids: number[]): string {
+    if (ids.length === 0) return '';
+    
+    // Сортируем и убираем дубликаты
+    const sortedIds = Array.from(new Set(ids)).sort((a, b) => a - b);
+    
+    const ranges: string[] = [];
+    let start = sortedIds[0];
+    let end = sortedIds[0];
+    
+    for (let i = 1; i < sortedIds.length; i++) {
+        const currentId = sortedIds[i];
+        
+        // Если текущий ID следующий по порядку, продолжаем диапазон
+        if (currentId === end + 1) {
+            end = currentId;
+        } else {
+            // Заканчиваем текущий диапазон и начинаем новый
+            if (start === end) {
+                ranges.push(start.toString());
+            } else {
+                ranges.push(`${start}-${end}`);
+            }
+            start = currentId;
+            end = currentId;
+        }
+    }
+    
+    // Добавляем последний диапазон
+    if (start === end) {
+        ranges.push(start.toString());
+    } else {
+        ranges.push(`${start}-${end}`);
+    }
+    
+    return ranges.join(',');
+}

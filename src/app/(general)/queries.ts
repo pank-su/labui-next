@@ -1,6 +1,6 @@
 import {TypedSupabaseClient} from "@/utils/supabase/typed";
 import {FormattedBasicViewFilters, GeoBasicView, isGeoFilters} from "@/app/(general)/models";
-import {parseIndexFilterToSupabaseFilter} from "@/utils/parseIndexFilter";
+import {parseIndexFilterToSupabaseFilter, compressIdsToRanges} from "@/utils/parseIndexFilter";
 import {infiniteQueryOptions, keepPreviousData, queryOptions} from "@tanstack/react-query";
 import {parseDate} from "@/utils/date";
 import {buildDateFilterString} from "@/app/(general)/utils";
@@ -193,7 +193,15 @@ export async function getBasicView(client: TypedSupabaseClient, page: number, fi
 export async function getBasicViewModelCsv(client: TypedSupabaseClient, filters: FormattedBasicViewFilters | undefined = undefined) {
     const queryResult = await basicViewQuery(client, filters);
     const ids = queryResult.data?.map(({ id }) => id).filter(Boolean) || [];
-    return (client.from("csv_export_view").select("*").in("id", ids).csv())
+    
+    // Преобразуем массив ID в компактную строку диапазонов
+    const compressedIds = compressIdsToRanges(ids);
+    
+    // Используем parseIndexFilterToSupabaseFilter для создания фильтра
+    return client.from("csv_export_view")
+        .select("*")
+        .or(parseIndexFilterToSupabaseFilter(compressedIds))
+        .csv();
 }
 
 
