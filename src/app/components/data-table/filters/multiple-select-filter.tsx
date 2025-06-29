@@ -41,14 +41,21 @@ export default function MultipleSelectFilter({
         if (uniqueValues?.data?.length === 0) {
             return [];
         } else if (uniqueValues?.data) {
-            if (columnId == "tags")
+            if (columnId == "tags") {
                 return uniqueValues?.data
                 .map((entry) => ({
                     label: entry.name || "",
-                    value: entry.id || "",
+                    value: String(entry.id || ""), // Приводим к строке
                 }));
+            } else if (columnId == "collectors") {
+                return uniqueValues?.data
+                .map((entry) => ({
+                    label: entry.name || "",
+                    value: String(entry.id || ""), // Приводим к строке
+                }));
+            }
         }
-    }, [uniqueValues]);
+    }, [uniqueValues, columnId]);
 
     const { value, setValue } = useFilterQuery(
         columnId,
@@ -62,24 +69,23 @@ export default function MultipleSelectFilter({
         [], // default value as empty array for multiple select
     );
 
+
     const selectedValues = value ? value.split(",").filter(Boolean) : [];
 
     return (
         <Space.Compact className="w-full">
             <Select
                 mode="multiple"
-                defaultValue={selectedValues || []}
+                value={selectedValues || []}
                 className="w-full text-start"
                 showSearch={true}
                 placeholder="Выберите значения..."
                 onChange={(selectedValues: string[]) => {
-
                     setValue(selectedValues.join(","));
                 }}
                 options={options}
-                maxTagCount="responsive"
             />
-            {Array.isArray(value) && value.length > 0 && (
+            {value && value.length > 0 && (
                 <Button onClick={() => setValue("")} icon={<ReloadOutlined />} />
             )}
         </Space.Compact>

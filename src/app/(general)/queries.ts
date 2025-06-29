@@ -122,6 +122,12 @@ function basicViewQuery(client: TypedSupabaseClient, filters: FormattedBasicView
         query = query.contains("tag_ids", tags.map(Number));
     }
 
+    if (filters.collectors) {
+        const collectors = filters.collectors.split(",")
+
+        query = query.contains("collector_ids", collectors.map(Number));
+    }
+
     const otherFields = []
 
     // Поиск

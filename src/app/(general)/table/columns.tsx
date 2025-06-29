@@ -1,6 +1,7 @@
 "use client"
 
 import ExpandableText from "@/app/components/expand-text"
+import ExpandableTags from "@/app/components/expandable-tags"
 import {date} from "@/utils/date"
 import {createColumnHelper, Row, RowData} from "@tanstack/react-table"
 import {Tag, Tooltip} from "antd"
@@ -543,17 +544,46 @@ export default function getColumns(options: {
         }),
         columnHelper.accessor("collectors", {
             header: "Коллекторы",
-            cell: info => <></>
+            cell: info => {
+                const collectors = info.getValue()
+                if (!collectors || collectors.length === 0) return null
+                
+                return (
+                    <ExpandableTags>
+                        {collectors.map((collector, index) => {
+                            const surname = collector.last_name || ""
+                            const firstInitial = collector.first_name ? collector.first_name.charAt(0) + "." : ""
+                            const secondInitial = collector.second_name ? collector.second_name.charAt(0) + "." : ""
+                            const displayName = `${surname} ${firstInitial}${secondInitial}`.trim()
+                            
+                            return (
+                                <Tag key={index} className="text-xs">
+                                    {displayName}
+                                </Tag>
+                            )
+                        })}
+                    </ExpandableTags>
+                )
+            },
+            meta: {
+                filterVariant: "multiple-select"
+            }
         }),
         columnHelper.accessor("tags", {
             header: "Тэги",
             cell: info => {
                 let tags = info.getValue()
-                return <> {tags?.map((tag) => <Tooltip key={(tag).id} title={(tag.description)} color={tag.color ?? "blue"}><Tag
-                    color={tag.color ?? "blue"} >{(tag).name}</Tag></Tooltip>)}
-                </>
+                return (
+                    <ExpandableTags>
+                        {tags?.map((tag) => (
+                            <Tooltip key={(tag).id} title={(tag.description)} color={tag.color ?? "blue"}>
+                                <Tag color={tag.color ?? "blue"}>{(tag).name}</Tag>
+                            </Tooltip>
+                        ))}
+                    </ExpandableTags>
+                )
             },
-            size: 100,
+            size: 120.0,
             meta: {
                 filterVariant: "multiple-select"
             }
