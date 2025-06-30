@@ -192,7 +192,7 @@ export async function getBasicView(client: TypedSupabaseClient, page: number, fi
 
 export async function getBasicViewModelCsv(client: TypedSupabaseClient, filters: FormattedBasicViewFilters | undefined = undefined) {
     const queryResult = await basicViewQuery(client, filters);
-    const ids = queryResult.data?.map(({ id }) => id).filter(Boolean) || [];
+    const ids = queryResult.data?.map(({ id }) => id).filter((id): id is number => id !== null) || [];
     
     // Преобразуем массив ID в компактную строку диапазонов
     const compressedIds = compressIdsToRanges(ids);

@@ -37,7 +37,7 @@ export default function CollectionTableControls({table, filters}: {
     return <>
         <div className="p-2 flex justify-between items-center">
             <div className="space-x-2">
-                <Tooltip title={!userLoad.user ? "Для добавления записи нужно войти в аккаунт" : null}>
+                <Tooltip title={!userLoad.user ? "Для добавления записи нужно войти в аккаунт" : undefined}>
                     <Popconfirm
                         placement="right"
                         okText="Да"
