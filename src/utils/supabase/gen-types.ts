@@ -3191,27 +3191,36 @@ export type Database = {
       audit_logs: {
         Row: {
           changed_at: string | null
-          changed_by: string | null
           changed_data: Json | null
           id: number
           operation: string
           table_name: string
+          user_avatar: string | null
+          user_first_name: string | null
+          user_id: string | null
+          user_last_name: string | null
         }
         Insert: {
           changed_at?: string | null
-          changed_by?: string | null
           changed_data?: Json | null
           id?: number
           operation: string
           table_name: string
+          user_avatar?: string | null
+          user_first_name?: string | null
+          user_id?: string | null
+          user_last_name?: string | null
         }
         Update: {
           changed_at?: string | null
-          changed_by?: string | null
           changed_data?: Json | null
           id?: number
           operation?: string
           table_name?: string
+          user_avatar?: string | null
+          user_first_name?: string | null
+          user_id?: string | null
+          user_last_name?: string | null
         }
         Relationships: []
       }
@@ -3598,6 +3607,39 @@ export type Database = {
       }
     }
     Views: {
+      audit_logs_view: {
+        Row: {
+          changed_at: string | null
+          changed_data: Json | null
+          first_name: string | null
+          id: number | null
+          last_name: string | null
+          operation: string | null
+          table_name: string | null
+          user_id: string | null
+        }
+        Insert: {
+          changed_at?: string | null
+          changed_data?: Json | null
+          first_name?: string | null
+          id?: number | null
+          last_name?: string | null
+          operation?: string | null
+          table_name?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          changed_at?: string | null
+          changed_data?: Json | null
+          first_name?: string | null
+          id?: number | null
+          last_name?: string | null
+          operation?: string | null
+          table_name?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       basic_view: {
         Row: {
           age: string | null
@@ -3614,6 +3656,12 @@ export type Database = {
           geo_comment: string | null
           id: number | null
           kind: Database["public"]["CompositeTypes"]["topology_type"] | null
+          last_modified: string | null
+          last_modified_by: string | null
+          last_modified_user_avatar: string | null
+          last_modified_user_first_name: string | null
+          last_modified_user_last_name: string | null
+          last_operation: string | null
           latitude: number | null
           longitude: number | null
           month: number | null
@@ -3638,11 +3686,14 @@ export type Database = {
           Геокомментарий: string | null
           Дата: string | null
           Долгота: number | null
+          Изменил_пользователь: string | null
           Институт: string | null
           Коллекторы: string | null
           Комментарий: string | null
+          Операция: string | null
           Отряд: string | null
           Пол: string | null
+          Последнее_изменение: string | null
           Регион: string | null
           Род: string | null
           Семейство: string | null
@@ -3777,6 +3828,16 @@ export type Database = {
           region_id: number
         }
         Returns: number
+      }
+      get_user_info: {
+        Args: {
+          user_id: string
+        }
+        Returns: {
+          first_name: string
+          last_name: string
+          avatar: string
+        }[]
       }
       get_vouch_inst_id: {
         Args: {
