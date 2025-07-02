@@ -1,31 +1,21 @@
 import {SyncOutlined} from "@ant-design/icons";
-import {Column} from "@tanstack/react-table";
 import {Tag} from "antd";
-import {useMemo} from "react";
+import {useQuery} from "@tanstack/react-query";
+import {useClient} from "@/utils/supabase/client";
+import {nextCollectionId} from "@/app/(general)/queries";
 
 
-export default function NewId({column}: { column: Column<any, unknown> | null }) {
-    if (column == null) {
+export default function NewId() {
+    const supabase = useClient();
+    const { data: nextId, isLoading } = useQuery(nextCollectionId(supabase));
+
+    if (isLoading || nextId === undefined) {
         return <Tag icon={<SyncOutlined spin/>} color="processing">
             загрузка
         </Tag>
     }
-    const minMax = column.getFacetedMinMaxValues()
 
-    const last = useMemo(() => {
-        if (minMax) {
-            return minMax[1] + 1
-        } else return null;
-
-    }, [minMax?.[1]])
-
-    if (last) {
-        return <Tag color="blue">
-            {last}
-        </Tag>
-    }
-    return <Tag icon={<SyncOutlined spin/>} color="processing">
-        загрузка
+    return <Tag color="blue">
+        {nextId}
     </Tag>
-
 }

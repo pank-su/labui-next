@@ -257,6 +257,16 @@ export function geoBasicView(client: TypedSupabaseClient, filters: {
     })
 }
 
+export function nextCollectionId(client: TypedSupabaseClient) {
+    return queryOptions({
+        queryKey: ["next_collection_id"],
+        queryFn: async () => {
+            const result = await client.from("collection").select("id").order("id", { ascending: false }).limit(1);
+            return result.data && result.data.length > 0 ? result.data[0].id + 1 : 1;
+        },
+    })
+}
+
 
 /**
  * Применяет фильтры диапазона дат к запросу Supabase.

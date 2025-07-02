@@ -2,8 +2,7 @@ import {Avatar, Dropdown, Skeleton} from "antd";
 import {MenuProps} from "antd/lib";
 import {useMemo} from "react";
 import {singOutAction} from "../auth/actions";
-import {useClient} from "@/utils/supabase/client";
-import {useQuery} from "@supabase-cache-helpers/postgrest-react-query";
+import {useUser} from "./header";
 
 
 const items: MenuProps['items'] = [
@@ -25,22 +24,19 @@ export function generateAvatar(seed: String) {
  * Аватар профиля
  */
 export default function ProfileAvatar() {
-
-    const supabase = useClient()
-
-    const {data, isPending} = useQuery(supabase.from("profiles").select())
+    const {user, isLoading} = useUser();
 
     const avatarUrl = useMemo(() => {
-        if (!data) {
+        if (!user) {
             return null
         }
-        return data[0]?.avatar ?? generateAvatar(data[0]?.id)
-    }, [data])
+        return user.user_metadata?.avatar_url ?? generateAvatar(user.id)
+    }, [user])
 
-
-    if (isPending) {
+    if (isLoading) {
         return <Skeleton.Avatar/>
     }
+    
     return (
         <Dropdown menu={{
             items

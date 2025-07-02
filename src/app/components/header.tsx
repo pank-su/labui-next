@@ -55,7 +55,8 @@ export function useUser() {
     const supabase = useClient();
     const {data, isLoading} = useQuery({
         queryKey: ["supabase-get-user"],
-        gcTime: 0,
+        gcTime: 5 * 60 * 1000, // 5 минут
+        staleTime: 2 * 60 * 1000, // 2 минуты
         queryFn: () => supabase.auth.getUser()
     });
 
