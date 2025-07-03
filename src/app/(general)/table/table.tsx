@@ -15,7 +15,7 @@ import {
     useReactTable
 } from "@tanstack/react-table";
 import {useCallback, useMemo, useRef, useState} from "react";
-import {basicView, geoBasicView, orders as loadOrders} from "@/app/(general)/queries";
+import {basicView, basicViewQuery, geoBasicView, orders as loadOrders} from "@/app/(general)/queries";
 
 import {Database, Tables} from "@/utils/supabase/gen-types";
 import {SupabaseClient} from "@supabase/supabase-js";
@@ -163,11 +163,27 @@ export default function CollectionTable({params}: { params: { [key: string]: str
     const queryClient = useQueryClient()
 
     // Функция для обновления конкретной записи в кэше
-    const updateItemInCache = async (collectionId: number) => {
+    const updateItemInCache = async (collectionId: number, isInsert: boolean = false) => {
+        // Для INSERT проверяем, попадает ли новая запись под текущие фильтры
+        if (isInsert) {
+            const filtersWithId = { ...params, id: collectionId.toString() }
+            const result = await basicViewQuery(supabase, filtersWithId).select("id")
+            
+            // Если запись не попадает под фильтры, не обновляем кэш
+            if (!result.data || result.data.length === 0) {
+                return
+            }
+            
+            // Если попадает, делаем ревалидацию всех страниц
+            queryClient.invalidateQueries({ queryKey: ["basic_view"] })
+            queryClient.invalidateQueries({ queryKey: ["geo_basic_view"] })
+            return
+        }
+
+        // Для UPDATE обновляем конкретную запись в кэше
         const basicViewItem = await loadBasicViewItemById(supabase, collectionId)
         if (!basicViewItem) return
 
-        // Обновляем данные в кэше basic_view
         queryClient.setQueryData(queryOptions.queryKey, (oldData: any) => {
             if (!oldData?.pages) return oldData
 
@@ -199,7 +215,7 @@ export default function CollectionTable({params}: { params: { [key: string]: str
         callback: async (payload) => {
             if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
                 const newItem = payload.new as Tables<"collection">
-                await updateItemInCache(newItem.id)
+                await updateItemInCache(newItem.id, payload.eventType === "INSERT")
             }
         }
     })

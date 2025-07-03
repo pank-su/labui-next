@@ -34,6 +34,9 @@ export default function CollectionTableControls({table, filters}: {
         ["id"],
         "id",
         {
+            onError: (error) => {
+                console.log(error)
+            },
             onSuccess(data, variables, context) {
             },
         }
@@ -48,7 +51,7 @@ export default function CollectionTableControls({table, filters}: {
                         okText="Да"
                         cancelText="Нет"
                         icon={<PlusOutlined style={{color: "blue"}}/>}
-                        onConfirm={() => insert([])}
+                        onConfirm={() => insert([{}])}
                         title={mounted ? <>Вы точно хотите добавить запись с ID <NewId/></> : "Вы точно хотите добавить запись?"}
                     >
                         <Button
