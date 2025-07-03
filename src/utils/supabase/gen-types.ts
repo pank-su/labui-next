@@ -3660,9 +3660,6 @@ export type Database = {
           kind: Database["public"]["CompositeTypes"]["topology_type"] | null
           last_modified: string | null
           last_modified_by: string | null
-          last_modified_user_avatar: string | null
-          last_modified_user_first_name: string | null
-          last_modified_user_last_name: string | null
           last_operation: string | null
           latitude: number | null
           longitude: number | null
