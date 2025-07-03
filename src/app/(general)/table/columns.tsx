@@ -4,7 +4,7 @@ import ExpandableText from "@/app/components/expand-text"
 import ExpandableTags from "@/app/components/expandable-tags"
 import {date} from "@/utils/date"
 import {createColumnHelper, Row, RowData} from "@tanstack/react-table"
-import {Tag, Tooltip} from "antd"
+import {Avatar, Tag, Tooltip} from "antd"
 import {EditableCell} from "../../components/data-table/editable"
 import {FormattedBasicView, GenomRow, toGenomRow, Topology} from "../models"
 import {TopologyCell} from "../../components/data-table/topology-cell"
@@ -110,6 +110,40 @@ function formatSex(sex: string | null): string {
         result += "?"
     }
     return result
+}
+
+/**
+ * Форматирует дату последнего изменения
+ * @param lastModified - ISO строка даты последнего изменения
+ * @returns Отформатированная строка даты в формате "дд.мм.гггг чч:мм"
+ */
+function formatLastModified(lastModified: string | null): string {
+    if (!lastModified) return ""
+    try {
+        const date = new Date(lastModified)
+        return date.toLocaleString('ru-RU', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        })
+    } catch {
+        return ""
+    }
+}
+
+/**
+ * Форматирует информацию о пользователе, внесшем последнее изменение
+ * @param firstName - Имя пользователя
+ * @param lastName - Фамилия пользователя
+ * @returns Отформатированная строка "Фамилия И."
+ */
+function formatLastModifiedUser(firstName: string | null, lastName: string | null): string {
+    if (!firstName && !lastName) return ""
+    if (!lastName) return firstName || ""
+    if (!firstName) return lastName
+    return `${lastName} ${firstName.charAt(0)}.`
 }
 
 
@@ -598,6 +632,58 @@ export default function getColumns(options: {
             meta: {
                 filterVariant: "input"
             }
+        }),
+
+        columnHelper.group({
+            header: "Последнее изменение",
+            columns: [
+                columnHelper.accessor("last_modified", {
+                    header: "Дата",
+                    cell: info => {
+                        const lastModified = info.getValue()
+                        return <span className="text-xs text-gray-600">
+                            {formatLastModified(lastModified)}
+                        </span>
+                    },
+                    size: 120,
+                    meta: {
+                        filterVariant: "input"
+                    }
+                }),
+                columnHelper.accessor(row => formatLastModifiedUser(row.last_modified_user_first_name, row.last_modified_user_last_name), {
+                    id: "last_modified_user",
+                    header: "Пользователь",
+                    cell: info => {
+                        const row = info.row.original
+                        const userName = info.getValue() as string
+                        const userAvatar = row.last_modified_user_avatar
+
+                        if (!userName) return null
+
+                        return (
+                            <Tag 
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    fontSize: '10px',
+                                    padding: '2px',
+                                    margin: 0
+                                }}
+                            >
+                                {userAvatar && (
+                                    <Avatar src={userAvatar} size={"small"}  />
+                                )}
+                                {userName}
+                            </Tag>
+                        )
+                    },
+                    size: 150,
+                    meta: {
+                        filterVariant: "input"
+                    }
+                })
+            ]
         }),
 
     ]
