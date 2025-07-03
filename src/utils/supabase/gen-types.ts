@@ -3651,6 +3651,8 @@ export type Database = {
           comment: string | null
           country: string | null
           day: number | null
+          edit_user_ids: string[] | null
+          edit_users: Database["public"]["CompositeTypes"]["user_type"][] | null
           family: Database["public"]["CompositeTypes"]["topology_type"] | null
           genus: Database["public"]["CompositeTypes"]["topology_type"] | null
           geo_comment: string | null
@@ -3683,6 +3685,7 @@ export type Database = {
           Ваучер_ID: string | null
           Вид: string | null
           Возраст: string | null
+          Все_редакторы: string | null
           Геокомментарий: string | null
           Дата: string | null
           Долгота: number | null
@@ -3939,6 +3942,12 @@ export type Database = {
       topology_type: {
         id: number | null
         name: string | null
+      }
+      user_type: {
+        id: string | null
+        first_name: string | null
+        last_name: string | null
+        avatar: string | null
       }
     }
   }
