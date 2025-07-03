@@ -13,12 +13,13 @@ interface VirtualTableBodyProps<T> {
 
 export function VirtualTableBody<T>({table, tableContainerRef, rowVirtualizer}: VirtualTableBodyProps<T>) {
     const {rows} = table.getRowModel()
+    const BOTTOM_PADDING = 60 // Дополнительный отступ для предотвращения перекрытия надписями о состоянии
 
     return (
         <tbody
             style={{
                 display: 'grid',
-                height: `${rowVirtualizer.getTotalSize()}px`, //tells scrollbar how big the table is
+                height: `${rowVirtualizer.getTotalSize() + BOTTOM_PADDING}px`, //tells scrollbar how big the table is
                 position: 'relative', //needed for absolute positioning of rows
             }}
         >
