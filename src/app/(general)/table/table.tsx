@@ -4,8 +4,7 @@ import {useClient} from "@/utils/supabase/client";
 import {
     useQuery as useTableQuery,
     useSubscription,
-    useUpdateMutation,
-    useUpsertItem
+    useUpdateMutation
 } from "@supabase-cache-helpers/postgrest-react-query";
 import {
     getCoreRowModel,
@@ -26,7 +25,7 @@ import {FormattedBasicView, GenomRow, isGeoFilters, MapState, mapStates, toGenom
 import CollectionTableControls from "@/app/(general)/table/controls";
 import {usePathname, useRouter, useSearchParams} from "next/navigation";
 import {MapFilter} from "@/app/(general)/table/map-filter";
-import {useQuery, useSuspenseInfiniteQuery, useSuspenseQuery} from "@tanstack/react-query";
+import {useQuery, useQueryClient, useSuspenseInfiniteQuery, useSuspenseQuery} from "@tanstack/react-query";
 import {useUser} from "@/app/components/header";
 import {Spin} from "antd";
 
@@ -34,7 +33,8 @@ import {Spin} from "antd";
 
 
 async function loadBasicViewItemById(supabase: SupabaseClient<Database>, id: number) {
-    return ((await supabase.from("basic_view").select("*").eq("id", id)).data as FormattedBasicView[])[0]
+    const result = await supabase.from("basic_view").select("*").eq("id", id);
+    return result.data?.[0] as FormattedBasicView;
 }
 
 /**
@@ -81,11 +81,6 @@ export default function CollectionTable({params}: { params: { [key: string]: str
 
 
 
-    const upsertItem = useUpsertItem({
-        primaryKeys: ["id"],
-        table: "basic_view",
-        schema: "public"
-    })
 
     const [editedGenomRow, setEditedGenomRow] = useState<GenomRow | null>(null)
     const {user} = useUser()
@@ -165,21 +160,174 @@ export default function CollectionTable({params}: { params: { [key: string]: str
     };
 
 
-    // Supabase не поддерживает realtime для представлений
-    // поэтому просто будет получать все изменения в таблице
-    // и самостоятельно обновлять кэш
-    // надо также подключить обновление при изменении смежных таблиц
-    // TODO: привязаться к триггеру обновления view
+    const queryClient = useQueryClient()
+
+    // Функция для обновления конкретной записи в кэше
+    const updateItemInCache = async (collectionId: number) => {
+        const basicViewItem = await loadBasicViewItemById(supabase, collectionId)
+        if (!basicViewItem) return
+
+        // Обновляем данные в кэше basic_view
+        queryClient.setQueryData(queryOptions.queryKey, (oldData: any) => {
+            if (!oldData?.pages) return oldData
+
+            return {
+                ...oldData,
+                pages: oldData.pages.map((page: any) => {
+                    if (!page?.data) return page
+                    
+                    const itemIndex = page.data.findIndex((item: FormattedBasicView) => item.id === collectionId)
+                    if (itemIndex === -1) return page
+
+                    const newData = [...page.data]
+                    newData[itemIndex] = basicViewItem
+                    return { ...page, data: newData }
+                })
+            }
+        })
+
+        // Обновляем geo данные если нужно
+        queryClient.invalidateQueries({ queryKey: ["geo_basic_view"] })
+    }
+
+    // Обновление кэша при изменении таблицы collection
     useSubscription(supabase, "collection_updates", {
         event: "*",
         table: "collection",
         schema: "public"
     }, ["id"], {
         callback: async (payload) => {
-            console.log(payload)
-            const newItem = payload.new as Tables<"collection">
-            const basicViewItem = await loadBasicViewItemById(supabase, newItem.id)
-            await upsertItem(basicViewItem) // Элементы коллекции не удаляются
+            if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
+                const newItem = payload.new as Tables<"collection">
+                await updateItemInCache(newItem.id)
+            }
+        }
+    })
+
+    // Обновление кэша при изменении связей тегов
+    useSubscription(supabase, "tags_to_collection_updates", {
+        event: "*",
+        table: "tags_to_collection",
+        schema: "public"
+    }, ["col_id"], {
+        callback: async (payload) => {
+            const collectionId = (payload.new as any)?.col_id || (payload.old as any)?.col_id
+            if (collectionId) {
+                await updateItemInCache(collectionId)
+            }
+        }
+    })
+
+    // Обновление кэша при изменении тегов
+    useSubscription(supabase, "tags_updates", {
+        event: "*",
+        table: "tags",
+        schema: "public"
+    }, ["id"], {
+        callback: async (payload) => {
+            if (payload.eventType === "UPDATE") {
+                const tagId = (payload.new as any).id
+                const { data: tagConnections } = await supabase
+                    .from("tags_to_collection")
+                    .select("col_id")
+                    .eq("tag_id", tagId)
+                
+                if (tagConnections) {
+                    for (const connection of tagConnections) {
+                        await updateItemInCache(connection.col_id)
+                    }
+                }
+            }
+        }
+    })
+
+    // Обновление кэша при изменении связей коллекторов
+    useSubscription(supabase, "collector_to_collection_updates", {
+        event: "*",
+        table: "collector_to_collection",
+        schema: "public"
+    }, ["collection_id"], {
+        callback: async (payload) => {
+            const collectionId = (payload.new as any)?.collection_id || (payload.old as any)?.collection_id
+            if (collectionId) {
+                await updateItemInCache(collectionId)
+            }
+        }
+    })
+
+    // Обновление кэша при изменении коллекторов
+    useSubscription(supabase, "collector_updates", {
+        event: "*",
+        table: "collector",
+        schema: "public"
+    }, ["id"], {
+        callback: async (payload) => {
+            if (payload.eventType === "UPDATE") {
+                const collectorId = (payload.new as any).id
+                const { data: collectorConnections } = await supabase
+                    .from("collector_to_collection")
+                    .select("collection_id")
+                    .eq("collector_id", collectorId)
+                
+                if (collectorConnections) {
+                    for (const connection of collectorConnections) {
+                        await updateItemInCache(connection.collection_id)
+                    }
+                }
+            }
+        }
+    })
+
+    // Для остальных таблиц (таксономия, регионы и т.д.) просто перезагружаем все страницы
+    useSubscription(supabase, "taxonomy_updates", {
+        event: "*",
+        table: "order",
+        schema: "public"
+    }, ["id"], {
+        callback: async (payload) => {
+            if (payload.eventType === "UPDATE") {
+                queryClient.invalidateQueries({ queryKey: ["basic_view"] })
+                queryClient.invalidateQueries({ queryKey: ["geo_basic_view"] })
+            }
+        }
+    })
+
+    useSubscription(supabase, "family_updates", {
+        event: "*", 
+        table: "family",
+        schema: "public"
+    }, ["id"], {
+        callback: async (payload) => {
+            if (payload.eventType === "UPDATE") {
+                queryClient.invalidateQueries({ queryKey: ["basic_view"] })
+                queryClient.invalidateQueries({ queryKey: ["geo_basic_view"] })
+            }
+        }
+    })
+
+    useSubscription(supabase, "genus_updates", {
+        event: "*",
+        table: "genus", 
+        schema: "public"
+    }, ["id"], {
+        callback: async (payload) => {
+            if (payload.eventType === "UPDATE") {
+                queryClient.invalidateQueries({ queryKey: ["basic_view"] })
+                queryClient.invalidateQueries({ queryKey: ["geo_basic_view"] })
+            }
+        }
+    })
+
+    useSubscription(supabase, "kind_updates", {
+        event: "*",
+        table: "kind",
+        schema: "public"
+    }, ["id"], {
+        callback: async (payload) => {
+            if (payload.eventType === "UPDATE") {
+                queryClient.invalidateQueries({ queryKey: ["basic_view"] })
+                queryClient.invalidateQueries({ queryKey: ["geo_basic_view"] })
+            }
         }
     })
 
