@@ -1,10 +1,11 @@
 "use client"
 
-import {Card, Flex, notification} from "antd";
-import {useState} from "react";
+import {Card, Flex, notification, Button} from "antd";
+import {useState, useEffect} from "react";
 import {useRouter} from "next/navigation";
 import {LoginButton} from "@telegram-auth/react";
 import {signInWithTelegramAction} from "./actions";
+import type {FormInput} from "./models";
 
 interface TelegramUser {
     id: number;
@@ -36,17 +37,39 @@ function LoginForm() {
         setLoading(false)
     };
 
+    const handleTestAuth = async () => {
+        setLoading(true)
+        try {
+            const { signInAction } = await import("./actions");
+            const actionResult = await signInAction({
+                email: "not@use.please",
+                password: "test123"
+            } as FormInput);
+            if (actionResult.success) {
+                router.replace("/")
+            } else {
+                api.error({message: "Ошибка при входе", description: actionResult.error || "Ошибка тестовой авторизации"})
+            }
+        } catch (error) {
+            api.error({message: "Ошибка при входе", description: "Произошла ошибка при тестовой авторизации"})
+        }
+        setLoading(false)
+    };
+
     return (
 
         <>
             {contextHolder}
             <Card title="Авторизация" className="shadow" loading={loading}>
-                <div className="flex justify-center">
+                <div className="flex flex-col items-center gap-4">
                     <LoginButton
                         lang={"ru"}
                         botUsername="dbackuper_bot"
                         onAuthCallback={handleTelegramAuth}
                     />
+                    <Button type="dashed" onClick={handleTestAuth}>
+                        Test Auth
+                    </Button>
                 </div>
             </Card>
         </>)

@@ -1,7 +1,7 @@
 /**
  * Интерфейс для обработки формы
  */
-interface FormInput {
+export interface FormInput {
     email: string,
     password: string
 }
