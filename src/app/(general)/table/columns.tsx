@@ -133,18 +133,6 @@ function formatLastModified(lastModified: string | null): string {
     }
 }
 
-/**
- * Форматирует информацию о пользователе, внесшем последнее изменение
- * @param firstName - Имя пользователя
- * @param lastName - Фамилия пользователя
- * @returns Отформатированная строка "Фамилия И."
- */
-function formatLastModifiedUser(firstName: string | null, lastName: string | null): string {
-    if (!firstName && !lastName) return ""
-    if (!lastName) return firstName || ""
-    if (!firstName) return lastName
-    return `${lastName} ${firstName.charAt(0)}.`
-}
 
 
 export default function getColumns(options: {
@@ -650,32 +638,31 @@ export default function getColumns(options: {
                         filterVariant: "input"
                     }
                 }),
-                columnHelper.accessor(row => formatLastModifiedUser(row.last_modified_user_first_name, row.last_modified_user_last_name), {
-                    id: "last_modified_user",
-                    header: "Пользователь",
+                columnHelper.accessor("edit_users", {
+                    id: "edit_users",
+                    header: "Пользователи",
                     cell: info => {
-                        const row = info.row.original
-                        const userName = info.getValue() as string
-                        const userAvatar = row.last_modified_user_avatar
+                        const editUsers = info.getValue()
 
-                        if (!userName) return null
+
+                        if (!editUsers || editUsers.length === 0) return null
 
                         return (
-                            <Tag 
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '4px',
-                                    fontSize: '10px',
-                                    padding: '2px',
-                                    margin: 0
-                                }}
-                            >
-                                {userAvatar && (
-                                    <Avatar src={userAvatar} size={"small"}  />
-                                )}
-                                {userName}
-                            </Tag>
+                            <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                                {editUsers.map((user: any, index: number) => {
+                                    const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim()
+                                    
+                                    return (
+                                        <Tooltip key={user.id || index} title={fullName || 'Пользователь'}>
+                                            <Avatar 
+                                                src={user.avatar} 
+                                                size="small"
+                                                style={{ cursor: 'pointer' }}
+                                            />
+                                        </Tooltip>
+                                    )
+                                })}
+                            </div>
                         )
                     },
                     size: 150,

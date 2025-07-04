@@ -37,7 +37,7 @@ export const basicView = (client: TypedSupabaseClient, params: {
 
 // Создаём запрос c фильтроми к basic query
 export function basicViewQuery(client: TypedSupabaseClient, filters: FormattedBasicViewFilters | undefined) {
-    let query = client.from("basic_view").select("id,collect_id,order,family,genus,kind,age,sex,voucher_institute,voucher_id,latitude,longitude,country,region,geo_comment,day,month,year,comment,collectors,tags,last_modified,last_modified_by,last_modified_user_avatar,last_modified_user_first_name,last_modified_user_last_name,last_operation", {count: "exact"})
+    let query = client.from("basic_view").select("id,collect_id,order,family,genus,kind,age,sex,voucher_institute,voucher_id,latitude,longitude,country,region,geo_comment,day,month,year,comment,collectors,tags,last_modified,last_modified_by,last_operation,edit_users", {count: "exact"})
 
     if (isGeoFilters(filters)) {
 

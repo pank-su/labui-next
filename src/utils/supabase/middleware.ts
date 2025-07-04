@@ -5,7 +5,6 @@ export const updateSession = async (request: NextRequest) => {
     // This `try/catch` block is only here for the interactive tutorial.
     // Feel free to remove once you have Supabase connected.
     try {
-        console.time(`[Middleware] supabase.auth.getUser for ${request.nextUrl.pathname}`);
 
         // Create an unmodified response
         let response = NextResponse.next({
@@ -41,7 +40,6 @@ export const updateSession = async (request: NextRequest) => {
         // https://supabase.com/docs/guides/auth/server-side/nextjs
 
         const user = await supabase.auth.getUser();
-        console.timeEnd(`[Middleware] supabase.auth.getUser for ${request.nextUrl.pathname}`);
 
         // protected routes
         if (request.nextUrl.pathname.startsWith("/protected") && user.error) {

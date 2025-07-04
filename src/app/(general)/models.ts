@@ -1,7 +1,7 @@
 import {CompositeTypes, Database, Tables} from "@/utils/supabase/gen-types";
 import GeoFilter from "@/app/components/data-table/filters/geo-filter";
 
-export type FormattedBasicView = Omit<Tables<"basic_view">, "collector_ids" | "tag_ids"> & {size?: number};
+export type FormattedBasicView = Omit<Tables<"basic_view">, "collector_ids" | "tag_ids" | "edit_user_ids"> & {size?: number};
 
 export interface GeoBasicView {
     id: number;
