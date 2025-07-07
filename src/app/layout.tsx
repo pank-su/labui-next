@@ -6,7 +6,6 @@ import {ConfigProvider} from 'antd'
 import ruRU from 'antd/locale/ru_RU';
 import '@ant-design/v5-patch-for-react-19';
 import {ReactQueryClientProvider} from './components/query-provider';
-import TelegramMiniAppAuth from './components/telegram-mini-app-auth';
 
 
 export default function Layout({children}: {
@@ -23,7 +22,6 @@ export default function Layout({children}: {
             <AntdRegistry>
                 <ConfigProvider locale={ruRU}>
                     {children}
-                    <TelegramMiniAppAuth />
                 </ConfigProvider>
             </AntdRegistry>
         </ReactQueryClientProvider>

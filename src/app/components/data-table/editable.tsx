@@ -43,25 +43,60 @@ export function EditText({cellValue, onCancel, onSuccess}: {
     );
 }
 
-export function EditableCell({cellValue, onSave, user}: {
+export function EditableCell({
+    cellValue, 
+    onSave, 
+    user, 
+    rowId, 
+    fieldName, 
+    onStartEditing, 
+    onStopEditing, 
+    isFieldEditing
+}: {
     cellValue: string | null,
     onSave: (value: string | null) => void,
-    user?: User | null
+    user?: User | null,
+    rowId?: number,
+    fieldName?: string,
+    onStartEditing?: (rowId: number, fieldName: string) => void,
+    onStopEditing?: (rowId: number, fieldName: string) => void,
+    isFieldEditing?: (rowId: number, fieldName: string) => boolean
 }) {
     const [isEdit, setIsEdit] = useState(false);
-    return isEdit ? (
+    
+    // Используем контролируемое состояние если переданы все необходимые props
+    const useControlledState = rowId !== undefined && fieldName && onStartEditing && onStopEditing && isFieldEditing;
+    const isEditing = useControlledState ? isFieldEditing(rowId, fieldName) : isEdit;
+    
+    const handleStartEdit = () => {
+        if (useControlledState && rowId !== undefined && fieldName) {
+            onStartEditing(rowId, fieldName);
+        } else {
+            setIsEdit(true);
+        }
+    };
+    
+    const handleStopEdit = () => {
+        if (useControlledState && rowId !== undefined && fieldName) {
+            onStopEditing(rowId, fieldName);
+        } else {
+            setIsEdit(false);
+        }
+    };
+    
+    return isEditing ? (
         <EditText
             cellValue={cellValue}
-            onCancel={() => setIsEdit(false)}
+            onCancel={handleStopEdit}
             onSuccess={(value) => {
                 onSave(value);
-                setIsEdit(false); // закрываем редактор после успешного обновления
+                handleStopEdit(); // закрываем редактор после успешного обновления
             }}
         />
     ) : (
         <ExpandableText onDoubleClick={(e) => {
             if (user) {
-                setIsEdit(true);
+                handleStartEdit();
             }
             e.preventDefault();
         }}>

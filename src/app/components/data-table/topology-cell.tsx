@@ -1,4 +1,4 @@
-import {Button, Input, Modal, Select, Space} from "antd";
+import {Button, Input, Modal, Select, Space, Popconfirm, message} from "antd";
 import {GenomRow, Topology} from "../../(general)/models";
 import {useState} from "react";
 import {CheckOutlined} from "@ant-design/icons";
@@ -46,11 +46,37 @@ export const TopologyCell: React.FC<TopologyCellProps> = ({
         "id"
     );
 
+    const getFieldNameRu = (field: string) => {
+        switch (field) {
+            case 'order': return 'отряд';
+            case 'family': return 'семейство';
+            case 'genus': return 'род';
+            case 'kind': return 'вид';
+            default: return field;
+        }
+    };
+
     const handleAddNewItem = async () => {
-        if (!newItemName.trim()) return;
+        const trimmedName = newItemName.trim();
+        
+        // Проверка на пустое поле
+        if (!trimmedName) {
+            message.error('Название не может быть пустым');
+            return;
+        }
+
+        // Проверка на дублирование
+        const existingItem = options.find(item => 
+            item.name?.toLowerCase() === trimmedName.toLowerCase()
+        );
+        
+        if (existingItem) {
+            message.error(`${getFieldNameRu(field).charAt(0).toUpperCase() + getFieldNameRu(field).slice(1)} "${trimmedName}" уже существует`);
+            return;
+        }
 
         try {
-            let insertData: any = {name: newItemName};
+            let insertData: any = {name: trimmedName};
 
             // Добавляем ID родительского элемента, если необходимо
             switch (field) {
@@ -77,14 +103,23 @@ export const TopologyCell: React.FC<TopologyCellProps> = ({
             const result = await insertItem([insertData]);
 
             if (result && result.length > 0) {
-
-
+                const newItem = result[0];
+                message.success(`${getFieldNameRu(field).charAt(0).toUpperCase() + getFieldNameRu(field).slice(1)} "${trimmedName}" успешно добавлен`);
+                
+                // Автоматически выбираем добавленный элемент
+                const topology = {
+                    id: newItem.id,
+                    name: trimmedName
+                };
+                onChange(field, topology);
+                
                 // Закрываем модальное окно
                 setIsAddNewModalVisible(false);
                 setNewItemName("");
             }
         } catch (error) {
             console.error('Ошибка при добавлении элемента:', error);
+            message.error('Ошибка при добавлении элемента');
         }
     }
 
@@ -105,12 +140,19 @@ export const TopologyCell: React.FC<TopologyCellProps> = ({
                         }
                     }}
                     className="w-full"
-                    value={genomRow[field]?.id}
+                    value={genomRow[field]?.name && genomRow[field]?.name.trim() !== '' ? genomRow[field]?.id : undefined}
                     searchValue={search}
                     onSearch={setSearch}
                     loading={isLoading}
+                    placeholder="Выберите или добавьте новый"
+                    allowClear
 
                     onChange={(newId, option) => {
+                        // Если поле очищено
+                        if (newId === undefined) {
+                            onChange(field, undefined);
+                            return;
+                        }
 
                         if (!Array.isArray(option) && option != null && option.value === "add-new") {
                             setNewItemName(search)
@@ -156,20 +198,39 @@ export const TopologyCell: React.FC<TopologyCellProps> = ({
 
                 }
                 <Modal
-                    title={`Добавить новый ${field}`}
+                    title={`Добавить новый ${getFieldNameRu(field)}`}
                     open={isAddNewModalVisible}
-                    onOk={handleAddNewItem}
                     onCancel={() => {
                         setIsAddNewModalVisible(false);
                         setNewItemName("");
                     }}
-                    okText="Добавить"
-                    cancelText="Отмена"
-                    confirmLoading={isPending}
+                    footer={[
+                        <Button key="cancel" onClick={() => {
+                            setIsAddNewModalVisible(false);
+                            setNewItemName("");
+                        }}>
+                            Отмена
+                        </Button>,
+                        <Popconfirm
+                            key="confirm"
+                            title={`Вы уверены, что хотите добавить ${getFieldNameRu(field)} "${newItemName.trim()}"?`}
+                            onConfirm={handleAddNewItem}
+                            okText="Да"
+                            cancelText="Нет"
+                            disabled={!newItemName.trim()}
+                        >
+                            <Button 
+                                type="primary" 
+                                loading={isPending}
+                                disabled={!newItemName.trim()}
+                            >
+                                Добавить
+                            </Button>
+                        </Popconfirm>
+                    ]}
                 >
                     <div className="mb-2">
-                        Введите название для нового
-                        элемента{field === 'family' ? ` в отряде ${genomRow.order?.name || ''}` :
+                        Введите название для нового {getFieldNameRu(field)}{field === 'family' ? ` в отряде ${genomRow.order?.name || ''}` :
                         field === 'genus' ? ` в семействе ${genomRow.family?.name || ''}` :
                             field === 'kind' ? ` в роде ${genomRow.genus?.name || ''}` : ''}
                     </div>
@@ -177,7 +238,11 @@ export const TopologyCell: React.FC<TopologyCellProps> = ({
                         placeholder="Название"
                         value={newItemName}
                         onChange={(e) => setNewItemName(e.target.value)}
-                        onPressEnter={handleAddNewItem}
+                        onPressEnter={() => {
+                            if (newItemName.trim()) {
+                                handleAddNewItem();
+                            }
+                        }}
                         autoFocus
                     />
                 </Modal>
@@ -190,7 +255,7 @@ export const TopologyCell: React.FC<TopologyCellProps> = ({
             className="cursor-pointer w-full"
             onDoubleClick={startEditing}
         >
-            {value || ' '}
+            {(value && value.trim() !== '') ? value : ' '}
         </div>
     );
 };

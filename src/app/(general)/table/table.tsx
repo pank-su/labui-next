@@ -32,9 +32,82 @@ import {Spin} from "antd";
 
 
 
+// Утилиты
 async function loadBasicViewItemById(supabase: SupabaseClient<Database>, id: number) {
     const result = await supabase.from("basic_view").select("*").eq("id", id);
     return result.data?.[0] as FormattedBasicView;
+}
+
+// Хук для управления редактированием
+const useEditing = () => {
+    const [editedGenomRow, setEditedGenomRow] = useState<GenomRow | null>(null)
+    const [editingFields, setEditingFields] = useState<Set<string>>(new Set())
+
+    const handleEdit = useCallback((row: FormattedBasicView) => {
+        setEditedGenomRow(toGenomRow(row));
+    }, []);
+
+    const handleFieldChange = useCallback((field: string, value: Topology | undefined) => {
+        if (!editedGenomRow) return;
+
+        const updatedRow = {...editedGenomRow};
+        switch (field) {
+            case 'order':
+                updatedRow.order = value;
+                updatedRow.family = undefined;
+                updatedRow.genus = undefined;
+                updatedRow.kind = undefined;
+                break;
+            case 'family':
+                updatedRow.family = value;
+                updatedRow.genus = undefined;
+                updatedRow.kind = undefined;
+                break;
+            case 'genus':
+                updatedRow.genus = value;
+                updatedRow.kind = undefined;
+                break;
+            case 'kind':
+                updatedRow.kind = value;
+                break;
+        }
+
+        setEditedGenomRow(updatedRow);
+    }, [editedGenomRow]);
+
+    const handleStartEditing = useCallback((rowId: number, fieldName: string) => {
+        const fieldKey = `${rowId}-${fieldName}`;
+        setEditingFields(prev => new Set(prev).add(fieldKey));
+    }, []);
+
+    const handleStopEditing = useCallback((rowId: number, fieldName: string) => {
+        const fieldKey = `${rowId}-${fieldName}`;
+        setEditingFields(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(fieldKey);
+            return newSet;
+        });
+    }, []);
+
+    const isFieldEditing = useCallback((rowId: number, fieldName: string) => {
+        const fieldKey = `${rowId}-${fieldName}`;
+        return editingFields.has(fieldKey);
+    }, [editingFields]);
+
+    const handleCancel = useCallback(() => {
+        setEditedGenomRow(null);
+    }, []);
+
+    return {
+        editedGenomRow,
+        setEditedGenomRow,
+        handleEdit,
+        handleFieldChange,
+        handleStartEditing,
+        handleStopEditing,
+        isFieldEditing,
+        handleCancel
+    }
 }
 
 /**
@@ -82,12 +155,9 @@ export default function CollectionTable({params}: { params: { [key: string]: str
 
 
 
-    const [editedGenomRow, setEditedGenomRow] = useState<GenomRow | null>(null)
     const {user} = useUser()
-
-    const handleEdit = useCallback((row: FormattedBasicView) => {
-        setEditedGenomRow(toGenomRow(row));
-    }, []);
+    const editing = useEditing()
+    const {editedGenomRow, setEditedGenomRow} = editing
 
     const {mutateAsync: update} = useUpdateMutation(
         supabase.from("collection"),
@@ -112,34 +182,6 @@ export default function CollectionTable({params}: { params: { [key: string]: str
         {enabled: !!editedGenomRow?.genus?.id}
     );
 
-    const handleFieldChange = (field: string, value: Topology | undefined) => {
-        if (!editedGenomRow) return;
-
-        const updatedRow = {...editedGenomRow};
-        switch (field) {
-            case 'order':
-                updatedRow.order = value;
-                updatedRow.family = undefined;
-                updatedRow.genus = undefined;
-                updatedRow.kind = undefined;
-                break;
-            case 'family':
-                updatedRow.family = value;
-                updatedRow.genus = undefined;
-                updatedRow.kind = undefined;
-                break;
-            case 'genus':
-                updatedRow.genus = value;
-                updatedRow.kind = undefined;
-                break;
-            case 'kind':
-                updatedRow.kind = value;
-                break;
-        }
-
-        setEditedGenomRow(updatedRow);
-    };
-
     const handleSave = async () => {
         if (editedGenomRow) {
             console.log(editedGenomRow)
@@ -151,12 +193,7 @@ export default function CollectionTable({params}: { params: { [key: string]: str
                 kind_id: editedGenomRow.kind?.id ?? undefined
             })
             setEditedGenomRow(null)
-
         }
-    };
-
-    const handleCancel = () => {
-        setEditedGenomRow(null);
     };
 
 
@@ -164,6 +201,9 @@ export default function CollectionTable({params}: { params: { [key: string]: str
 
     // Функция для обновления конкретной записи в кэше
     const updateItemInCache = async (collectionId: number, isInsert: boolean = false) => {
+        // Сохраняем состояние редактирования таксономии перед обновлением
+        const isEditingTaxonomy = editedGenomRow?.rowId === collectionId;
+        
         // Для INSERT проверяем, попадает ли новая запись под текущие фильтры
         if (isInsert) {
             const filtersWithId = { ...params, id: collectionId.toString() }
@@ -197,6 +237,19 @@ export default function CollectionTable({params}: { params: { [key: string]: str
 
                     const newData = [...page.data]
                     newData[itemIndex] = basicViewItem
+                    
+                    // Если эта запись редактируется в данный момент, обновляем editedGenomRow
+                    if (isEditingTaxonomy && editedGenomRow) {
+                        const updatedGenomRow = toGenomRow(basicViewItem);
+                        updatedGenomRow.rowId = editedGenomRow.rowId;
+                        // Сохраняем текущие изменения пользователя
+                        updatedGenomRow.order = editedGenomRow.order;
+                        updatedGenomRow.family = editedGenomRow.family;
+                        updatedGenomRow.genus = editedGenomRow.genus;
+                        updatedGenomRow.kind = editedGenomRow.kind;
+                        setEditedGenomRow(updatedGenomRow);
+                    }
+                    
                     return { ...page, data: newData }
                 })
             }
@@ -305,6 +358,9 @@ export default function CollectionTable({params}: { params: { [key: string]: str
                 queryClient.invalidateQueries({ queryKey: ["basic_view"] })
                 queryClient.invalidateQueries({ queryKey: ["geo_basic_view"] })
             }
+            if (payload.eventType === "INSERT") {
+                queryClient.invalidateQueries({ queryKey: ["orders"] })
+            }
         }
     })
 
@@ -317,6 +373,9 @@ export default function CollectionTable({params}: { params: { [key: string]: str
             if (payload.eventType === "UPDATE") {
                 queryClient.invalidateQueries({ queryKey: ["basic_view"] })
                 queryClient.invalidateQueries({ queryKey: ["geo_basic_view"] })
+            }
+            if (payload.eventType === "INSERT") {
+                queryClient.invalidateQueries({ queryKey: ["family"] })
             }
         }
     })
@@ -331,6 +390,9 @@ export default function CollectionTable({params}: { params: { [key: string]: str
                 queryClient.invalidateQueries({ queryKey: ["basic_view"] })
                 queryClient.invalidateQueries({ queryKey: ["geo_basic_view"] })
             }
+            if (payload.eventType === "INSERT") {
+                queryClient.invalidateQueries({ queryKey: ["genus"] })
+            }
         }
     })
 
@@ -343,6 +405,9 @@ export default function CollectionTable({params}: { params: { [key: string]: str
             if (payload.eventType === "UPDATE") {
                 queryClient.invalidateQueries({ queryKey: ["basic_view"] })
                 queryClient.invalidateQueries({ queryKey: ["geo_basic_view"] })
+            }
+            if (payload.eventType === "INSERT") {
+                queryClient.invalidateQueries({ queryKey: ["kind"] })
             }
         }
     })
@@ -359,15 +424,19 @@ export default function CollectionTable({params}: { params: { [key: string]: str
         isFamiliesLoading,
         isGeneraLoading,
         isKindsLoading,
-        onEdit: handleEdit,
-        onFieldChange: handleFieldChange,
+        onEdit: editing.handleEdit,
+        onFieldChange: editing.handleFieldChange,
         onSave: handleSave,
-        onCancel: handleCancel,
+        onCancel: editing.handleCancel,
         onUpdate: update,
+        onStartEditing: editing.handleStartEditing,
+        onStopEditing: editing.handleStopEditing,
+        isFieldEditing: editing.isFieldEditing,
     }), [
         user, editedGenomRow, orders, families, genera, kinds,
         isOrdersLoading, isFamiliesLoading, isGeneraLoading, isKindsLoading,
-        handleEdit, handleFieldChange, handleSave, handleCancel, update
+        editing.handleEdit, editing.handleFieldChange, handleSave, editing.handleCancel, update,
+        editing.handleStartEditing, editing.handleStopEditing, editing.isFieldEditing
     ]);
 
 

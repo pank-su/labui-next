@@ -6,7 +6,7 @@ export interface FormInput {
     password: string
 }
 
-interface SignInResult {
+export interface SignInResult {
     success: boolean,
     error: string | null
 }

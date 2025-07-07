@@ -17,7 +17,6 @@ import {FilterGeo} from "@/app/components/data-table/filters/geo-filter";
 const columnHelper = createColumnHelper<FormattedBasicView>()
 
 declare module '@tanstack/react-table' {
-    //allows us to define custom properties for our columns
     export interface ColumnMeta<TData extends RowData, TValue> {
         filterVariant?: 'index' | 'input' | 'date' | 'select' | 'geo' | "checkbox" | "multiple-select"
     }
@@ -34,7 +33,6 @@ const geoFilterFn = (
     columnId: string,
     filterValue: any,
 ): boolean => {
-
     const value = row.getValue(columnId) as number | null | undefined
 
     if (filterValue === null || filterValue === undefined) {
@@ -47,83 +45,33 @@ const geoFilterFn = (
     const geoFilter = filterValue as FilterGeo
     const {from, to} = geoFilter
 
-    // 4. Проверяем соответствие значения диапазону [from, to]
-    let passesFrom = true
-    if (from !== null) {
-        passesFrom = value >= from
-    }
-
-    let passesTo = true
-    if (to !== null) {
-        passesTo = value <= to
-    }
+    const passesFrom = from === null || value >= from
+    const passesTo = to === null || value <= to
 
     return passesFrom && passesTo
 }
 
-/**
- * Интерфейс для представления тега.
- * @interface
- * @property {number} id - Уникальный идентификатор тега
- * @property {string} name - Название тега
- */
-interface Tag {
-    id: number;
-    name: string;
-}
-
-/**
- * Форматирует строку возраста в сокращенную форму
- * @param age - Строка возраста для форматирования, может быть null
- * @returns Отформатированная строка возраста:
- * - "ad" для "adult" (взрослый)
- * - "juv" для "juvenile" (молодой)
- * - "sad" для "subadult" (полувзрослый)
- * - Исходная строка или пустая строка если null
- */
-function formatAge(age: string | null): string {
-    switch (age) {
-        case "adult":
-            return "ad"
-        case "juvenile":
-            return "juv"
-        case "subadult":
-            return "sad"
-        default:
-            return age ?? ""
+// Утилиты форматирования
+const formatAge = (age: string | null): string => {
+    const ageMap: Record<string, string> = {
+        "adult": "ad",
+        "juvenile": "juv", 
+        "subadult": "sad"
     }
+    return age ? ageMap[age] ?? age : ""
 }
 
-/**
- * Форматирует строку пола в сокращенную форму
- * @param sex - Строка пола для форматирования, может быть null
- * @returns Отформатированная строка:
- * - Возвращает пустую строку если входное значение null
- * - Возвращает первый символ строки пола
- * - Если пол не до конца определён то сохраняем знак вопроса
- */
-
-function formatSex(sex: string | null): string {
-    if (sex == null) return ""
-    let result = sex[0]
-    if (sex.endsWith("?")) {
-        result += "?"
-    }
-    return result
+const formatSex = (sex: string | null): string => {
+    if (!sex) return ""
+    return sex[0] + (sex.endsWith("?") ? "?" : "")
 }
 
-/**
- * Форматирует дату последнего изменения
- * @param lastModified - ISO строка даты последнего изменения
- * @returns Отформатированная строка даты в формате "дд.мм.гггг чч:мм"
- */
-function formatLastModified(lastModified: string | null): string {
+const formatLastModified = (lastModified: string | null): string => {
     if (!lastModified) return ""
     try {
-        const date = new Date(lastModified)
-        return date.toLocaleString('ru-RU', {
+        return new Date(lastModified).toLocaleString('ru-RU', {
             day: '2-digit',
-            month: '2-digit',
+            month: '2-digit', 
             year: 'numeric',
             hour: '2-digit',
             minute: '2-digit'
@@ -151,6 +99,9 @@ export default function getColumns(options: {
     onSave: () => void;
     onCancel: () => void;
     onUpdate: (payload: any) => Promise<any>;
+    onStartEditing: (rowId: number, fieldName: string) => void;
+    onStopEditing: (rowId: number, fieldName: string) => void;
+    isFieldEditing: (rowId: number, fieldName: string) => boolean;
 }) {
 
     const {
@@ -169,33 +120,68 @@ export default function getColumns(options: {
         onSave,
         onCancel,
         onUpdate: update,
+        onStartEditing,
+        onStopEditing,
+        isFieldEditing,
     } = options;
 
 
+    // Хелперы для создания колонок
     const getFieldProps = (field: 'order' | 'family' | 'genus' | 'kind') => {
-        let options: { id: number, name: string | null }[] = [];
-        let isDisabled = false;
-
-        switch (field) {
-            case 'order':
-                options = orders || [];
-                break;
-            case 'family':
-                options = families || [];
-                isDisabled = !editedGenomRow?.order?.id;
-                break;
-            case 'genus':
-                options = genera || [];
-                isDisabled = !editedGenomRow?.family?.id;
-                break;
-            case 'kind':
-                options = kinds || [];
-                isDisabled = !editedGenomRow?.genus?.id;
-                break;
+        const fieldMap = {
+            order: { options: orders || [], isDisabled: false },
+            family: { 
+                options: families || [], 
+                isDisabled: !editedGenomRow?.order?.id || !editedGenomRow?.order?.name?.trim()
+            },
+            genus: { 
+                options: genera || [], 
+                isDisabled: !editedGenomRow?.family?.id || !editedGenomRow?.family?.name?.trim()
+            },
+            kind: { 
+                options: kinds || [], 
+                isDisabled: !editedGenomRow?.genus?.id || !editedGenomRow?.genus?.name?.trim()
+            }
         }
+        return fieldMap[field]
+    }
 
-        return {options, isDisabled};
-    };
+    const createEditableCell = (fieldName: string, savePayload: (value: string | null, rowId: number) => any) => 
+        (info: any) => (
+            <EditableCell 
+                cellValue={info.getValue()}
+                onSave={(value) => update(savePayload(value, info.row.getValue("id")))}
+                user={user}
+                rowId={info.row.getValue("id") as number}
+                fieldName={fieldName}
+                onStartEditing={onStartEditing}
+                onStopEditing={onStopEditing}
+                isFieldEditing={isFieldEditing}
+            />
+        )
+
+    const createTopologyCell = (field: 'order' | 'family' | 'genus' | 'kind', loadingState: boolean) => 
+        (info: any) => {
+            const {options, isDisabled} = getFieldProps(field)
+            const isEditing = !!(info.row.getValue("id") == editedGenomRow?.rowId && user)
+
+            return (
+                <TopologyCell
+                    genomRow={isEditing ? editedGenomRow! : toGenomRow(info.row.original)}
+                    field={field}
+                    value={info.getValue()}
+                    isEditing={isEditing}
+                    options={options}
+                    isDisabled={isDisabled}
+                    onEdit={() => onEdit(info.row.original)}
+                    onChange={onFieldChange}
+                    showActions={field === 'kind' && isEditing}
+                    onSave={onSave}
+                    isLoading={loadingState}
+                    onCancel={onCancel}
+                />
+            )
+        }
 
     return [
         /* Вернуть, когда будет смысл
@@ -240,10 +226,7 @@ export default function getColumns(options: {
         }),
 
         columnHelper.accessor('collect_id', {
-            cell: info => <EditableCell cellValue={info.getValue()}
-                                        onSave={(value) => update({id: info.row.getValue("id"), collect_id: value})}
-                                        user={user}/>
-            ,
+            cell: createEditableCell("collect_id", (value, rowId) => ({id: rowId, collect_id: value})),
             header: "collect id",
             size: 150,
             filterFn: "includesString",
@@ -256,123 +239,40 @@ export default function getColumns(options: {
             header: "Классификация",
             columns: [
                 columnHelper.accessor('order.name', {
-                    cell: info => {
-                        const {options, isDisabled} = getFieldProps('order');
-
-                        const isEditing = !!(info.row.getValue("id") == editedGenomRow?.rowId && user)
-
-                        return (
-                            <TopologyCell
-                                genomRow={isEditing ? editedGenomRow! : toGenomRow(info.row.original)}
-                                field="order"
-                                value={info.getValue()}
-                                isEditing={isEditing}
-                                options={options}
-                                isDisabled={isDisabled}
-                                onEdit={() => onEdit(info.row.original)}
-                                onChange={onFieldChange}
-                                showActions={false}
-                                onSave={onSave}
-                                isLoading={isOrdersLoading}
-                                onCancel={onCancel}
-                            />
-                        );
-                    },
+                    cell: createTopologyCell('order', isOrdersLoading),
                     header: "Отряд",
                     size: 150,
                     meta: {
                         filterVariant: "select"
                     },
                     filterFn: selectFilter
-
                 }),
                 columnHelper.accessor('family.name', {
-                    cell: info => {
-                        const {options, isDisabled} = getFieldProps('family');
-                        const isEditing = !!(info.row.getValue("id") == editedGenomRow?.rowId && user)
-
-                        return (
-                            <TopologyCell
-                                genomRow={isEditing ? editedGenomRow! : toGenomRow(info.row.original)}
-                                field="family"
-                                value={info.getValue()}
-                                isEditing={isEditing}
-                                options={options}
-                                isDisabled={isDisabled}
-                                onEdit={() => onEdit(info.row.original)}
-                                onChange={onFieldChange}
-                                showActions={false}
-                                onSave={onSave}
-                                isLoading={isFamiliesLoading}
-                                onCancel={onCancel}
-                            />
-                        );
-                    },
+                    cell: createTopologyCell('family', isFamiliesLoading),
                     header: "Семейство",
                     size: 150,
                     meta: {
                         filterVariant: "select"
                     },
                     filterFn: selectFilter
-
                 }),
                 columnHelper.accessor('genus.name', {
-                    cell: info => {
-                        const {options, isDisabled} = getFieldProps('genus');
-                        const isEditing = !!(info.row.getValue("id") == editedGenomRow?.rowId && user)
-
-                        return (
-                            <TopologyCell
-                                genomRow={isEditing ? editedGenomRow! : toGenomRow(info.row.original)}
-                                field="genus"
-                                value={info.getValue()}
-                                isEditing={isEditing}
-                                options={options}
-                                isDisabled={isDisabled}
-                                onEdit={() => onEdit(info.row.original)}
-                                onChange={onFieldChange}
-                                showActions={false}
-                                onSave={onSave}
-                                isLoading={isGeneraLoading}
-                                onCancel={onCancel}
-                            />
-                        );
-                    }, header: "Род",
+                    cell: createTopologyCell('genus', isGeneraLoading),
+                    header: "Род",
                     size: 150,
                     meta: {
                         filterVariant: "select"
                     },
                     filterFn: selectFilter
-
                 }),
                 columnHelper.accessor('kind.name', {
-                    cell: info => {
-                        const {options, isDisabled} = getFieldProps('kind');
-                        const isEditing = !!(info.row.getValue("id") == editedGenomRow?.rowId && user)
-
-                        return (
-                            <TopologyCell
-                                genomRow={isEditing ? editedGenomRow! : toGenomRow(info.row.original)}
-                                field="kind"
-                                value={info.getValue()}
-                                isEditing={isEditing}
-                                options={options}
-                                isDisabled={isDisabled}
-                                onEdit={() => onEdit(info.row.original)}
-                                onChange={onFieldChange}
-                                showActions={false}
-                                onSave={onSave}
-                                isLoading={isKindsLoading}
-                                onCancel={onCancel}
-                            />
-                        );
-                    }, header: "Вид",
+                    cell: createTopologyCell('kind', isKindsLoading),
+                    header: "Вид",
                     size: 150,
                     meta: {
                         filterVariant: "select"
                     },
                     filterFn: selectFilter
-
                 }),
             ]
         }),
@@ -533,12 +433,7 @@ export default function getColumns(options: {
                 columnHelper.accessor("geo_comment", {
                     header: "Геокомментарий",
                     size: 270,
-                    cell: info => <EditableCell cellValue={info.getValue()}
-                                                onSave={(value) => update({
-                                                    id: info.row.getValue("id"),
-                                                    geo_comment: value
-                                                })}
-                                                user={user}/>,
+                    cell: createEditableCell("geo_comment", (value, rowId) => ({id: rowId, geo_comment: value})),
                     meta: {
                         filterVariant: "input"
                     }
@@ -613,9 +508,7 @@ export default function getColumns(options: {
 
         columnHelper.accessor("comment", {
             header: "Комментарий",
-            cell: info => <EditableCell cellValue={info.getValue()}
-                                        onSave={(value) => update({id: info.row.getValue("id"), comment: value})}
-                                        user={user}/>,
+            cell: createEditableCell("comment", (value, rowId) => ({id: rowId, comment: value})),
             size: 400,
             meta: {
                 filterVariant: "input"

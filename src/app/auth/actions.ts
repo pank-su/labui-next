@@ -3,6 +3,7 @@
 import {createClient} from "@/utils/supabase/server"
 import {revalidatePath} from "next/cache"
 import {redirect} from "next/navigation"
+import {FormInput, SignInResult} from "@/app/auth/models";
 
 
 export async function signInAction(formData: FormInput): Promise<SignInResult> {
