@@ -55,7 +55,7 @@ const geoFilterFn = (
 const formatAge = (age: string | null): string => {
     const ageMap: Record<string, string> = {
         "adult": "ad",
-        "juvenile": "juv", 
+        "juvenile": "juv",
         "subadult": "sad"
     }
     return age ? ageMap[age] ?? age : ""
@@ -71,7 +71,7 @@ const formatLastModified = (lastModified: string | null): string => {
     try {
         return new Date(lastModified).toLocaleString('ru-RU', {
             day: '2-digit',
-            month: '2-digit', 
+            month: '2-digit',
             year: 'numeric',
             hour: '2-digit',
             minute: '2-digit'
@@ -80,7 +80,6 @@ const formatLastModified = (lastModified: string | null): string => {
         return ""
     }
 }
-
 
 
 export default function getColumns(options: {
@@ -129,26 +128,26 @@ export default function getColumns(options: {
     // Хелперы для создания колонок
     const getFieldProps = (field: 'order' | 'family' | 'genus' | 'kind') => {
         const fieldMap = {
-            order: { options: orders || [], isDisabled: false },
-            family: { 
-                options: families || [], 
+            order: {options: orders || [], isDisabled: false},
+            family: {
+                options: families || [],
                 isDisabled: !editedGenomRow?.order?.id || !editedGenomRow?.order?.name?.trim()
             },
-            genus: { 
-                options: genera || [], 
+            genus: {
+                options: genera || [],
                 isDisabled: !editedGenomRow?.family?.id || !editedGenomRow?.family?.name?.trim()
             },
-            kind: { 
-                options: kinds || [], 
+            kind: {
+                options: kinds || [],
                 isDisabled: !editedGenomRow?.genus?.id || !editedGenomRow?.genus?.name?.trim()
             }
         }
         return fieldMap[field]
     }
 
-    const createEditableCell = (fieldName: string, savePayload: (value: string | null, rowId: number) => any) => 
+    const createEditableCell = (fieldName: string, savePayload: (value: string | null, rowId: number) => any) =>
         (info: any) => (
-            <EditableCell 
+            <EditableCell
                 cellValue={info.getValue()}
                 onSave={(value) => update(savePayload(value, info.row.getValue("id")))}
                 user={user}
@@ -160,7 +159,7 @@ export default function getColumns(options: {
             />
         )
 
-    const createTopologyCell = (field: 'order' | 'family' | 'genus' | 'kind', loadingState: boolean) => 
+    const createTopologyCell = (field: 'order' | 'family' | 'genus' | 'kind', loadingState: boolean) =>
         (info: any) => {
             const {options, isDisabled} = getFieldProps(field)
             const isEditing = !!(info.row.getValue("id") == editedGenomRow?.rowId && user)
@@ -495,7 +494,7 @@ export default function getColumns(options: {
             cell: info => {
                 const collectors = info.getValue()
                 if (!collectors || collectors.length === 0) return null
-                
+
                 return (
                     <ExpandableTags>
                         {collectors.map((collector, index) => {
@@ -503,7 +502,7 @@ export default function getColumns(options: {
                             const firstInitial = collector.first_name ? collector.first_name.charAt(0) + "." : ""
                             const secondInitial = collector.second_name ? collector.second_name.charAt(0) + "." : ""
                             const displayName = `${surname} ${firstInitial}${secondInitial}`.trim()
-                            
+
                             return (
                                 <Tag key={index} className="text-xs">
                                     {displayName}
@@ -553,11 +552,11 @@ export default function getColumns(options: {
                     header: "Дата",
                     cell: info => {
                         const lastModified = info.getValue()
-                        return <span className="text-xs text-gray-600">
+                        return <>
                             {formatLastModified(lastModified)}
-                        </span>
+                        </>
                     },
-                    size: 120,
+                    size: 155,
                     meta: {
                         filterVariant: "input"
                     }
@@ -572,24 +571,24 @@ export default function getColumns(options: {
                         if (!editUsers || editUsers.length === 0) return null
 
                         return (
-                            <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                            <Avatar.Group max={{count: 5}}>
                                 {editUsers.map((user: any, index: number) => {
                                     const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim()
-                                    
+
                                     return (
                                         <Tooltip key={user.id || index} title={fullName || 'Пользователь'}>
-                                            <Avatar 
-                                                src={user.avatar} 
+                                            <Avatar
+                                                src={user.avatar}
                                                 size="small"
-                                                style={{ cursor: 'pointer' }}
+                                                style={{cursor: 'pointer'}}
                                             />
                                         </Tooltip>
                                     )
                                 })}
-                            </div>
+                            </Avatar.Group>
                         )
                     },
-                    size: 150,
+                    size: 120,
                     meta: {
                         filterVariant: "input"
                     }
