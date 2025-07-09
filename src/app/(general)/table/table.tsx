@@ -14,14 +14,14 @@ import {
     getSortedRowModel,
     useReactTable
 } from "@tanstack/react-table";
-import {useCallback, useMemo, useRef, useState} from "react";
+import {useCallback, useMemo, useRef, useState, useEffect} from "react";
 import {basicView, basicViewQuery, geoBasicView, orders as loadOrders} from "@/app/(general)/queries";
 
 import {Database, Tables} from "@/utils/supabase/gen-types";
 import {SupabaseClient} from "@supabase/supabase-js";
 import getColumns from "@/app/(general)/table/columns";
 import DataTable from "@/app/components/data-table/data-table";
-import {FormattedBasicView, GenomRow, isGeoFilters, MapState, mapStates, toGenomRow, Topology} from "../models"
+import {FormattedBasicView, GenomRow, isGeoFilters, MapState, mapStates, toGenomRow, Topology, CoordinateRow, toCoordinateRow} from "../models"
 import CollectionTableControls from "@/app/(general)/table/controls";
 import {usePathname, useRouter, useSearchParams} from "next/navigation";
 import {MapFilter} from "@/app/(general)/table/map-filter";
@@ -41,10 +41,15 @@ async function loadBasicViewItemById(supabase: SupabaseClient<Database>, id: num
 // Хук для управления редактированием
 const useEditing = () => {
     const [editedGenomRow, setEditedGenomRow] = useState<GenomRow | null>(null)
+    const [editedCoordinateRow, setEditedCoordinateRow] = useState<CoordinateRow | null>(null)
     const [editingFields, setEditingFields] = useState<Set<string>>(new Set())
 
     const handleEdit = useCallback((row: FormattedBasicView) => {
         setEditedGenomRow(toGenomRow(row));
+    }, []);
+
+    const handleCoordinateEdit = useCallback((row: CoordinateRow) => {
+        setEditedCoordinateRow(row);
     }, []);
 
     const handleFieldChange = useCallback((field: string, value: Topology | undefined) => {
@@ -75,6 +80,14 @@ const useEditing = () => {
         setEditedGenomRow(updatedRow);
     }, [editedGenomRow]);
 
+    const handleCoordinateChange = useCallback((field: 'latitude' | 'longitude', value: number | null) => {
+        if (!editedCoordinateRow) return;
+
+        const updatedRow = {...editedCoordinateRow};
+        updatedRow[field] = value;
+        setEditedCoordinateRow(updatedRow);
+    }, [editedCoordinateRow]);
+
     const handleStartEditing = useCallback((rowId: number, fieldName: string) => {
         const fieldKey = `${rowId}-${fieldName}`;
         setEditingFields(prev => new Set(prev).add(fieldKey));
@@ -98,15 +111,25 @@ const useEditing = () => {
         setEditedGenomRow(null);
     }, []);
 
+    const handleCoordinateCancel = useCallback(() => {
+        setEditedCoordinateRow(null);
+        setEditingFields(new Set());
+    }, []);
+
     return {
         editedGenomRow,
         setEditedGenomRow,
+        editedCoordinateRow,
+        setEditedCoordinateRow,
         handleEdit,
+        handleCoordinateEdit,
         handleFieldChange,
+        handleCoordinateChange,
         handleStartEditing,
         handleStopEditing,
         isFieldEditing,
-        handleCancel
+        handleCancel,
+        handleCoordinateCancel
     }
 }
 
@@ -195,6 +218,102 @@ export default function CollectionTable({params}: { params: { [key: string]: str
             setEditedGenomRow(null)
         }
     };
+
+    const handleCoordinateSave = async () => {
+        if (editing.editedCoordinateRow) {
+            console.log(editing.editedCoordinateRow)
+            // await update({
+            //     id: editing.editedCoordinateRow.rowId!,
+            //     latitude: editing.editedCoordinateRow.latitude,
+            //     longitude: editing.editedCoordinateRow.longitude
+            // })
+            editing.setEditedCoordinateRow(null)
+            
+            // Убираем edit_row и map (режим выбора) из URL после сохранения
+            const searchParams = new URLSearchParams();
+            Object.entries(params).forEach(([key, value]) => {
+                if (value !== undefined && !['edit_row', 'map'].includes(key)) {
+                    if (Array.isArray(value)) {
+                        value.forEach(v => searchParams.append(key, v));
+                    } else {
+                        searchParams.set(key, value);
+                    }
+                }
+            });
+            
+            const newUrl = searchParams.toString() ? `${pathname}?${searchParams.toString()}` : pathname;
+            router.push(newUrl);
+        }
+    };
+
+    const handleCoordinateCancel = () => {
+        editing.handleCoordinateCancel();
+        
+        // Убираем edit_row и map (режим выбора) из URL при отмене
+        const searchParams = new URLSearchParams();
+        Object.entries(params).forEach(([key, value]) => {
+            if (value !== undefined && !['edit_row', 'map'].includes(key)) {
+                if (Array.isArray(value)) {
+                    value.forEach(v => searchParams.append(key, v));
+                } else {
+                    searchParams.set(key, value);
+                }
+            }
+        });
+        
+        const newUrl = searchParams.toString() ? `${pathname}?${searchParams.toString()}` : pathname;
+        router.push(newUrl);
+    };
+
+    const handleMapSelect = useCallback((rowId: number) => {
+        const searchParams = new URLSearchParams();
+        Object.entries(params).forEach(([key, value]) => {
+            if (value !== undefined) {
+                if (Array.isArray(value)) {
+                    value.forEach(v => searchParams.append(key, v));
+                } else {
+                    searchParams.set(key, value);
+                }
+            }
+        });
+        searchParams.set("map", "select");
+        searchParams.set("edit_row", rowId.toString());
+        
+        const newUrl = `${pathname}?${searchParams.toString()}`;
+        router.push(newUrl);
+    }, [params, pathname, router]);
+
+    const handlePointSelect = useCallback((longitude: number, latitude: number) => {
+        const editRowId = params.edit_row ? parseInt(params.edit_row as string) : null;
+        if (editRowId) {
+            // Если editedCoordinateRow еще не инициализирован, создаем его
+            if (!editing.editedCoordinateRow) {
+                const row = tableData.find(item => item.id === editRowId);
+                if (row) {
+                    editing.handleCoordinateEdit(toCoordinateRow(row));
+                }
+            }
+            
+            // Обновляем обе координаты одновременно
+            if (editing.editedCoordinateRow) {
+                const updatedRow = {...editing.editedCoordinateRow};
+                updatedRow.longitude = longitude;
+                updatedRow.latitude = latitude;
+                editing.setEditedCoordinateRow(updatedRow);
+            }
+        }
+    }, [params, editing, tableData]);
+
+    // Эффект для инициализации координат при входе в режим выбора
+    useEffect(() => {
+        const editRowId = params.edit_row ? parseInt(params.edit_row as string) : null;
+        if (editRowId && mapState === "select" && !editing.editedCoordinateRow) {
+            const row = tableData.find(item => item.id === editRowId);
+            if (row) {
+                editing.handleCoordinateEdit(toCoordinateRow(row));
+            }
+        }
+    }, [params.edit_row, mapState, editing, tableData]);
 
 
     const queryClient = useQueryClient()
@@ -416,6 +535,7 @@ export default function CollectionTable({params}: { params: { [key: string]: str
     const columns = useMemo(() => getColumns({
         user,
         editedGenomRow,
+        editedCoordinateRow: editing.editedCoordinateRow,
         orders: orders || [],
         families: families || [],
         genera: genera || [],
@@ -425,18 +545,24 @@ export default function CollectionTable({params}: { params: { [key: string]: str
         isGeneraLoading,
         isKindsLoading,
         onEdit: editing.handleEdit,
+        onCoordinateEdit: editing.handleCoordinateEdit,
         onFieldChange: editing.handleFieldChange,
+        onCoordinateChange: editing.handleCoordinateChange,
         onSave: handleSave,
+        onCoordinateSave: handleCoordinateSave,
         onCancel: editing.handleCancel,
+        onCoordinateCancel: handleCoordinateCancel,
         onUpdate: update,
         onStartEditing: editing.handleStartEditing,
         onStopEditing: editing.handleStopEditing,
         isFieldEditing: editing.isFieldEditing,
+        onMapSelect: handleMapSelect,
     }), [
-        user, editedGenomRow, orders, families, genera, kinds,
+        user, editedGenomRow, editing.editedCoordinateRow, orders, families, genera, kinds,
         isOrdersLoading, isFamiliesLoading, isGeneraLoading, isKindsLoading,
-        editing.handleEdit, editing.handleFieldChange, handleSave, editing.handleCancel, update,
-        editing.handleStartEditing, editing.handleStopEditing, editing.isFieldEditing
+        editing.handleEdit, editing.handleCoordinateEdit, editing.handleFieldChange, editing.handleCoordinateChange, 
+        handleSave, handleCoordinateSave, editing.handleCancel, handleCoordinateCancel, update,
+        editing.handleStartEditing, editing.handleStopEditing, editing.isFieldEditing, handleMapSelect
     ]);
 
 
@@ -534,17 +660,25 @@ export default function CollectionTable({params}: { params: { [key: string]: str
         }
 
         const [fromLng, fromLat, toLng, toLat] = bounds;
-        table.getColumn("latitude")?.setFilterValue({
-            from: fromLat,
-            to: toLat
-        })
-        table.getColumn("longitude")?.setFilterValue({
-            from: fromLng,
-            to: toLng
-        })
+        
+        // Не применяем фильтры по координатам в режиме выбора
+        if (mapState !== "select") {
+            table.getColumn("latitude")?.setFilterValue({
+                from: fromLat,
+                to: toLat
+            })
+            table.getColumn("longitude")?.setFilterValue({
+                from: fromLng,
+                to: toLng
+            })
+        }
 
         boundsChangeTimeoutRef.current = setTimeout(() => {
 
+            // Не обновляем URL параметры фильтров в режиме выбора
+            if (mapState === "select") {
+                return;
+            }
 
             const searchParams = new URLSearchParams();
 
@@ -570,7 +704,7 @@ export default function CollectionTable({params}: { params: { [key: string]: str
                 router.replace(pathname)
             }
         }, 500);
-    }, [params, mapInitialized]);
+    }, [params, mapInitialized, mapState]);
 
 
 
@@ -583,13 +717,13 @@ export default function CollectionTable({params}: { params: { [key: string]: str
             {/* Содержимое в зависимости от режима отображения */}
             <div className="flex-1 flex" style={{minHeight: 0}}>
 
-                <div className={mapState === "open" ? "w-1/2" : "w-full"}>
+                <div className={mapState === "open" || mapState === "select" ? "w-1/2" : "w-full"}>
                     <DataTable filters={params} tableName={"basic_view"} table={table} hasNextPage={hasNextPage}
                                fetchedSize={tableData.length} size={data.pages[0].count ?? 0}
                                fetchNextPage={fetchNextPage} isFetching={isFetching} loading={isLoading} padding={42}/>
                 </div>
 
-                {mapState === "open" && <div className={"w-1/2"}>
+                {(mapState === "open" || mapState === "select") && <div className={"w-1/2"}>
                     <MapFilter
                         height="100%"
                         onBoundsChange={handleBoundsChange}
@@ -597,6 +731,12 @@ export default function CollectionTable({params}: { params: { [key: string]: str
                         isLoading={mapItemsLoading}
                         startBounds={startBounds}
                         startZoom={zoom}
+                        selectionMode={mapState === "select"}
+                        onPointSelect={handlePointSelect}
+                        selectedPoint={editing.editedCoordinateRow ? {
+                            longitude: editing.editedCoordinateRow.longitude ?? null,
+                            latitude: editing.editedCoordinateRow.latitude ?? null
+                        } : undefined}
                         />
 
 

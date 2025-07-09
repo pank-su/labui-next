@@ -17,6 +17,9 @@ interface CollectionMapProps {
     startZoom?: number
     items: GeoBasicView[]
     isLoading?: boolean,
+    selectionMode?: boolean
+    onPointSelect?: (longitude: number, latitude: number) => void
+    selectedPoint?: { longitude: number | null, latitude: number | null }
 }
 
 interface PointFeature {
@@ -38,7 +41,10 @@ export const MapFilter: React.FC<CollectionMapProps> = ({
                                                             startBounds,
                                                             items,
                                                             isLoading = false,
-                                                            startZoom = 3
+                                                            startZoom = 3,
+                                                            selectionMode = false,
+                                                            onPointSelect,
+                                                            selectedPoint
                                                         }) => {
     const mapRef = useRef<any>(null)
     const boundsChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -171,6 +177,11 @@ export const MapFilter: React.FC<CollectionMapProps> = ({
         (clusterId: number, longitude: number, latitude: number) => {
             if (!supercluster || !mapRef.current) return
 
+            if (selectionMode && onPointSelect) {
+                onPointSelect(longitude, latitude)
+                return
+            }
+
             const clusterPoints = supercluster.getLeaves(clusterId, Infinity)
             const sameLocation = clusterPoints.every((point, _, arr) => {
                 const [lng1, lat1] = point.geometry.coordinates
@@ -204,16 +215,27 @@ export const MapFilter: React.FC<CollectionMapProps> = ({
                 setPointItems(null)
             }
         },
-        [supercluster],
+        [supercluster, selectionMode, onPointSelect],
     )
 
     const handleMarkerClick = useCallback((item: GeoBasicView) => {
-        setPointItems({
-            items: [item],
-            longitude: item.longitude!,
-            latitude: item.latitude!,
-        })
-    }, [])
+        if (selectionMode && onPointSelect) {
+            onPointSelect(item.longitude!, item.latitude!)
+        } else {
+            setPointItems({
+                items: [item],
+                longitude: item.longitude!,
+                latitude: item.latitude!,
+            })
+        }
+    }, [selectionMode, onPointSelect])
+
+    const handleMapClick = useCallback((event: any) => {
+        if (selectionMode && onPointSelect) {
+            const {lngLat} = event
+            onPointSelect(lngLat.lng, lngLat.lat)
+        }
+    }, [selectionMode, onPointSelect])
 
     // Мемоизируем кластеры для предотвращения мигания
     const memoizedClusters = useMemo(() => {
@@ -283,7 +305,7 @@ export const MapFilter: React.FC<CollectionMapProps> = ({
         )
     }
 
-    if (pointsWithCoordinates.length === 0) {
+    if (pointsWithCoordinates.length === 0 && !selectionMode) {
         return (
             <div className="flex justify-center items-center" style={{height}}>
                 <Empty description="Нет элементов с геоданными для отображения"/>
@@ -298,8 +320,9 @@ export const MapFilter: React.FC<CollectionMapProps> = ({
                 {...viewState}
                 onMove={onMapMove}
                 onMoveEnd={onMapMoveEnd}
+                onClick={handleMapClick}
                 mapStyle="https://api.maptiler.com/maps/019615fe-ff46-7b99-a1b5-53f413c455dc/style.json?key=bWMAD0ONYiA5u4kpUJlf"
-                style={{width: "100%", height: "100%"}}
+                style={{width: "100%", height: "100%", cursor: selectionMode ? "crosshair" : "default"}}
                 attributionControl={false}
                 renderWorldCopies={true}
                 maxZoom={16}
@@ -338,6 +361,27 @@ export const MapFilter: React.FC<CollectionMapProps> = ({
                         </div>
                     </Marker>
                 ))}
+
+                {/* Выбранная точка в режиме редактирования */}
+                {selectedPoint && selectedPoint.longitude !== null && selectedPoint.latitude !== null && (
+                    <Marker
+                        longitude={selectedPoint.longitude}
+                        latitude={selectedPoint.latitude}
+                    >
+                        <div
+                            className="flex items-center justify-center rounded-full text-white font-semibold"
+                            style={{
+                                width: "20px",
+                                height: "20px",
+                                backgroundColor: "#ff4d4f",
+                                border: "3px solid white",
+                                boxShadow: "0 2px 8px rgba(255,77,79,0.5)",
+                            }}
+                        >
+                            ✓
+                        </div>
+                    </Marker>
+                )}
 
                 {pointItems && (
                     <Popup

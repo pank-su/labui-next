@@ -248,7 +248,7 @@ export async function getGeoBasicView(client: TypedSupabaseClient, filters: {
 export function geoBasicView(client: TypedSupabaseClient, filters: {
     [key: string]: string | string[] | undefined
 } | undefined = undefined) {
-    const {from_lat, to_lat, from_lng, to_lng, zoom, map, ...cleanFilters} = filters || {}
+    const {from_lat, to_lat, from_lng, to_lng, zoom, map, edit_row, ...cleanFilters} = filters || {}
 
 
     return queryOptions({

@@ -6,10 +6,11 @@ import {date} from "@/utils/date"
 import {createColumnHelper, Row, RowData} from "@tanstack/react-table"
 import {Avatar, Tag, Tooltip} from "antd"
 import {EditableCell} from "../../components/data-table/editable"
-import {FormattedBasicView, GenomRow, toGenomRow, Topology} from "../models"
+import {FormattedBasicView, GenomRow, toGenomRow, Topology, CoordinateRow, toCoordinateRow} from "../models"
 import {TopologyCell} from "../../components/data-table/topology-cell"
 import {DataCell} from "../../components/data-table/data-cell"
 import {SelectCell} from "../../components/data-table/select-cell"
+import {CoordinateCell} from "../../components/data-table/coordinate-cell"
 import {FilterDate} from "@/app/components/data-table/filters/date-filter";
 import {FilterGeo} from "@/app/components/data-table/filters/geo-filter";
 
@@ -85,6 +86,7 @@ const formatLastModified = (lastModified: string | null): string => {
 export default function getColumns(options: {
     user: any;
     editedGenomRow: GenomRow | null;
+    editedCoordinateRow: CoordinateRow | null;
     orders: any[];
     families: any[];
     genera: any[];
@@ -94,18 +96,24 @@ export default function getColumns(options: {
     isGeneraLoading: boolean;
     isKindsLoading: boolean;
     onEdit: (row: FormattedBasicView) => void;
+    onCoordinateEdit: (row: CoordinateRow) => void;
     onFieldChange: (field: string, value: Topology | undefined) => void;
+    onCoordinateChange: (field: 'latitude' | 'longitude', value: number | null) => void;
     onSave: () => void;
+    onCoordinateSave: () => void;
     onCancel: () => void;
+    onCoordinateCancel: () => void;
     onUpdate: (payload: any) => Promise<any>;
     onStartEditing: (rowId: number, fieldName: string) => void;
     onStopEditing: (rowId: number, fieldName: string) => void;
     isFieldEditing: (rowId: number, fieldName: string) => boolean;
+    onMapSelect: (rowId: number) => void;
 }) {
 
     const {
         user,
         editedGenomRow,
+        editedCoordinateRow,
         orders,
         families,
         genera,
@@ -115,13 +123,18 @@ export default function getColumns(options: {
         isGeneraLoading,
         isKindsLoading,
         onEdit,
+        onCoordinateEdit,
         onFieldChange,
+        onCoordinateChange,
         onSave,
+        onCoordinateSave,
         onCancel,
+        onCoordinateCancel,
         onUpdate: update,
         onStartEditing,
         onStopEditing,
         isFieldEditing,
+        onMapSelect,
     } = options;
 
 
@@ -178,6 +191,28 @@ export default function getColumns(options: {
                     onSave={onSave}
                     isLoading={loadingState}
                     onCancel={onCancel}
+                />
+            )
+        }
+
+    const createCoordinateCell = (field: 'latitude' | 'longitude') =>
+        (info: any) => {
+            const isEditing = !!(info.row.getValue("id") == editedCoordinateRow?.rowId && user)
+            const coordinateRow = isEditing ? editedCoordinateRow! : toCoordinateRow(info.row.original)
+            const value = isEditing ? coordinateRow[field] : info.getValue()
+
+            return (
+                <CoordinateCell
+                    coordinateRow={coordinateRow}
+                    field={field}
+                    value={value}
+                    isEditing={isEditing}
+                    onEdit={() => onCoordinateEdit(toCoordinateRow(info.row.original))}
+                    onChange={onCoordinateChange}
+                    showActions={field === 'longitude' && isEditing}
+                    onSave={onCoordinateSave}
+                    onCancel={onCoordinateCancel}
+                    onMapSelect={onMapSelect}
                 />
             )
         }
@@ -430,6 +465,7 @@ export default function getColumns(options: {
             header: "Позиция",
             columns: [
                 columnHelper.accessor("latitude", {
+                    cell: createCoordinateCell('latitude'),
                     header: "Широта",
                     enableGlobalFilter: false,
                     meta: {
@@ -438,6 +474,7 @@ export default function getColumns(options: {
                     filterFn: geoFilterFn
                 }),
                 columnHelper.accessor("longitude", {
+                    cell: createCoordinateCell('longitude'),
                     header: "Долгота",
                     enableGlobalFilter: false,
                     meta: {

@@ -81,6 +81,14 @@ export function toGenomRow(view: FormattedBasicView): GenomRow {
     }
 }
 
+export function toCoordinateRow(view: FormattedBasicView): CoordinateRow {
+    return {
+        rowId: view.id,
+        latitude: view.latitude,
+        longitude: view.longitude
+    }
+}
+
 export type Topology = CompositeTypes<"topology_type">
 export interface GenomRow {
     rowId: number | null,
@@ -88,6 +96,12 @@ export interface GenomRow {
     family?: Topology | null,
     genus? :Topology | null,
     kind?: Topology | null
+}
+
+export interface CoordinateRow {
+    rowId: number | null,
+    latitude?: number | null,
+    longitude?: number | null
 }
 
 export const mapStates = ["closed", "open", "select"] as const;
