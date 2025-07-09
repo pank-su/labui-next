@@ -387,7 +387,38 @@ export default function getColumns(options: {
 
         }),
         columnHelper.accessor("sex", {
-            cell: info => <>{formatSex(info.getValue())}</>,
+            cell: info => {
+                const rowId = info.row.getValue("id") as number;
+                const isEditing = !!user;
+                const value = info.getValue() as string | null;
+                const displayValue = formatSex(value);
+
+                // Опции для пола
+                const sexOptions = [
+                    {value: 1, label: 'female'},
+                    {value: 2, label: 'male'},
+                    {value: null, label: 'Не указано'}
+                ];
+
+                return (
+                    <SelectCell
+                        value={sexOptions.find((data) => data.label == value)?.value}
+                        displayValue={displayValue}
+                        options={sexOptions}
+                        rowId={rowId}
+                        isEditing={isEditing}
+                        onSave={async (rowId, value) => {
+                            await update({
+                                id: rowId,
+                                sex_id: value
+                            });
+                        }}
+                        onCancel={() => {
+                        }}
+                        placeholder="Выберите пол"
+                    />
+                );
+            },
             header: "Пол",
             size: 85,
             meta: {
