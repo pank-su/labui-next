@@ -3195,10 +3195,7 @@ export type Database = {
           id: number
           operation: string
           table_name: string
-          user_avatar: string | null
-          user_first_name: string | null
           user_id: string | null
-          user_last_name: string | null
         }
         Insert: {
           changed_at?: string | null
@@ -3206,10 +3203,7 @@ export type Database = {
           id?: number
           operation: string
           table_name: string
-          user_avatar?: string | null
-          user_first_name?: string | null
           user_id?: string | null
-          user_last_name?: string | null
         }
         Update: {
           changed_at?: string | null
@@ -3217,10 +3211,7 @@ export type Database = {
           id?: number
           operation?: string
           table_name?: string
-          user_avatar?: string | null
-          user_first_name?: string | null
           user_id?: string | null
-          user_last_name?: string | null
         }
         Relationships: []
       }
@@ -3618,26 +3609,6 @@ export type Database = {
           table_name: string | null
           user_id: string | null
         }
-        Insert: {
-          changed_at?: string | null
-          changed_data?: Json | null
-          first_name?: string | null
-          id?: number | null
-          last_name?: string | null
-          operation?: string | null
-          table_name?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          changed_at?: string | null
-          changed_data?: Json | null
-          first_name?: string | null
-          id?: number | null
-          last_name?: string | null
-          operation?: string | null
-          table_name?: string | null
-          user_id?: string | null
-        }
         Relationships: []
       }
       basic_view: {
@@ -3728,6 +3699,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      add_coordinates_to_collection: {
+        Args: {
+          collection_id: number
+          latitude: number
+          longitude: number
+        }
+        Returns: undefined
+      }
       add_topology: {
         Args: {
           order: string
@@ -3736,12 +3715,6 @@ export type Database = {
           kind?: string
         }
         Returns: string
-      }
-      collectors_test: {
-        Args: {
-          collectors: string[]
-        }
-        Returns: number
       }
       get_age_id: {
         Args: {
@@ -3770,29 +3743,10 @@ export type Database = {
         }
         Returns: number
       }
-      get_genom_row: {
-        Args: {
-          collection_id: number
-        }
-        Returns: {
-          row_id: number
-          order: Database["public"]["CompositeTypes"]["topology_type"]
-          family: Database["public"]["CompositeTypes"]["topology_type"]
-          genus: Database["public"]["CompositeTypes"]["topology_type"]
-          kind: Database["public"]["CompositeTypes"]["topology_type"]
-        }[]
-      }
       get_genus_id: {
         Args: {
           name: string
           family_id: number
-        }
-        Returns: number
-      }
-      get_id_by_name: {
-        Args: {
-          table_name: string
-          name_: string
         }
         Returns: number
       }
@@ -3829,61 +3783,11 @@ export type Database = {
         }
         Returns: number
       }
-      get_user_info: {
-        Args: {
-          user_id: string
-        }
-        Returns: {
-          first_name: string
-          last_name: string
-          avatar: string
-        }[]
-      }
       get_vouch_inst_id: {
         Args: {
           name: string
         }
         Returns: number
-      }
-      remove_collection_by_id: {
-        Args: {
-          col_id: number
-        }
-        Returns: undefined
-      }
-      test: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      try_cast_double: {
-        Args: {
-          inp: string
-        }
-        Returns: number
-      }
-      update_collection_by_id: {
-        Args: {
-          col_id: number
-          collect_id?: string
-          order?: string
-          family?: string
-          genus?: string
-          kind?: string
-          age?: string
-          sex?: string
-          vauch_inst?: string
-          vauch_id?: string
-          point?: unknown
-          country?: string
-          region?: string
-          subregion?: string
-          geocomment?: string
-          date_collect?: string
-          comment?: string
-          collectors?: string[]
-          rna?: boolean
-        }
-        Returns: undefined
       }
       update_collection_taxonomy_by_ids: {
         Args: {
@@ -3894,30 +3798,6 @@ export type Database = {
           kind_id?: number
         }
         Returns: undefined
-      }
-      url_decode: {
-        Args: {
-          data: string
-        }
-        Returns: string
-      }
-      url_encode: {
-        Args: {
-          data: string
-        }
-        Returns: string
-      }
-      verify: {
-        Args: {
-          token: string
-          secret: string
-          algorithm?: string
-        }
-        Returns: {
-          header: Json
-          payload: Json
-          valid: boolean
-        }[]
       }
     }
     Enums: {

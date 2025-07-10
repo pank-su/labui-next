@@ -170,10 +170,23 @@ export default function CollectionTable({params}: { params: { [key: string]: str
             : "closed";
     }, [params["map"]]);
 
-    const mapQuery = useMemo(() => geoBasicView(supabase, params)
-        , [params, supabase]);
+    const mapQuery = useMemo(() => {
+        // В режиме выбора убираем все фильтры
+        const queryParams = mapState === "select" ? {} : params;
+        return geoBasicView(supabase, queryParams);
+    }, [params, supabase, mapState]);
 
-    const {data: mapItems, isLoading: mapItemsLoading} = useQuery(geoBasicView(supabase, params))
+    const {data: rawMapItems, isLoading: mapItemsLoading} = useQuery(mapQuery)
+    
+    // Исключаем редактируемую точку из данных карты
+    const mapItems = useMemo(() => {
+        if (!rawMapItems) return rawMapItems;
+        
+        const editRowId = params.edit_row ? parseInt(params.edit_row as string) : null;
+        if (!editRowId) return rawMapItems;
+        
+        return rawMapItems.filter(item => item.id !== editRowId);
+    }, [rawMapItems, params.edit_row]);
 
 
 
@@ -220,16 +233,8 @@ export default function CollectionTable({params}: { params: { [key: string]: str
     };
 
     const handleCoordinateSave = async () => {
-        if (editing.editedCoordinateRow) {
-            console.log(editing.editedCoordinateRow)
-            // await update({
-            //     id: editing.editedCoordinateRow.rowId!,
-            //     latitude: editing.editedCoordinateRow.latitude,
-            //     longitude: editing.editedCoordinateRow.longitude
-            // })
-            editing.setEditedCoordinateRow(null)
-            
-            // Убираем edit_row и map (режим выбора) из URL после сохранения
+        if (editing.editedCoordinateRow && editing.editedCoordinateRow.rowId) {
+            // Сначала убираем edit_row и map из URL
             const searchParams = new URLSearchParams();
             Object.entries(params).forEach(([key, value]) => {
                 if (value !== undefined && !['edit_row', 'map'].includes(key)) {
@@ -243,6 +248,26 @@ export default function CollectionTable({params}: { params: { [key: string]: str
             
             const newUrl = searchParams.toString() ? `${pathname}?${searchParams.toString()}` : pathname;
             router.push(newUrl);
+            
+            try {
+                // Проверяем, что обе координаты заданы, иначе не сохраняем
+                if (editing.editedCoordinateRow.latitude &&
+                    editing.editedCoordinateRow.longitude) {
+                    
+                    await supabase.rpc('add_coordinates_to_collection', {
+                        collection_id: editing.editedCoordinateRow.rowId,
+                        latitude: editing.editedCoordinateRow.latitude,
+                        longitude: editing.editedCoordinateRow.longitude
+                    });
+                }
+                
+                // Сбрасываем состояние редактирования после попытки сохранения
+                editing.setEditedCoordinateRow(null);
+            } catch (error) {
+                console.error('Error updating coordinates:', error);
+                // Даже при ошибке сбрасываем состояние, чтобы убрать поля ввода
+                editing.setEditedCoordinateRow(null);
+            }
         }
     };
 

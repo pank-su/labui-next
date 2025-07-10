@@ -177,11 +177,6 @@ export const MapFilter: React.FC<CollectionMapProps> = ({
         (clusterId: number, longitude: number, latitude: number) => {
             if (!supercluster || !mapRef.current) return
 
-            if (selectionMode && onPointSelect) {
-                onPointSelect(longitude, latitude)
-                return
-            }
-
             const clusterPoints = supercluster.getLeaves(clusterId, Infinity)
             const sameLocation = clusterPoints.every((point, _, arr) => {
                 const [lng1, lat1] = point.geometry.coordinates
@@ -190,6 +185,7 @@ export const MapFilter: React.FC<CollectionMapProps> = ({
             })
 
             if (sameLocation && clusterPoints.length > 1) {
+                // Если точки в одном месте, показываем popup
                 const itemsInCluster = clusterPoints.map(
                     (point) => point.properties.item,
                 )
@@ -198,7 +194,13 @@ export const MapFilter: React.FC<CollectionMapProps> = ({
                     longitude,
                     latitude,
                 })
+                
+                // В режиме выбора также устанавливаем координаты в это место
+                if (selectionMode && onPointSelect) {
+                    onPointSelect(longitude, latitude)
+                }
             } else {
+                // Если точки разбросаны, приближаемся
                 const expansionZoom = Math.min(
                     supercluster.getClusterExpansionZoom(clusterId) || 0,
                     20,
@@ -219,14 +221,16 @@ export const MapFilter: React.FC<CollectionMapProps> = ({
     )
 
     const handleMarkerClick = useCallback((item: GeoBasicView) => {
+        // Всегда показываем popup с информацией о точке
+        setPointItems({
+            items: [item],
+            longitude: item.longitude!,
+            latitude: item.latitude!,
+        })
+        
+        // В режиме выбора также устанавливаем координаты в это место
         if (selectionMode && onPointSelect) {
             onPointSelect(item.longitude!, item.latitude!)
-        } else {
-            setPointItems({
-                items: [item],
-                longitude: item.longitude!,
-                latitude: item.latitude!,
-            })
         }
     }, [selectionMode, onPointSelect])
 
@@ -335,7 +339,8 @@ export const MapFilter: React.FC<CollectionMapProps> = ({
                         key={clusterData.key}
                         longitude={clusterData.longitude}
                         latitude={clusterData.latitude}
-                        onClick={() => {
+                        onClick={(e) => {
+                            e.originalEvent.stopPropagation(); // Предотвращаем всплытие события
                             if (clusterData.isCluster) {
                                 handleClusterClick(
                                     clusterData.clusterId,
@@ -367,6 +372,7 @@ export const MapFilter: React.FC<CollectionMapProps> = ({
                     <Marker
                         longitude={selectedPoint.longitude}
                         latitude={selectedPoint.latitude}
+                        style={{ zIndex: 1000 }}
                     >
                         <div
                             className="flex items-center justify-center rounded-full text-white font-semibold"
@@ -376,6 +382,8 @@ export const MapFilter: React.FC<CollectionMapProps> = ({
                                 backgroundColor: "#ff4d4f",
                                 border: "3px solid white",
                                 boxShadow: "0 2px 8px rgba(255,77,79,0.5)",
+                                zIndex: 1000,
+                                position: "relative"
                             }}
                         >
                             ✓
