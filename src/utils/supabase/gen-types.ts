@@ -3789,6 +3789,14 @@ export type Database = {
         }
         Returns: number
       }
+      update_collection_region: {
+        Args: {
+          collection_id: number
+          country_name: string
+          region_name?: string
+        }
+        Returns: undefined
+      }
       update_collection_taxonomy_by_ids: {
         Args: {
           col_id: number

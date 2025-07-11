@@ -89,6 +89,14 @@ export function toCoordinateRow(view: FormattedBasicView): CoordinateRow {
     }
 }
 
+export function toLocationRow(view: FormattedBasicView): LocationRow {
+    return {
+        rowId: view.id,
+        country: view.country ? { id: 0, name: view.country } : null,
+        region: view.region ? { id: 0, name: view.region } : null
+    }
+}
+
 export type Topology = CompositeTypes<"topology_type">
 export interface GenomRow {
     rowId: number | null,
@@ -102,6 +110,12 @@ export interface CoordinateRow {
     rowId: number | null,
     latitude?: number | null,
     longitude?: number | null
+}
+
+export interface LocationRow {
+    rowId: number | null,
+    country?: { id: number; name: string } | null,
+    region?: { id: number; name: string } | null
 }
 
 export const mapStates = ["closed", "open", "select"] as const;

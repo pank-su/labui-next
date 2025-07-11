@@ -6,11 +6,12 @@ import {date} from "@/utils/date"
 import {createColumnHelper, Row, RowData} from "@tanstack/react-table"
 import {Avatar, Tag, Tooltip} from "antd"
 import {EditableCell} from "../../components/data-table/editable"
-import {FormattedBasicView, GenomRow, toGenomRow, Topology, CoordinateRow, toCoordinateRow} from "../models"
+import {FormattedBasicView, GenomRow, toGenomRow, Topology, CoordinateRow, toCoordinateRow, LocationRow, toLocationRow} from "../models"
 import {TopologyCell} from "../../components/data-table/topology-cell"
 import {DataCell} from "../../components/data-table/data-cell"
 import {SelectCell} from "../../components/data-table/select-cell"
 import {CoordinateCell} from "../../components/data-table/coordinate-cell"
+import {LocationCell} from "../../components/data-table/location-cell"
 import {FilterDate} from "@/app/components/data-table/filters/date-filter";
 import {FilterGeo} from "@/app/components/data-table/filters/geo-filter";
 
@@ -87,22 +88,31 @@ export default function getColumns(options: {
     user: any;
     editedGenomRow: GenomRow | null;
     editedCoordinateRow: CoordinateRow | null;
+    editedLocationRow: LocationRow | null;
     orders: any[];
     families: any[];
     genera: any[];
     kinds: any[];
+    countries: any[];
+    regions: any[];
     isOrdersLoading: boolean;
     isFamiliesLoading: boolean;
     isGeneraLoading: boolean;
     isKindsLoading: boolean;
+    isCountriesLoading: boolean;
+    isRegionsLoading: boolean;
     onEdit: (row: FormattedBasicView) => void;
     onCoordinateEdit: (row: CoordinateRow) => void;
+    onLocationEdit: (row: LocationRow) => void;
     onFieldChange: (field: string, value: Topology | undefined) => void;
     onCoordinateChange: (field: 'latitude' | 'longitude', value: number | null) => void;
+    onLocationChange: (countryName: string | null, regionName: string | null) => void;
     onSave: () => void;
     onCoordinateSave: () => void;
+    onLocationSave: (countryName: string | null, regionName: string | null) => void;
     onCancel: () => void;
     onCoordinateCancel: () => void;
+    onLocationCancel: () => void;
     onUpdate: (payload: any) => Promise<any>;
     onStartEditing: (rowId: number, fieldName: string) => void;
     onStopEditing: (rowId: number, fieldName: string) => void;
@@ -114,22 +124,31 @@ export default function getColumns(options: {
         user,
         editedGenomRow,
         editedCoordinateRow,
+        editedLocationRow,
         orders,
         families,
         genera,
         kinds,
+        countries,
+        regions,
         isOrdersLoading,
         isFamiliesLoading,
         isGeneraLoading,
         isKindsLoading,
+        isCountriesLoading,
+        isRegionsLoading,
         onEdit,
         onCoordinateEdit,
+        onLocationEdit,
         onFieldChange,
         onCoordinateChange,
+        onLocationChange,
         onSave,
         onCoordinateSave,
+        onLocationSave,
         onCancel,
         onCoordinateCancel,
+        onLocationCancel,
         onUpdate: update,
         onStartEditing,
         onStopEditing,
@@ -213,6 +232,30 @@ export default function getColumns(options: {
                     onSave={onCoordinateSave}
                     onCancel={onCoordinateCancel}
                     onMapSelect={onMapSelect}
+                />
+            )
+        }
+
+    const createLocationCell = (field: 'country' | 'region') =>
+        (info: any) => {
+            const isEditing = !!(info.row.getValue("id") == editedLocationRow?.rowId && user)
+            const locationRow = isEditing ? editedLocationRow! : toLocationRow(info.row.original)
+            const value = info.getValue()
+
+            return (
+                <LocationCell
+                    locationRow={locationRow}
+                    field={field}
+                    value={value}
+                    countries={countries}
+                    regions={regions}
+                    isEditing={isEditing}
+                    isLoading={field === 'country' ? isCountriesLoading : isRegionsLoading}
+                    onEdit={() => onLocationEdit(toLocationRow(info.row.original))}
+                    onChange={onLocationChange}
+                    showActions={field === 'region' && isEditing}
+                    onSave={onLocationSave}
+                    onCancel={onLocationCancel}
                 />
             )
         }
@@ -483,20 +526,22 @@ export default function getColumns(options: {
                     filterFn: geoFilterFn
                 }),
                 columnHelper.accessor("country", {
-                    header: "Страна", cell: info => <ExpandableText>{info.getValue()}</ExpandableText>,
+                    cell: createLocationCell('country'),
+                    header: "Страна",
                     meta: {
                         filterVariant: "select"
-                    }
+                    },
+                    filterFn: selectFilter
                 }),
                 columnHelper.accessor("region", {
-                        header: "Регион",
-                        size: 250,
-                        cell: info => <ExpandableText>{info.getValue()}</ExpandableText>,
-                        meta: {
-                            filterVariant: "select"
-                        }
-                    }
-                ),
+                    cell: createLocationCell('region'),
+                    header: "Регион",
+                    size: 250,
+                    meta: {
+                        filterVariant: "select"
+                    },
+                    filterFn: selectFilter
+                }),
                 columnHelper.accessor("geo_comment", {
                     header: "Геокомментарий",
                     size: 270,

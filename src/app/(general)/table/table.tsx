@@ -21,7 +21,7 @@ import {Database, Tables} from "@/utils/supabase/gen-types";
 import {SupabaseClient} from "@supabase/supabase-js";
 import getColumns from "@/app/(general)/table/columns";
 import DataTable from "@/app/components/data-table/data-table";
-import {FormattedBasicView, GenomRow, isGeoFilters, MapState, mapStates, toGenomRow, Topology, CoordinateRow, toCoordinateRow} from "../models"
+import {FormattedBasicView, GenomRow, isGeoFilters, MapState, mapStates, toGenomRow, Topology, CoordinateRow, toCoordinateRow, LocationRow, toLocationRow} from "../models"
 import CollectionTableControls from "@/app/(general)/table/controls";
 import {usePathname, useRouter, useSearchParams} from "next/navigation";
 import {MapFilter} from "@/app/(general)/table/map-filter";
@@ -42,6 +42,7 @@ async function loadBasicViewItemById(supabase: SupabaseClient<Database>, id: num
 const useEditing = () => {
     const [editedGenomRow, setEditedGenomRow] = useState<GenomRow | null>(null)
     const [editedCoordinateRow, setEditedCoordinateRow] = useState<CoordinateRow | null>(null)
+    const [editedLocationRow, setEditedLocationRow] = useState<LocationRow | null>(null)
     const [editingFields, setEditingFields] = useState<Set<string>>(new Set())
 
     const handleEdit = useCallback((row: FormattedBasicView) => {
@@ -50,6 +51,10 @@ const useEditing = () => {
 
     const handleCoordinateEdit = useCallback((row: CoordinateRow) => {
         setEditedCoordinateRow(row);
+    }, []);
+
+    const handleLocationEdit = useCallback((row: LocationRow) => {
+        setEditedLocationRow(row);
     }, []);
 
     const handleFieldChange = useCallback((field: string, value: Topology | undefined) => {
@@ -88,6 +93,18 @@ const useEditing = () => {
         setEditedCoordinateRow(updatedRow);
     }, [editedCoordinateRow]);
 
+    const handleLocationChange = useCallback((countryName: string | null, regionName: string | null) => {
+        setEditedLocationRow(prev => {
+            if (!prev) return prev;
+            
+            const updatedRow = {...prev};
+            updatedRow.country = countryName ? { id: -1, name: countryName } : null;
+            updatedRow.region = regionName ? { id: -1, name: regionName } : null;
+            
+            return updatedRow;
+        });
+    }, []);
+
     const handleStartEditing = useCallback((rowId: number, fieldName: string) => {
         const fieldKey = `${rowId}-${fieldName}`;
         setEditingFields(prev => new Set(prev).add(fieldKey));
@@ -116,20 +133,29 @@ const useEditing = () => {
         setEditingFields(new Set());
     }, []);
 
+    const handleLocationCancel = useCallback(() => {
+        setEditedLocationRow(null);
+    }, []);
+
     return {
         editedGenomRow,
         setEditedGenomRow,
         editedCoordinateRow,
         setEditedCoordinateRow,
+        editedLocationRow,
+        setEditedLocationRow,
         handleEdit,
         handleCoordinateEdit,
+        handleLocationEdit,
         handleFieldChange,
         handleCoordinateChange,
+        handleLocationChange,
         handleStartEditing,
         handleStopEditing,
         isFieldEditing,
         handleCancel,
-        handleCoordinateCancel
+        handleCoordinateCancel,
+        handleLocationCancel
     }
 }
 
@@ -218,6 +244,16 @@ export default function CollectionTable({params}: { params: { [key: string]: str
         {enabled: !!editedGenomRow?.genus?.id}
     );
 
+    // Загрузка данных для редактирования локации
+    const {data: countries, isLoading: isCountriesLoading} = useTableQuery(
+        supabase.from("country").select("id,name").not('name', 'is', null)
+    );
+    const {data: regions, isLoading: isRegionsLoading} = useTableQuery(
+        supabase.from("region").select("id,name").not('name', 'is', null)
+            .eq('country_id', editing.editedLocationRow?.country?.id || -1),
+        {enabled: !!editing.editedLocationRow?.country?.id}
+    );
+
     const handleSave = async () => {
         if (editedGenomRow) {
             console.log(editedGenomRow)
@@ -267,6 +303,25 @@ export default function CollectionTable({params}: { params: { [key: string]: str
                 console.error('Error updating coordinates:', error);
                 // Даже при ошибке сбрасываем состояние, чтобы убрать поля ввода
                 editing.setEditedCoordinateRow(null);
+            }
+        }
+    };
+
+    const handleLocationSave = async (countryName: string | null, regionName: string | null) => {
+        if (editing.editedLocationRow && editing.editedLocationRow.rowId) {
+            try {
+
+                if (countryName) {
+                    await supabase.rpc('update_collection_region', {
+                        collection_id: editing.editedLocationRow.rowId,
+                        country_name: countryName,
+                        region_name: regionName || undefined
+                    });
+                }
+
+                editing.setEditedLocationRow(null);
+            } catch (error) {
+                console.error('Error updating location:', error);
             }
         }
     };
@@ -561,32 +616,44 @@ export default function CollectionTable({params}: { params: { [key: string]: str
         user,
         editedGenomRow,
         editedCoordinateRow: editing.editedCoordinateRow,
+        editedLocationRow: editing.editedLocationRow,
         orders: orders || [],
         families: families || [],
         genera: genera || [],
         kinds: kinds || [],
+        countries: countries || [],
+        regions: regions || [],
         isOrdersLoading,
         isFamiliesLoading,
         isGeneraLoading,
         isKindsLoading,
+        isCountriesLoading,
+        isRegionsLoading,
         onEdit: editing.handleEdit,
         onCoordinateEdit: editing.handleCoordinateEdit,
+        onLocationEdit: editing.handleLocationEdit,
         onFieldChange: editing.handleFieldChange,
         onCoordinateChange: editing.handleCoordinateChange,
+        onLocationChange: editing.handleLocationChange,
         onSave: handleSave,
         onCoordinateSave: handleCoordinateSave,
+        onLocationSave: handleLocationSave,
         onCancel: editing.handleCancel,
         onCoordinateCancel: handleCoordinateCancel,
+        onLocationCancel: editing.handleLocationCancel,
         onUpdate: update,
         onStartEditing: editing.handleStartEditing,
         onStopEditing: editing.handleStopEditing,
         isFieldEditing: editing.isFieldEditing,
         onMapSelect: handleMapSelect,
     }), [
-        user, editedGenomRow, editing.editedCoordinateRow, orders, families, genera, kinds,
-        isOrdersLoading, isFamiliesLoading, isGeneraLoading, isKindsLoading,
-        editing.handleEdit, editing.handleCoordinateEdit, editing.handleFieldChange, editing.handleCoordinateChange, 
-        handleSave, handleCoordinateSave, editing.handleCancel, handleCoordinateCancel, update,
+        user, editedGenomRow, editing.editedCoordinateRow, editing.editedLocationRow, 
+        orders, families, genera, kinds, countries, regions,
+        isOrdersLoading, isFamiliesLoading, isGeneraLoading, isKindsLoading, isCountriesLoading, isRegionsLoading,
+        editing.handleEdit, editing.handleCoordinateEdit, editing.handleLocationEdit, 
+        editing.handleFieldChange, editing.handleCoordinateChange, editing.handleLocationChange,
+        handleSave, handleCoordinateSave, handleLocationSave, 
+        editing.handleCancel, handleCoordinateCancel, editing.handleLocationCancel, update,
         editing.handleStartEditing, editing.handleStopEditing, editing.isFieldEditing, handleMapSelect
     ]);
 
