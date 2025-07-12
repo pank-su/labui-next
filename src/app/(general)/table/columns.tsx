@@ -652,23 +652,27 @@ export default function getColumns(options: {
 
                         if (!editUsers || editUsers.length === 0) return null
 
-                        return (
-                            <Avatar.Group max={{count: 5}}>
-                                {editUsers.map((user: any, index: number) => {
-                                    const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim()
+                        const avatars = editUsers.map((user: any, index: number) => {
+                            const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim()
 
-                                    return (
-                                        <Tooltip key={user.id || index} title={fullName || 'Пользователь'}>
-                                            <Avatar
-                                                src={user.avatar}
-                                                size="small"
-                                                style={{cursor: 'pointer'}}
-                                            />
-                                        </Tooltip>
-                                    )
-                                })}
+                            return (
+                                <Tooltip key={user.id || index} title={fullName || 'Пользователь'}>
+                                    <Avatar
+                                        src={user.avatar || undefined}
+                                        size="small"
+                                        style={{cursor: 'pointer'}}
+                                    >
+                                        {!user.avatar && (fullName ? fullName.charAt(0).toUpperCase() : 'П')}
+                                    </Avatar>
+                                </Tooltip>
+                            )
+                        })
+
+                        return avatars.length > 0 ? (
+                            <Avatar.Group max={{count: 5}}>
+                                {avatars}
                             </Avatar.Group>
-                        )
+                        ) : null
                     },
                     size: 120,
                     meta: {
