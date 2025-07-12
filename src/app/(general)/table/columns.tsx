@@ -1,10 +1,9 @@
 "use client"
 
 import ExpandableText from "@/app/components/expand-text"
-import ExpandableTags from "@/app/components/expandable-tags"
 import {date} from "@/utils/date"
 import {createColumnHelper, Row, RowData} from "@tanstack/react-table"
-import {Avatar, Tag, Tooltip} from "antd"
+import {Avatar, Tooltip} from "antd"
 import {EditableCell} from "../../components/data-table/editable"
 import {FormattedBasicView, GenomRow, toGenomRow, Topology, CoordinateRow, toCoordinateRow, LocationRow, toLocationRow} from "../models"
 import {TopologyCell} from "../../components/data-table/topology-cell"
@@ -12,6 +11,8 @@ import {DataCell} from "../../components/data-table/data-cell"
 import {SelectCell} from "../../components/data-table/select-cell"
 import {CoordinateCell} from "../../components/data-table/coordinate-cell"
 import {LocationCell} from "../../components/data-table/location-cell"
+import CollectorsCell from "../../components/data-table/collectors-cell"
+import TagsCell from "../../components/data-table/tags-cell"
 import {FilterDate} from "@/app/components/data-table/filters/date-filter";
 import {FilterGeo} from "@/app/components/data-table/filters/geo-filter";
 
@@ -615,46 +616,46 @@ export default function getColumns(options: {
         }),
         columnHelper.accessor("collectors", {
             header: "Коллекторы",
-            cell: info => {
-                const collectors = info.getValue()
-                if (!collectors || collectors.length === 0) return null
-
-                return (
-                    <ExpandableTags>
-                        {collectors.map((collector, index) => {
-                            const surname = collector.last_name || ""
-                            const firstInitial = collector.first_name ? collector.first_name.charAt(0) + "." : ""
-                            const secondInitial = collector.second_name ? collector.second_name.charAt(0) + "." : ""
-                            const displayName = `${surname} ${firstInitial}${secondInitial}`.trim()
-
-                            return (
-                                <Tag key={index} className="text-xs">
-                                    {displayName}
-                                </Tag>
-                            )
-                        })}
-                    </ExpandableTags>
-                )
-            },
+            size: 150,
+            cell: info => (
+                <CollectorsCell
+                    collectors={info.getValue()}
+                    user={user}
+                    rowId={info.row.getValue("id") as number}
+                    onSave={async (collectors) => {
+                        await update({
+                            id: info.row.getValue("id"),
+                            collector_ids: collectors.map(c => c.id)
+                        });
+                    }}
+                    onStartEditing={onStartEditing}
+                    onStopEditing={onStopEditing}
+                    isFieldEditing={isFieldEditing}
+                />
+            ),
             meta: {
                 filterVariant: "multiple-select"
             }
         }),
         columnHelper.accessor("tags", {
             header: "Тэги",
-            cell: info => {
-                let tags = info.getValue()
-                return (
-                    <ExpandableTags>
-                        {tags?.map((tag) => (
-                            <Tooltip key={(tag).id} title={(tag.description)} color={tag.color ?? "blue"}>
-                                <Tag color={tag.color ?? "blue"}>{(tag).name}</Tag>
-                            </Tooltip>
-                        ))}
-                    </ExpandableTags>
-                )
-            },
-            size: 120.0,
+            size: 150,
+            cell: info => (
+                <TagsCell
+                    tags={info.getValue()}
+                    user={user}
+                    rowId={info.row.getValue("id") as number}
+                    onSave={async (tags) => {
+                        await update({
+                            id: info.row.getValue("id"),
+                            tag_ids: tags.map(t => t.id)
+                        });
+                    }}
+                    onStartEditing={onStartEditing}
+                    onStopEditing={onStopEditing}
+                    isFieldEditing={isFieldEditing}
+                />
+            ),
             meta: {
                 filterVariant: "multiple-select"
             }
