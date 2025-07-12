@@ -28,7 +28,7 @@ export const basicView = (client: TypedSupabaseClient, params: {
         return allPages.length;
     },
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    refetchOnMount: true,
     refetchOnReconnect: false,
     placeholderData: keepPreviousData,
 })
