@@ -51,22 +51,13 @@ export async function signInWithTelegramAction(user: any): Promise<SignInResult>
         const data = await response.json();
         console.log(data);
 
-        // Импортируем сессию из ответа
-        const supabase = await createClient()
-        const { error: sessionError } = await supabase.auth.setSession({
-            access_token: data.session.access_token,
-            refresh_token: data.session.refresh_token
-        })
-
-        if (sessionError) {
-            return {
-                success: false,
-                error: sessionError.message
-            }
-        }
-
         revalidatePath("/", "layout");
-        redirect("/");
+        
+        return {
+            success: true,
+            error: null,
+            session: data.session // Возвращаем данные сессии клиенту
+        };
     } catch (error) {
         console.log(error);
         // Если это ошибка редиректа Next.js, пробрасываем её дальше

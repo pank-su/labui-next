@@ -1,6 +1,6 @@
 import {TypedSupabaseClient} from "@/utils/supabase/typed";
 import {FormattedBasicViewFilters, GeoBasicView, isGeoFilters} from "@/app/(general)/models";
-import {parseIndexFilterToSupabaseFilter, compressIdsToRanges} from "@/utils/parseIndexFilter";
+import {compressIdsToRanges, parseIndexFilterToSupabaseFilter} from "@/utils/parseIndexFilter";
 import {infiniteQueryOptions, keepPreviousData, queryOptions} from "@tanstack/react-query";
 import {parseDate} from "@/utils/date";
 import {buildDateFilterString} from "@/app/(general)/utils";
@@ -22,7 +22,6 @@ export const basicView = (client: TypedSupabaseClient, params: {
             lastPage.data.length === 0 ||
             lastPage.data.length < fetchSize
         ) {
-            console.log({message: "ok, end of data"});
             return undefined;
         }
 
@@ -152,29 +151,28 @@ function applyBasicViewSorting(query: any, filters: FormattedBasicViewFilters | 
     if (filters?.sort_field && filters?.sort_direction) {
         const sortField = filters.sort_field;
         const sortDirection = filters.sort_direction === 'asc';
-        
+
         // Для полей таксономии используем вложенную сортировку
         if (['order', 'family', 'genus', 'kind'].includes(sortField)) {
-            return query.order(`${sortField}->>name`, { ascending: sortDirection });
+            return query.order(`${sortField}->>name`, {ascending: sortDirection});
         }
         // Если пришло поле с _name, преобразуем обратно в синтаксис PostgREST
         if (sortField.endsWith('_name') && ['order_name', 'family_name', 'genus_name', 'kind_name'].includes(sortField)) {
             const baseField = sortField.replace('_name', '');
-            return query.order(`${baseField}->>name`, { ascending: sortDirection });
-        } 
+            return query.order(`${baseField}->>name`, {ascending: sortDirection});
+        }
         // Для даты используем составную сортировку
         else if (sortField === 'date') {
             return query
-                .order('year', { ascending: sortDirection, nullsFirst: false })
-                .order('month', { ascending: sortDirection, nullsFirst: false })
-                .order('day', { ascending: sortDirection, nullsFirst: false });
-        } 
-        else {
-            return query.order(sortField, { ascending: sortDirection });
+                .order('year', {ascending: sortDirection, nullsFirst: false})
+                .order('month', {ascending: sortDirection, nullsFirst: false})
+                .order('day', {ascending: sortDirection, nullsFirst: false});
+        } else {
+            return query.order(sortField, {ascending: sortDirection});
         }
     } else {
         // Сортировка по умолчанию по id
-        return query.order('id', { ascending: true });
+        return query.order('id', {ascending: true});
     }
 }
 
@@ -186,17 +184,17 @@ export async function getBasicView(client: TypedSupabaseClient, page: number, fi
 
     let query = basicViewQuery(client, filters);
     query = applyBasicViewSorting(query, filters);
-    
+
     return query.range(start, finish);
 }
 
 export async function getBasicViewModelCsv(client: TypedSupabaseClient, filters: FormattedBasicViewFilters | undefined = undefined) {
     const queryResult = await basicViewQuery(client, filters);
-    const ids = queryResult.data?.map(({ id }) => id).filter((id): id is number => id !== null) || [];
-    
+    const ids = queryResult.data?.map(({id}) => id).filter((id): id is number => id !== null) || [];
+
     // Преобразуем массив ID в компактную строку диапазонов
     const compressedIds = compressIdsToRanges(ids);
-    
+
     // Используем parseIndexFilterToSupabaseFilter для создания фильтра
     return client.from("csv_export_view")
         .select("*")
@@ -261,7 +259,7 @@ export function nextCollectionId(client: TypedSupabaseClient) {
     return queryOptions({
         queryKey: ["next_collection_id"],
         queryFn: async () => {
-            const result = await client.from("collection").select("id").order("id", { ascending: false }).limit(1);
+            const result = await client.from("collection").select("id").order("id", {ascending: false}).limit(1);
             return result.data && result.data.length > 0 ? result.data[0].id + 1 : 1;
         },
     })

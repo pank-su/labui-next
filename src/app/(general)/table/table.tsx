@@ -14,22 +14,31 @@ import {
     getSortedRowModel,
     useReactTable
 } from "@tanstack/react-table";
-import {useCallback, useMemo, useRef, useState, useEffect} from "react";
+import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {basicView, basicViewQuery, geoBasicView, orders as loadOrders} from "@/app/(general)/queries";
 
 import {Database, Tables} from "@/utils/supabase/gen-types";
 import {SupabaseClient} from "@supabase/supabase-js";
 import getColumns from "@/app/(general)/table/columns";
 import DataTable from "@/app/components/data-table/data-table";
-import {FormattedBasicView, GenomRow, isGeoFilters, MapState, mapStates, toGenomRow, Topology, CoordinateRow, toCoordinateRow, LocationRow, toLocationRow} from "../models"
+import {
+    CoordinateRow,
+    FormattedBasicView,
+    GenomRow,
+    isGeoFilters,
+    LocationRow,
+    MapState,
+    mapStates,
+    toCoordinateRow,
+    toGenomRow,
+    Topology
+} from "../models"
 import CollectionTableControls from "@/app/(general)/table/controls";
 import {usePathname, useRouter, useSearchParams} from "next/navigation";
 import {MapFilter} from "@/app/(general)/table/map-filter";
 import {useQuery, useQueryClient, useSuspenseInfiniteQuery, useSuspenseQuery} from "@tanstack/react-query";
-import {useUser} from "@/app/components/header";
+import {useUser} from "@/hooks/useUser";
 import {Spin} from "antd";
-
-
 
 
 // Утилиты
@@ -96,11 +105,11 @@ const useEditing = () => {
     const handleLocationChange = useCallback((countryName: string | null, regionName: string | null) => {
         setEditedLocationRow(prev => {
             if (!prev) return prev;
-            
+
             const updatedRow = {...prev};
-            updatedRow.country = countryName ? { id: -1, name: countryName } : null;
-            updatedRow.region = regionName ? { id: -1, name: regionName } : null;
-            
+            updatedRow.country = countryName ? {id: -1, name: countryName} : null;
+            updatedRow.region = regionName ? {id: -1, name: regionName} : null;
+
             return updatedRow;
         });
     }, []);
@@ -203,18 +212,16 @@ export default function CollectionTable({params}: { params: { [key: string]: str
     }, [params, supabase, mapState]);
 
     const {data: rawMapItems, isLoading: mapItemsLoading} = useQuery(mapQuery)
-    
+
     // Исключаем редактируемую точку из данных карты
     const mapItems = useMemo(() => {
         if (!rawMapItems) return rawMapItems;
-        
+
         const editRowId = params.edit_row ? parseInt(params.edit_row as string) : null;
         if (!editRowId) return rawMapItems;
-        
+
         return rawMapItems.filter(item => item.id !== editRowId);
     }, [rawMapItems, params.edit_row]);
-
-
 
 
     const {user} = useUser()
@@ -281,22 +288,22 @@ export default function CollectionTable({params}: { params: { [key: string]: str
                     }
                 }
             });
-            
+
             const newUrl = searchParams.toString() ? `${pathname}?${searchParams.toString()}` : pathname;
             router.push(newUrl);
-            
+
             try {
                 // Проверяем, что обе координаты заданы, иначе не сохраняем
                 if (editing.editedCoordinateRow.latitude &&
                     editing.editedCoordinateRow.longitude) {
-                    
+
                     await supabase.rpc('add_coordinates_to_collection', {
                         collection_id: editing.editedCoordinateRow.rowId,
                         latitude: editing.editedCoordinateRow.latitude,
                         longitude: editing.editedCoordinateRow.longitude
                     });
                 }
-                
+
                 // Сбрасываем состояние редактирования после попытки сохранения
                 editing.setEditedCoordinateRow(null);
             } catch (error) {
@@ -328,7 +335,7 @@ export default function CollectionTable({params}: { params: { [key: string]: str
 
     const handleCoordinateCancel = () => {
         editing.handleCoordinateCancel();
-        
+
         // Убираем edit_row и map (режим выбора) из URL при отмене
         const searchParams = new URLSearchParams();
         Object.entries(params).forEach(([key, value]) => {
@@ -340,7 +347,7 @@ export default function CollectionTable({params}: { params: { [key: string]: str
                 }
             }
         });
-        
+
         const newUrl = searchParams.toString() ? `${pathname}?${searchParams.toString()}` : pathname;
         router.push(newUrl);
     };
@@ -358,7 +365,7 @@ export default function CollectionTable({params}: { params: { [key: string]: str
         });
         searchParams.set("map", "select");
         searchParams.set("edit_row", rowId.toString());
-        
+
         const newUrl = `${pathname}?${searchParams.toString()}`;
         router.push(newUrl);
     }, [params, pathname, router]);
@@ -373,7 +380,7 @@ export default function CollectionTable({params}: { params: { [key: string]: str
                     editing.handleCoordinateEdit(toCoordinateRow(row));
                 }
             }
-            
+
             // Обновляем обе координаты одновременно
             if (editing.editedCoordinateRow) {
                 const updatedRow = {...editing.editedCoordinateRow};
@@ -402,20 +409,20 @@ export default function CollectionTable({params}: { params: { [key: string]: str
     const updateItemInCache = async (collectionId: number, isInsert: boolean = false) => {
         // Сохраняем состояние редактирования таксономии перед обновлением
         const isEditingTaxonomy = editedGenomRow?.rowId === collectionId;
-        
+
         // Для INSERT проверяем, попадает ли новая запись под текущие фильтры
         if (isInsert) {
-            const filtersWithId = { ...params, id: collectionId.toString() }
+            const filtersWithId = {...params, id: collectionId.toString()}
             const result = await basicViewQuery(supabase, filtersWithId).select("id")
-            
+
             // Если запись не попадает под фильтры, не обновляем кэш
             if (!result.data || result.data.length === 0) {
                 return
             }
-            
+
             // Если попадает, делаем ревалидацию всех страниц
-            queryClient.invalidateQueries({ queryKey: ["basic_view"] })
-            queryClient.invalidateQueries({ queryKey: ["geo_basic_view"] })
+            queryClient.invalidateQueries({queryKey: ["basic_view"]})
+            queryClient.invalidateQueries({queryKey: ["geo_basic_view"]})
             return
         }
 
@@ -430,13 +437,13 @@ export default function CollectionTable({params}: { params: { [key: string]: str
                 ...oldData,
                 pages: oldData.pages.map((page: any) => {
                     if (!page?.data) return page
-                    
+
                     const itemIndex = page.data.findIndex((item: FormattedBasicView) => item.id === collectionId)
                     if (itemIndex === -1) return page
 
                     const newData = [...page.data]
                     newData[itemIndex] = basicViewItem
-                    
+
                     // Если эта запись редактируется в данный момент, обновляем editedGenomRow
                     if (isEditingTaxonomy && editedGenomRow) {
                         const updatedGenomRow = toGenomRow(basicViewItem);
@@ -448,14 +455,14 @@ export default function CollectionTable({params}: { params: { [key: string]: str
                         updatedGenomRow.kind = editedGenomRow.kind;
                         setEditedGenomRow(updatedGenomRow);
                     }
-                    
-                    return { ...page, data: newData }
+
+                    return {...page, data: newData}
                 })
             }
         })
 
         // Обновляем geo данные если нужно
-        queryClient.invalidateQueries({ queryKey: ["geo_basic_view"] })
+        queryClient.invalidateQueries({queryKey: ["geo_basic_view"]})
     }
 
     // Обновление кэша при изменении таблицы collection
@@ -495,11 +502,11 @@ export default function CollectionTable({params}: { params: { [key: string]: str
         callback: async (payload) => {
             if (payload.eventType === "UPDATE") {
                 const tagId = (payload.new as any).id
-                const { data: tagConnections } = await supabase
+                const {data: tagConnections} = await supabase
                     .from("tags_to_collection")
                     .select("col_id")
                     .eq("tag_id", tagId)
-                
+
                 if (tagConnections) {
                     for (const connection of tagConnections) {
                         await updateItemInCache(connection.col_id)
@@ -532,11 +539,11 @@ export default function CollectionTable({params}: { params: { [key: string]: str
         callback: async (payload) => {
             if (payload.eventType === "UPDATE") {
                 const collectorId = (payload.new as any).id
-                const { data: collectorConnections } = await supabase
+                const {data: collectorConnections} = await supabase
                     .from("collector_to_collection")
                     .select("collection_id")
                     .eq("collector_id", collectorId)
-                
+
                 if (collectorConnections) {
                     for (const connection of collectorConnections) {
                         await updateItemInCache(connection.collection_id)
@@ -554,43 +561,43 @@ export default function CollectionTable({params}: { params: { [key: string]: str
     }, ["id"], {
         callback: async (payload) => {
             if (payload.eventType === "UPDATE") {
-                queryClient.invalidateQueries({ queryKey: ["basic_view"] })
-                queryClient.invalidateQueries({ queryKey: ["geo_basic_view"] })
+                queryClient.invalidateQueries({queryKey: ["basic_view"]})
+                queryClient.invalidateQueries({queryKey: ["geo_basic_view"]})
             }
             if (payload.eventType === "INSERT") {
-                queryClient.invalidateQueries({ queryKey: ["orders"] })
+                queryClient.invalidateQueries({queryKey: ["orders"]})
             }
         }
     })
 
     useSubscription(supabase, "family_updates", {
-        event: "*", 
+        event: "*",
         table: "family",
         schema: "public"
     }, ["id"], {
         callback: async (payload) => {
             if (payload.eventType === "UPDATE") {
-                queryClient.invalidateQueries({ queryKey: ["basic_view"] })
-                queryClient.invalidateQueries({ queryKey: ["geo_basic_view"] })
+                queryClient.invalidateQueries({queryKey: ["basic_view"]})
+                queryClient.invalidateQueries({queryKey: ["geo_basic_view"]})
             }
             if (payload.eventType === "INSERT") {
-                queryClient.invalidateQueries({ queryKey: ["family"] })
+                queryClient.invalidateQueries({queryKey: ["family"]})
             }
         }
     })
 
     useSubscription(supabase, "genus_updates", {
         event: "*",
-        table: "genus", 
+        table: "genus",
         schema: "public"
     }, ["id"], {
         callback: async (payload) => {
             if (payload.eventType === "UPDATE") {
-                queryClient.invalidateQueries({ queryKey: ["basic_view"] })
-                queryClient.invalidateQueries({ queryKey: ["geo_basic_view"] })
+                queryClient.invalidateQueries({queryKey: ["basic_view"]})
+                queryClient.invalidateQueries({queryKey: ["geo_basic_view"]})
             }
             if (payload.eventType === "INSERT") {
-                queryClient.invalidateQueries({ queryKey: ["genus"] })
+                queryClient.invalidateQueries({queryKey: ["genus"]})
             }
         }
     })
@@ -602,11 +609,11 @@ export default function CollectionTable({params}: { params: { [key: string]: str
     }, ["id"], {
         callback: async (payload) => {
             if (payload.eventType === "UPDATE") {
-                queryClient.invalidateQueries({ queryKey: ["basic_view"] })
-                queryClient.invalidateQueries({ queryKey: ["geo_basic_view"] })
+                queryClient.invalidateQueries({queryKey: ["basic_view"]})
+                queryClient.invalidateQueries({queryKey: ["geo_basic_view"]})
             }
             if (payload.eventType === "INSERT") {
-                queryClient.invalidateQueries({ queryKey: ["kind"] })
+                queryClient.invalidateQueries({queryKey: ["kind"]})
             }
         }
     })
@@ -647,12 +654,12 @@ export default function CollectionTable({params}: { params: { [key: string]: str
         isFieldEditing: editing.isFieldEditing,
         onMapSelect: handleMapSelect,
     }), [
-        user, editedGenomRow, editing.editedCoordinateRow, editing.editedLocationRow, 
+        user, editedGenomRow, editing.editedCoordinateRow, editing.editedLocationRow,
         orders, families, genera, kinds, countries, regions,
         isOrdersLoading, isFamiliesLoading, isGeneraLoading, isKindsLoading, isCountriesLoading, isRegionsLoading,
-        editing.handleEdit, editing.handleCoordinateEdit, editing.handleLocationEdit, 
+        editing.handleEdit, editing.handleCoordinateEdit, editing.handleLocationEdit,
         editing.handleFieldChange, editing.handleCoordinateChange, editing.handleLocationChange,
-        handleSave, handleCoordinateSave, handleLocationSave, 
+        handleSave, handleCoordinateSave, handleLocationSave,
         editing.handleCancel, handleCoordinateCancel, editing.handleLocationCancel, update,
         editing.handleStartEditing, editing.handleStopEditing, editing.isFieldEditing, handleMapSelect
     ]);
@@ -699,9 +706,9 @@ export default function CollectionTable({params}: { params: { [key: string]: str
         onSortingChange: (updater) => {
             const currentSorting = table.getState().sorting;
             const newSorting = typeof updater === 'function' ? updater(currentSorting) : updater;
-            
+
             const newParams = new URLSearchParams();
-            
+
             Object.entries(params).forEach(([key, value]) => {
                 if (value !== undefined && !['sort_field', 'sort_direction'].includes(key)) {
                     if (Array.isArray(value)) {
@@ -729,13 +736,13 @@ export default function CollectionTable({params}: { params: { [key: string]: str
     const [mapInitialized, setMapInitialized] = useState(false);
 
     const startBounds = useMemo(() => {
-        if (isGeoFilters(params)){
+        if (isGeoFilters(params)) {
             return [params.from_lng, params.from_lat, params.to_lng, params.to_lat].map((val) => Number(val)) as [number, number, number, number];
         }
     }, [params.from_lng, params.from_lat, params.to_lng, params.to_lat]) // Убираем mapInitialized
 
     const zoom = useMemo(() => {
-        if (isGeoFilters(params)){
+        if (isGeoFilters(params)) {
             return Number(params.zoom)
         }
     }, [params.zoom]) // Убираем mapInitialized
@@ -752,7 +759,7 @@ export default function CollectionTable({params}: { params: { [key: string]: str
         }
 
         const [fromLng, fromLat, toLng, toLat] = bounds;
-        
+
         // Не применяем фильтры по координатам в режиме выбора
         if (mapState !== "select") {
             table.getColumn("latitude")?.setFilterValue({
@@ -799,8 +806,6 @@ export default function CollectionTable({params}: { params: { [key: string]: str
     }, [params, mapInitialized, mapState]);
 
 
-
-
     return (
         <div className="h-full flex flex-col">
 
@@ -829,7 +834,7 @@ export default function CollectionTable({params}: { params: { [key: string]: str
                             longitude: editing.editedCoordinateRow.longitude ?? null,
                             latitude: editing.editedCoordinateRow.latitude ?? null
                         } : undefined}
-                        />
+                    />
 
 
                 </div>}

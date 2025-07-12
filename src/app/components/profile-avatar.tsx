@@ -1,17 +1,32 @@
 import {Avatar, Dropdown, Skeleton} from "antd";
 import {MenuProps} from "antd/lib";
 import {useMemo} from "react";
-import {singOutAction} from "../auth/actions";
-import {useUser} from "./header";
+import {useUser} from "@/hooks/useUser";
+import {useClient} from "@/utils/supabase/client";
+import {useRouter} from "next/navigation";
 
+
+function LogoutButton() {
+    const supabase = useClient();
+    const router = useRouter();
+    
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        router.push('/');
+    };
+    
+    return (
+        <button onClick={handleLogout} className="w-full text-left">
+            Выйти
+        </button>
+    );
+}
 
 const items: MenuProps['items'] = [
     {
         key: '2',
         danger: true,
-        label: (<form>
-            <button formAction={singOutAction}>Выйти</button>
-        </form>)
+        label: <LogoutButton />
     }
 ]
 

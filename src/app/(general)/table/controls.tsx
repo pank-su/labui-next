@@ -1,9 +1,9 @@
-import {DownloadOutlined, EnvironmentOutlined, PlusOutlined, ReloadOutlined} from "@ant-design/icons";
+import {DownloadOutlined, PlusOutlined, ReloadOutlined} from "@ant-design/icons";
 import {Button, Popconfirm, Tooltip} from "antd";
 import {Table} from "@tanstack/react-table";
 import {FormattedBasicView} from "@/app/(general)/models";
 import NewId from "@/app/components/data-table/new-id";
-import {useUser} from "@/app/components/header";
+import {useUser} from "@/hooks/useUser";
 import {useInsertMutation} from "@supabase-cache-helpers/postgrest-react-query";
 import {useClient} from "@/utils/supabase/client";
 import {useRouter} from "next/navigation";
@@ -26,7 +26,6 @@ export default function CollectionTableControls({table, filters}: {
     const supabase = useClient()
 
 
-
     const userLoad = useUser();
 
     const {mutateAsync: insert} = useInsertMutation(
@@ -45,14 +44,16 @@ export default function CollectionTableControls({table, filters}: {
     return <>
         <div className="p-2 flex justify-between items-center">
             <div className="space-x-2">
-                <Tooltip title={mounted && !userLoad.user && !userLoad.isLoading ? "Для добавления записи нужно войти в аккаунт" : ""}>
+                <Tooltip
+                    title={mounted && !userLoad.user && !userLoad.isLoading ? "Для добавления записи нужно войти в аккаунт" : ""}>
                     <Popconfirm
                         placement="right"
                         okText="Да"
                         cancelText="Нет"
                         icon={<PlusOutlined style={{color: "blue"}}/>}
                         onConfirm={() => insert([{}])}
-                        title={mounted ? <>Вы точно хотите добавить запись с ID <NewId/></> : "Вы точно хотите добавить запись?"}
+                        title={mounted ? <>Вы точно хотите добавить запись с
+                            ID <NewId/></> : "Вы точно хотите добавить запись?"}
                     >
                         <Button
                             type="primary"

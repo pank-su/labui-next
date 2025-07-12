@@ -8,5 +8,6 @@ export interface FormInput {
 
 export interface SignInResult {
     success: boolean,
-    error: string | null
+    error: string | null,
+    session?: any // Опциональные данные сессии для Telegram авторизации
 }

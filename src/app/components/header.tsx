@@ -6,9 +6,8 @@ import {Search} from "./search";
 import {Suspense} from "react";
 import AuthBtn from "./auth-btn";
 import ProfileAvatar from "./profile-avatar";
-import {useClient} from "@/utils/supabase/client";
-import {useQuery} from "@tanstack/react-query";
 import {usePathname} from "next/navigation";
+import {useUser} from "@/hooks/useUser";
 
 
 const options = [
@@ -51,20 +50,6 @@ export default function Header() {
     )
 }
 
-export function useUser() {
-    const supabase = useClient();
-    const {data, isLoading} = useQuery({
-        queryKey: ["supabase-get-user"],
-        gcTime: 5 * 60 * 1000, // 5 минут
-        staleTime: 2 * 60 * 1000, // 2 минуты
-        queryFn: () => supabase.auth.getUser()
-    });
-
-    return {
-        user: data?.data.user,
-        isLoading
-    };
-}
 
 /**
  * Кнопка или аватар авторизации

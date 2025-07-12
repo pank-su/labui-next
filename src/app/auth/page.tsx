@@ -1,11 +1,11 @@
 "use client"
 
-import {Card, Flex, notification, Button} from "antd";
-import {useState, useEffect} from "react";
+import {Button, Card, Flex, notification} from "antd";
+import {useState} from "react";
 import {useRouter} from "next/navigation";
 import {LoginButton} from "@telegram-auth/react";
 import {signInWithTelegramAction} from "./actions";
-import type {FormInput} from "./models";
+import {useClient} from "@/utils/supabase/client";
 
 interface TelegramUser {
     id: number;
@@ -21,15 +21,24 @@ function LoginForm() {
     const [loading, setLoading] = useState(false)
     const [api, contextHolder] = notification.useNotification();
     const router = useRouter()
+    const supabase = useClient()
 
     const handleTelegramAuth = async (user: TelegramUser) => {
         setLoading(true)
         try {
             const actionResult = await signInWithTelegramAction(user)
-            if (actionResult.success) {
+            if (actionResult.success && actionResult.session) {
+                // Устанавливаем сессию на клиенте
+                await supabase.auth.setSession({
+                    access_token: actionResult.session.access_token,
+                    refresh_token: actionResult.session.refresh_token
+                });
                 router.replace("/")
             } else {
-                api.error({message: "Ошибка при входе", description: actionResult.error || "Ошибка авторизации через Telegram"})
+                api.error({
+                    message: "Ошибка при входе",
+                    description: actionResult.error || "Ошибка авторизации через Telegram"
+                })
             }
         } catch (error) {
             api.error({message: "Ошибка при входе", description: "Произошла ошибка при авторизации"})
@@ -40,15 +49,16 @@ function LoginForm() {
     const handleTestAuth = async () => {
         setLoading(true)
         try {
-            const { signInAction } = await import("./actions");
-            const actionResult = await signInAction({
+            // Используем клиентский вход вместо server action
+            const {error} = await supabase.auth.signInWithPassword({
                 email: "not@use.please",
                 password: "test123"
-            } as FormInput);
-            if (actionResult.success) {
+            });
+
+            if (!error) {
                 router.replace("/")
             } else {
-                api.error({message: "Ошибка при входе", description: actionResult.error || "Ошибка тестовой авторизации"})
+                api.error({message: "Ошибка при входе", description: error.message || "Ошибка тестовой авторизации"})
             }
         } catch (error) {
             api.error({message: "Ошибка при входе", description: "Произошла ошибка при тестовой авторизации"})
