@@ -211,7 +211,7 @@ export const LocationDialog: React.FC<LocationDialogProps> = ({
                             placeholder="Введите город, регион, страну..."
                             value={locationInput}
                             onChange={(e) => setLocationInput(e.target.value)}
-                            suffix={isSearching ? <Spin size="small" /> : undefined}
+                            suffix={isSearching ? <Spin size="small" /> : <span/>}
                             className="mt-1"
                         />
                         
