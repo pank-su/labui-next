@@ -596,7 +596,6 @@ export default function getColumns(options: {
                                 onCancel={() => {
                                 }}
                                 placeholder="Выберите институт"
-                                disabled={isVoucherInstitutesLoading}
                             />
                         );
                     },
@@ -607,7 +606,7 @@ export default function getColumns(options: {
                 }),
                 columnHelper.accessor("voucher_id", {
                     header: "ID",
-                    cell: info => <ExpandableText>{info.getValue()}</ExpandableText>,
+                    cell: createEditableCell("voucher_id", (value, rowId) => ({id: rowId, vouch_id: value})),
                     meta: {
                         filterVariant: "input"
                     }
