@@ -213,6 +213,15 @@ async function loadOrders(client: TypedSupabaseClient) {
     return (await client.from("order").select("id,name").not('name', 'is', null)).data
 }
 
+export const voucherInstitutes = (client: TypedSupabaseClient) => queryOptions({
+    queryKey: ["voucher_institutes"],
+    queryFn: async () => loadVoucherInstitutes(client)
+})
+
+async function loadVoucherInstitutes(client: TypedSupabaseClient) {
+    return (await client.from("voucher_institute").select("id,name")).data
+}
+
 
 export function values(client: TypedSupabaseClient, tableName: string, columnId: string, filters: {
     [key: string]: string | string[] | undefined

@@ -95,12 +95,14 @@ export default function getColumns(options: {
     kinds: any[];
     countries: any[];
     regions: any[];
+    voucherInstitutes: any[];
     isOrdersLoading: boolean;
     isFamiliesLoading: boolean;
     isGeneraLoading: boolean;
     isKindsLoading: boolean;
     isCountriesLoading: boolean;
     isRegionsLoading: boolean;
+    isVoucherInstitutesLoading: boolean;
     onEdit: (row: FormattedBasicView) => void;
     onCoordinateEdit: (row: CoordinateRow) => void;
     onLocationEdit: (row: LocationRow) => void;
@@ -131,12 +133,14 @@ export default function getColumns(options: {
         kinds,
         countries,
         regions,
+        voucherInstitutes,
         isOrdersLoading,
         isFamiliesLoading,
         isGeneraLoading,
         isKindsLoading,
         isCountriesLoading,
         isRegionsLoading,
+        isVoucherInstitutesLoading,
         onEdit,
         onCoordinateEdit,
         onLocationEdit,
@@ -559,10 +563,47 @@ export default function getColumns(options: {
             columns: [
                 columnHelper.accessor("voucher_institute", {
                     header: "Институт",
-                    cell: info => <ExpandableText>{info.getValue()}</ExpandableText>,
+                    cell: info => {
+                        const rowId = info.row.getValue("id") as number;
+                        const isEditing = !!user;
+                        const value = info.getValue() as string | null;
+
+                        // Формируем опции для институтов из загруженных данных
+                        const instituteOptions = [
+                            {value: null, label: 'Не указано'},
+                            ...(voucherInstitutes || []).map((institute: any) => ({
+                                value: institute.id,
+                                label: institute.name
+                            }))
+                        ];
+
+                        // Находим текущее значение по имени института
+                        const currentOption = voucherInstitutes?.find((institute: any) => institute.name === value);
+
+                        return (
+                            <SelectCell
+                                value={currentOption?.id || null}
+                                displayValue={value || ''}
+                                options={instituteOptions}
+                                rowId={rowId}
+                                isEditing={isEditing}
+                                onSave={async (rowId, value) => {
+                                    await update({
+                                        id: rowId,
+                                        vouch_inst_id: value
+                                    });
+                                }}
+                                onCancel={() => {
+                                }}
+                                placeholder="Выберите институт"
+                                disabled={isVoucherInstitutesLoading}
+                            />
+                        );
+                    },
                     meta: {
                         filterVariant: "select"
-                    }
+                    },
+                    filterFn: selectFilter
                 }),
                 columnHelper.accessor("voucher_id", {
                     header: "ID",
