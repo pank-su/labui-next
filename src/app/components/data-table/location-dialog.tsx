@@ -24,6 +24,7 @@ interface NominatimPlace {
         state?: string;
         region?: string;
         county?: string;
+        province?: string;
         city?: string;
         town?: string;
         village?: string;
@@ -124,7 +125,26 @@ export const LocationDialog: React.FC<LocationDialogProps> = ({
     // Обработка выбора места из результатов поиска
     const handleLocationSelect = (place: NominatimPlace) => {
         const countryName = place.address.country;
-        const regionName = place.address.state || place.address.region || place.address.county;
+        
+        // Определяем порядок получения полей для получения "региона"
+        const locationFields = [
+            "state",
+            "county",
+            "province",
+            "region",
+            "city",
+            "town",
+            "village",
+        ];
+
+        // Получаем первую попавшуюся часть иначе пустоту
+        let regionName = "";
+        for (const field of locationFields) {
+            if (place.address[field as keyof typeof place.address]) {
+                regionName = place.address[field as keyof typeof place.address] as string;
+                break;
+            }
+        }
 
         if (!countryName) {
             message.error('Не удалось определить страну для выбранного места');
@@ -191,7 +211,7 @@ export const LocationDialog: React.FC<LocationDialogProps> = ({
                             placeholder="Введите город, регион, страну..."
                             value={locationInput}
                             onChange={(e) => setLocationInput(e.target.value)}
-                            suffix={isSearching ? <Spin size="small" /> : null}
+                            suffix={isSearching ? <Spin size="small" /> : undefined}
                             className="mt-1"
                         />
                         

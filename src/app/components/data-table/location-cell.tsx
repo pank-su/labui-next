@@ -17,6 +17,8 @@ interface LocationCellProps {
     showActions?: boolean;
     onSave?: (countryName: string | null, regionName: string | null) => void;
     onCancel?: () => void;
+    latitude?: number | null;
+    longitude?: number | null;
 }
 
 export const LocationCell: React.FC<LocationCellProps> = ({
@@ -31,13 +33,19 @@ export const LocationCell: React.FC<LocationCellProps> = ({
     onChange,
     showActions = false,
     onSave,
-    onCancel
+    onCancel,
+    latitude,
+    longitude
 }) => {
     const [isDialogVisible, setIsDialogVisible] = useState(false);
 
+    const hasCoordinates = latitude !== null && latitude !== undefined && longitude !== null && longitude !== undefined;
+
     const startEditing = () => {
-        onEdit(locationRow);
-        setIsDialogVisible(true);
+        if (!hasCoordinates) {
+            onEdit(locationRow);
+            setIsDialogVisible(true);
+        }
     };
 
     const handleDialogSave = (countryName: string | null, regionName: string | null) => {
@@ -52,15 +60,22 @@ export const LocationCell: React.FC<LocationCellProps> = ({
         onCancel?.();
     };
 
-    if (isEditing) {
-        return (
-            <>
-                <div className="cursor-pointer w-full" onClick={() => setIsDialogVisible(true)}>
-                    {(value && value.trim() !== '') ? value : ' '}
-                </div>
 
+
+
+    return (
+        <div
+            className={`w-full ${hasCoordinates ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
+            onDoubleClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                startEditing();
+            }}
+        >
+            {(value && value.trim() !== '') ? value : ' '}
+            <>
                 <LocationDialog
-                    visible={isDialogVisible}
+                    visible={isEditing}
                     locationRow={locationRow}
                     countries={countries}
                     regions={regions}
@@ -69,19 +84,6 @@ export const LocationCell: React.FC<LocationCellProps> = ({
                     isLoading={isLoading}
                 />
             </>
-        );
-    }
-
-    return (
-        <div
-            className="cursor-pointer w-full"
-            onDoubleClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                startEditing();
-            }}
-        >
-            {(value && value.trim() !== '') ? value : ' '}
         </div>
     );
 };

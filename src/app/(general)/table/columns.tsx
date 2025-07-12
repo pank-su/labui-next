@@ -256,6 +256,8 @@ export default function getColumns(options: {
                     showActions={field === 'region' && isEditing}
                     onSave={onLocationSave}
                     onCancel={onLocationCancel}
+                    latitude={info.row.original.latitude}
+                    longitude={info.row.original.longitude}
                 />
             )
         }
