@@ -16,12 +16,14 @@ interface TagType {
 
 interface EditableTagsSelectProps {
     value: TagType[];
+    collectionId: number;
     onSave: (tags: TagType[]) => void;
     onCancel: () => void;
 }
 
 export default function EditableTagsSelect({
     value,
+    collectionId,
     onSave,
     onCancel
 }: EditableTagsSelectProps) {
@@ -58,7 +60,7 @@ export default function EditableTagsSelect({
         label: (
             <div className="flex items-center gap-2">
                 <div 
-                    className="w-3 h-3 rounded-full" 
+                    className="w-3 h-3 rounded-full"
                     style={{ backgroundColor: tag.color || "#1677ff" }}
                 />
                 <span>{tag.name}</span>
@@ -109,7 +111,21 @@ export default function EditableTagsSelect({
                     )}
                 />
                 <Button
-                    onClick={() => onSave(selectedTags)}
+                    onClick={async () => {
+                        const tagIds = selectedTags.map(t => t.id!).filter(id => id !== null);
+                        
+                        const { error } = await supabase.rpc('update_collection_tags', {
+                            target_collection_id: collectionId,
+                            new_tag_ids: tagIds
+                        });
+                        
+                        if (error) {
+                            console.error('Error updating tags:', error);
+                            return;
+                        }
+                        
+                        onSave(selectedTags);
+                    }}
                     size="small"
                     icon={<CheckOutlined />}
                 />

@@ -32,7 +32,7 @@ export default function ExpandableTags({ children }: { children: React.ReactNode
                 onClick={() => (hasOverflow || expanded) && setExpanded(!expanded)}
                 className={`${(hasOverflow || expanded) ? 'cursor-pointer' : ''} w-full ${expanded ? '' : 'line-clamp-1 overflow-hidden'}`}
             >
-                <div className={`flex flex-wrap gap-1 ${expanded ? '' : 'flex-nowrap'}`}>
+                <div className={`flex flex-wrap  ${expanded ? '' : 'flex-nowrap'}`}>
                     {children}
                 </div>
                 {!expanded && hasOverflow && (

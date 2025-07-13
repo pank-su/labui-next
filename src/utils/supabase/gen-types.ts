@@ -3730,12 +3730,6 @@ export type Database = {
         }
         Returns: number
       }
-      get_country_id: {
-        Args: {
-          name: string
-        }
-        Returns: number
-      }
       get_family_id: {
         Args: {
           name: string
@@ -3757,16 +3751,22 @@ export type Database = {
         }
         Returns: number
       }
-      get_order_id: {
+      get_or_create_country_id: {
         Args: {
-          order_name: string
+          country_name: string
         }
         Returns: number
       }
-      get_region_id: {
+      get_or_create_region_id: {
         Args: {
-          name: string
-          country: number
+          region_name: string
+          input_country_id: number
+        }
+        Returns: number
+      }
+      get_order_id: {
+        Args: {
+          order_name: string
         }
         Returns: number
       }
@@ -3789,11 +3789,25 @@ export type Database = {
         }
         Returns: number
       }
+      update_collection_collectors: {
+        Args: {
+          target_collection_id: number
+          new_collector_ids?: number[]
+        }
+        Returns: undefined
+      }
       update_collection_region: {
         Args: {
           collection_id: number
           country_name: string
           region_name?: string
+        }
+        Returns: undefined
+      }
+      update_collection_tags: {
+        Args: {
+          target_collection_id: number
+          new_tag_ids?: number[]
         }
         Returns: undefined
       }

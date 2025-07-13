@@ -616,17 +616,14 @@ export default function getColumns(options: {
         }),
         columnHelper.accessor("collectors", {
             header: "Коллекторы",
-            size: 150,
+            size: 200,
             cell: info => (
                 <CollectorsCell
                     collectors={info.getValue()}
                     user={user}
                     rowId={info.row.getValue("id") as number}
                     onSave={async (collectors) => {
-                        await update({
-                            id: info.row.getValue("id"),
-                            collector_ids: collectors.map(c => c.id)
-                        });
+                        // Обновление происходит через новую функцию в компоненте
                     }}
                     onStartEditing={onStartEditing}
                     onStopEditing={onStopEditing}
@@ -639,17 +636,14 @@ export default function getColumns(options: {
         }),
         columnHelper.accessor("tags", {
             header: "Тэги",
-            size: 150,
+            size: 200,
             cell: info => (
                 <TagsCell
                     tags={info.getValue()}
                     user={user}
                     rowId={info.row.getValue("id") as number}
                     onSave={async (tags) => {
-                        await update({
-                            id: info.row.getValue("id"),
-                            tag_ids: tags.map(t => t.id)
-                        });
+                        // Обновление происходит через новую функцию в компоненте
                     }}
                     onStartEditing={onStartEditing}
                     onStopEditing={onStopEditing}

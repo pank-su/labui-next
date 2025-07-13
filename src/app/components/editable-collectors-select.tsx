@@ -16,12 +16,14 @@ interface Collector {
 
 interface EditableCollectorsSelectProps {
     value: Collector[];
+    collectionId: number;
     onSave: (collectors: Collector[]) => void;
     onCancel: () => void;
 }
 
 export default function EditableCollectorsSelect({
     value,
+    collectionId,
     onSave,
     onCancel
 }: EditableCollectorsSelectProps) {
@@ -101,7 +103,21 @@ export default function EditableCollectorsSelect({
                     )}
                 />
                 <Button
-                    onClick={() => onSave(selectedCollectors)}
+                    onClick={async () => {
+                        const collectorIds = selectedCollectors.map(c => c.id!).filter(id => id !== null);
+                        
+                        const { error } = await supabase.rpc('update_collection_collectors', {
+                            target_collection_id: collectionId,
+                            new_collector_ids: collectorIds
+                        });
+                        
+                        if (error) {
+                            console.error('Error updating collectors:', error);
+                            return;
+                        }
+                        
+                        onSave(selectedCollectors);
+                    }}
                     icon={<CheckOutlined />}
                 />
             </Space.Compact>

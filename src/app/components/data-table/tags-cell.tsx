@@ -57,6 +57,7 @@ export default function TagsCell({
         return (
             <EditableTagsSelect
                 value={tags || []}
+                collectionId={rowId}
                 onSave={async (newTags) => {
                     await onSave(newTags);
                     handleStopEdit();

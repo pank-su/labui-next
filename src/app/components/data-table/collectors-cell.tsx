@@ -64,6 +64,7 @@ export default function CollectorsCell({
         return (
             <EditableCollectorsSelect
                 value={collectors || []}
+                collectionId={rowId}
                 onSave={async (newCollectors) => {
                     await onSave(newCollectors);
                     handleStopEdit();
