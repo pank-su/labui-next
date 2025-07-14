@@ -168,7 +168,7 @@ function applyBasicViewSorting(query: any, filters: FormattedBasicViewFilters | 
                 .order('month', {ascending: sortDirection, nullsFirst: false})
                 .order('day', {ascending: sortDirection, nullsFirst: false});
         } else {
-            return query.order(sortField, {ascending: sortDirection});
+            return query.order(sortField, {ascending: sortDirection, nullsFirst: false});
         }
     } else {
         // Сортировка по умолчанию по id
