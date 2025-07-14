@@ -3,6 +3,9 @@
 import {useClient} from "@/utils/supabase/client";
 import {useQuery} from "@tanstack/react-query";
 
+/**
+ * Хук для получения текущего пользователя
+ */
 export function useUser() {
     const supabase = useClient();
     

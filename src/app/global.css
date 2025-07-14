@@ -1,3 +1,6 @@
+/* Настройка для shadcn ui
+ */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -60,6 +63,8 @@
     }
 }
 
+/* Убрать у Popup padding
+ */
 .maplibregl-popup-content {
     padding: 0 !important;
 }

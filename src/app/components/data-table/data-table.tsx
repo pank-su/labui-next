@@ -4,7 +4,7 @@ import {flexRender, Table} from "@tanstack/react-table";
 import {Table as TableUi, TableHead, TableHeader, TableRow} from "../ui/table";
 import {SortedIcon} from "../sorted-filter";
 import {VirtualTableBody} from "./body";
-import useWindowSize from "@/utils/useWindowSize";
+import useWindowSize from "@/hooks/useWindowSize";
 import {useCallback, useMemo, useRef} from "react";
 import {Spin} from "antd";
 import {useVirtualizer} from "@tanstack/react-virtual";

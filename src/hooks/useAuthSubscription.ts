@@ -6,6 +6,9 @@ import {useQueryClient} from "@tanstack/react-query";
 
 let subscriptionActive = false;
 
+/**
+ * Отслеживание состояния авторизации
+ */
 export function useAuthSubscription() {
     const supabase = useClient();
     const queryClient = useQueryClient();
@@ -17,7 +20,6 @@ export function useAuthSubscription() {
         subscriptionActive = true;
 
         const {data: {subscription}} = supabase.auth.onAuthStateChange(async (event, session) => {
-            console.log('Auth state changed:', event); // Для отладки
             if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
                 queryClient.invalidateQueries({queryKey: ["supabase-get-user"]});
             }

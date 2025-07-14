@@ -8,6 +8,9 @@ import '@ant-design/v5-patch-for-react-19';
 import {ReactQueryClientProvider} from './components/query-provider';
 
 
+/**
+ * Инициализация всех provider'ов
+ */
 export default function Layout({children}: {
     children: React.ReactNode
 }) {
