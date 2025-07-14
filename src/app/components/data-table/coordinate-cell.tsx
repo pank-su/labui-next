@@ -192,8 +192,10 @@ export const CoordinateCell: React.FC<CoordinateCellProps> = ({
     }
 
     return (
-        <Expandable onDoubleClick={startEditing}>
-            {formatValue(value) || ' '}
+        <Expandable onDoubleClick={startEditing} isEditable={true}>
+            <div className="min-h-[20px] h-full w-full flex items-center justify-start px-2">
+                {formatValue(value) || <span className="w-full h-full inline-block">&nbsp;</span>}
+            </div>
         </Expandable>
     );
 };

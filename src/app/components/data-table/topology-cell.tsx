@@ -19,6 +19,7 @@ interface TopologyCellProps {
     showActions?: boolean;
     onSave?: () => void;
     onCancel?: () => void;
+    isEditable?: boolean;
 }
 
 export const TopologyCell: React.FC<TopologyCellProps> = ({
@@ -33,7 +34,8 @@ export const TopologyCell: React.FC<TopologyCellProps> = ({
                                                               onChange,
                                                               showActions = false,
                                                               onSave,
-                                                              onCancel
+                                                              onCancel,
+                                                              isEditable = false
                                                           }) => {
     const [isAddNewModalVisible, setIsAddNewModalVisible] = useState(false);
     const [newItemName, setNewItemName] = useState("");
@@ -127,68 +129,70 @@ export const TopologyCell: React.FC<TopologyCellProps> = ({
 
     // Получение всех полей для редактирования
     const startEditing = () => {
-        onEdit(genomRow)
-
+        if (isEditable) {
+            onEdit(genomRow)
+        }
     };
 
     if (isEditing) {
         return (
-            <Space.Compact size="small" className="w-full">
-                <Select
-                    onKeyDown={(e) => {
-                        if (e.key === 'Escape') {
-                            onCancel?.()
-                        }
-                    }}
-                    className="w-full"
-                    value={genomRow[field]?.name && genomRow[field]?.name.trim() !== '' ? genomRow[field]?.id : undefined}
-                    searchValue={search}
-                    onSearch={setSearch}
-                    loading={isLoading}
-                    placeholder="Выберите или добавьте новый"
-                    allowClear
+            <div className="w-full">
+                {showActions ? (
+                    <Space.Compact size="small" className="w-full">
+                        <Select
+                            onKeyDown={(e) => {
+                                if (e.key === 'Escape') {
+                                    onCancel?.()
+                                } else if (e.key === 'Enter') {
+                                    onSave?.()
+                                }
+                            }}
+                            className="w-full min-w-0"
+                            value={genomRow[field]?.name && genomRow[field]?.name.trim() !== '' ? genomRow[field]?.id : undefined}
+                            searchValue={search}
+                            onSearch={setSearch}
+                            loading={isLoading}
+                            placeholder="Выберите или добавьте новый"
+                            allowClear
 
-                    onChange={(newId, option) => {
-                        // Если поле очищено
-                        if (newId === undefined) {
-                            onChange(field, undefined);
-                            return;
-                        }
+                            onChange={(newId, option) => {
+                                // Если поле очищено
+                                if (newId === undefined) {
+                                    onChange(field, undefined);
+                                    return;
+                                }
 
-                        if (!Array.isArray(option) && option != null && option.value === "add-new") {
-                            setNewItemName(search)
-                            setIsAddNewModalVisible(true);
-                            return;
-                        }
-                        const selectedOption = options.find(opt => opt.id === newId);
+                                if (!Array.isArray(option) && option != null && option.value === "add-new") {
+                                    setNewItemName(search)
+                                    setIsAddNewModalVisible(true);
+                                    return;
+                                }
+                                const selectedOption = options.find(opt => opt.id === newId);
 
-                        if (selectedOption) {
-                            const topology: Topology = {
-                                id: selectedOption.id,
-                                name: selectedOption.name
-                            };
-                            onChange(field, topology);
-                        }
-                    }}
-                    disabled={isDisabled}
-                    placement={"topLeft"}
-                    showSearch
-                    filterOption={(input, option) =>
+                                if (selectedOption) {
+                                    const topology: Topology = {
+                                        id: selectedOption.id,
+                                        name: selectedOption.name
+                                    };
+                                    onChange(field, topology);
+                                }
+                            }}
+                            disabled={isDisabled}
+                            placement={"topLeft"}
+                            showSearch
+                            filterOption={(input, option) =>
 
-                        option?.value == "add-new" || (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                    }
-                    options={[
-                        ...options.map(item => ({
-                            value: item.id,
-                            label: item.name
-                        })),
-                        {value: "add-new", label: `＋ Добавить`}
-                    ]
-                    }
-                />
-
-                {showActions && (
-                    <>
+                                option?.value == "add-new" || (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                            }
+                            options={[
+                                ...options.map(item => ({
+                                    value: item.id,
+                                    label: item.name
+                                })),
+                                {value: "add-new", label: `＋ Добавить`}
+                            ]
+                            }
+                        />
                         <Button
                             onClick={onCancel}
                             icon={<CloseOutlined/>}
@@ -198,7 +202,63 @@ export const TopologyCell: React.FC<TopologyCellProps> = ({
                             onClick={onSave}
                             icon={<CheckOutlined/>}
                         />
-                    </>
+                    </Space.Compact>
+                ) : (
+                    <Select
+                        onKeyDown={(e) => {
+                            if (e.key === 'Escape') {
+                                onCancel?.()
+                            } else if (e.key === 'Enter') {
+                                onSave?.()
+                            }
+                        }}
+                        className="w-full"
+                        size="small"
+                        value={genomRow[field]?.name && genomRow[field]?.name.trim() !== '' ? genomRow[field]?.id : undefined}
+                        searchValue={search}
+                        onSearch={setSearch}
+                        loading={isLoading}
+                        placeholder="Выберите или добавьте новый"
+                        allowClear
+
+                        onChange={(newId, option) => {
+                            // Если поле очищено
+                            if (newId === undefined) {
+                                onChange(field, undefined);
+                                return;
+                            }
+
+                            if (!Array.isArray(option) && option != null && option.value === "add-new") {
+                                setNewItemName(search)
+                                setIsAddNewModalVisible(true);
+                                return;
+                            }
+                            const selectedOption = options.find(opt => opt.id === newId);
+
+                            if (selectedOption) {
+                                const topology: Topology = {
+                                    id: selectedOption.id,
+                                    name: selectedOption.name
+                                };
+                                onChange(field, topology);
+                            }
+                        }}
+                        disabled={isDisabled}
+                        placement={"topLeft"}
+                        showSearch
+                        filterOption={(input, option) =>
+
+                            option?.value == "add-new" || (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                        }
+                        options={[
+                            ...options.map(item => ({
+                                value: item.id,
+                                label: item.name
+                            })),
+                            {value: "add-new", label: `＋ Добавить`}
+                        ]
+                        }
+                    />
                 )}
                 <Modal
                     title={`Добавить новый ${getFieldNameRu(field)}`}
@@ -249,13 +309,15 @@ export const TopologyCell: React.FC<TopologyCellProps> = ({
                         autoFocus
                     />
                 </Modal>
-            </Space.Compact>
+            </div>
         );
     }
 
     return (
-        <Expandable onDoubleClick={startEditing}>
-            {(value && value.trim() !== '') ? value : ' '}
+        <Expandable onDoubleClick={startEditing} isEditable={isEditable}>
+            <div className="min-h-[20px] h-full w-full flex items-center">
+                {(value && value.trim() !== '') ? value : <span>&nbsp;</span>}
+            </div>
         </Expandable>
     );
 };

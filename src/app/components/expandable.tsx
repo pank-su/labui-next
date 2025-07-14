@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect, MouseEventHandler } from "react";
 import OverflowIndicator from "./overflow-indicator";
 
-export default function Expandable({onDoubleClick, children}: {
+export default function Expandable({onDoubleClick, children, isEditable = false}: {
     onDoubleClick?: MouseEventHandler<HTMLDivElement>,
     children: React.ReactNode,
+    isEditable?: boolean,
 }) {
     const [expanded, setExpanded] = useState(false);
     const [hasOverflow, setHasOverflow] = useState(false);
@@ -19,7 +20,7 @@ export default function Expandable({onDoubleClick, children}: {
         }
     }, [children]);
     return (
-        <div className="w-full relative">
+        <div className="w-full h-full relative">
             {/* Скрытый элемент для измерения полной высоты */}
             <div
                 ref={testRef}
@@ -34,7 +35,7 @@ export default function Expandable({onDoubleClick, children}: {
                 ref={contentRef}
                 onClick={() => (hasOverflow || expanded) && setExpanded(!expanded)}
                 onDoubleClick={onDoubleClick}
-                className={`${(hasOverflow || expanded) ? 'cursor-pointer' : ''} w-full ${expanded ? '' : 'overflow-hidden whitespace-nowrap'}`}
+                className={`${(hasOverflow || expanded || isEditable) ? 'cursor-pointer' : ''} w-full h-full ${expanded ? '' : 'overflow-hidden whitespace-nowrap'}`}
             >
                 {children}
                 {!expanded && hasOverflow && <OverflowIndicator />}

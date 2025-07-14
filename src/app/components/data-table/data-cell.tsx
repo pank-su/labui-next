@@ -140,8 +140,10 @@ export const DataCell: React.FC<DateCellProps> = ({
     }
 
     return (
-        <Expandable onDoubleClick={() => !disabled && setEdit(true)}>
-            {value}
+        <Expandable onDoubleClick={() => !disabled && setEdit(true)} isEditable={!disabled}>
+            <div className="min-h-[20px] w-full">
+                {value}
+            </div>
         </Expandable>
     );
 };

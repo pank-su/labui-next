@@ -58,9 +58,7 @@ export function useFilterQuery(id: string, setFilter: (value: string) => void, r
 
     // Если фильтр был сброшен, то очищаем поле
     useEffect(() => {
-        if (value.trim() === ""){
-            setValue(queryValue)
-        }
+        setValue(queryValue)
     }, [queryValue])
 
     return {

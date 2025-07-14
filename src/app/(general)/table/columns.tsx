@@ -202,22 +202,21 @@ export default function getColumns(options: {
             const isEditing = !!(info.row.getValue("id") == editedGenomRow?.rowId && user)
 
             return (
-                <div>
-                    <TopologyCell
-                        genomRow={isEditing ? editedGenomRow! : toGenomRow(info.row.original)}
-                        field={field}
-                        value={info.getValue()}
-                        isEditing={isEditing}
-                        options={options}
-                        isDisabled={isDisabled}
-                        onEdit={() => onEdit(info.row.original)}
-                        onChange={onFieldChange}
-                        showActions={field === 'kind' && isEditing}
-                        onSave={onSave}
-                        isLoading={loadingState}
-                        onCancel={onCancel}
-                    />
-                </div>
+                <TopologyCell
+                    genomRow={isEditing ? editedGenomRow! : toGenomRow(info.row.original)}
+                    field={field}
+                    value={info.getValue()}
+                    isEditing={isEditing}
+                    options={options}
+                    isDisabled={isDisabled}
+                    onEdit={() => onEdit(info.row.original)}
+                    onChange={onFieldChange}
+                    showActions={field === 'kind' && isEditing}
+                    onSave={onSave}
+                    isLoading={loadingState}
+                    onCancel={onCancel}
+                    isEditable={!!user}
+                />
             )
         }
 
@@ -228,7 +227,7 @@ export default function getColumns(options: {
             const value = isEditing ? coordinateRow[field] : info.getValue()
 
             return (
-                <div className={user ? 'cursor-pointer' : ''}>
+                <div className={`${user ? 'cursor-pointer' : ''} w-full h-full`}>
                     <CoordinateCell
                         coordinateRow={coordinateRow}
                         field={field}
@@ -254,15 +253,12 @@ export default function getColumns(options: {
             return (
                 <LocationCell
                     locationRow={locationRow}
-                    field={field}
                     value={value}
                     countries={countries}
                     regions={regions}
                     isEditing={isEditing}
                     isLoading={field === 'country' ? isCountriesLoading : isRegionsLoading}
                     onEdit={() => onLocationEdit(toLocationRow(info.row.original))}
-                    onChange={onLocationChange}
-                    showActions={field === 'region' && isEditing}
                     onSave={onLocationSave}
                     onCancel={onLocationCancel}
                     latitude={info.row.original.latitude}
@@ -454,6 +450,7 @@ export default function getColumns(options: {
                         options={ageOptions}
                         rowId={rowId}
                         isEditing={isEditing}
+                        isEditable={isEditing}
                         onSave={async (rowId, value) => {
                             await update({
                                 id: rowId,
@@ -495,6 +492,7 @@ export default function getColumns(options: {
                         options={sexOptions}
                         rowId={rowId}
                         isEditing={isEditing}
+                        isEditable={isEditing}
                         onSave={async (rowId, value) => {
                             await update({
                                 id: rowId,
@@ -592,6 +590,7 @@ export default function getColumns(options: {
                                 options={instituteOptions}
                                 rowId={rowId}
                                 isEditing={isEditing}
+                                isEditable={isEditing}
                                 onSave={async (rowId, value) => {
                                     await update({
                                         id: rowId,

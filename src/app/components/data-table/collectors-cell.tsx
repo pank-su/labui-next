@@ -5,6 +5,7 @@ import { User } from "@supabase/supabase-js";
 import { Tag } from "antd";
 import ExpandableTags from "../expandable-tags";
 import EditableCollectorsSelect from "../editable-collectors-select";
+import Expandable from "../expandable";
 
 export interface Collector {
     id: number | null;
@@ -75,21 +76,23 @@ export default function CollectorsCell({
     }
 
     return (
-        <div 
+        <Expandable 
             onDoubleClick={() => user && handleStartEdit()}
-            className={`w-full h-full ${user ? "cursor-pointer" : ""}`}
+            isEditable={!!user}
         >
-            {(!collectors || collectors.length === 0) ? (
-                <div className="w-full h-full" />
-            ) : (
-                <ExpandableTags>
-                    {collectors.map((collector, index) => (
-                        <Tag key={index} className="text-xs">
-                            {formatCollectorName(collector)}
-                        </Tag>
-                    ))}
-                </ExpandableTags>
-            )}
-        </div>
+            <div className="min-h-[20px] w-full">
+                {(!collectors || collectors.length === 0) ? (
+                    <div className="min-h-[20px] w-full" />
+                ) : (
+                    <ExpandableTags>
+                        {collectors.map((collector, index) => (
+                            <Tag key={index} className="text-xs">
+                                {formatCollectorName(collector)}
+                            </Tag>
+                        ))}
+                    </ExpandableTags>
+                )}
+            </div>
+        </Expandable>
     );
 }

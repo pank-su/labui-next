@@ -99,14 +99,17 @@ export function EditableCell({
             }}
         />
     ) : (
-        <Expandable onDoubleClick={(e) => {
-            if (user) {
-                handleStartEdit();
-            }
-            e.preventDefault();
-        }}>
-            <div className={user ? 'cursor-pointer' : ''}>
-                {cellValue}
+        <Expandable 
+            onDoubleClick={(e) => {
+                if (user) {
+                    handleStartEdit();
+                }
+                e.preventDefault();
+            }}
+            isEditable={!!user}
+        >
+            <div className="min-h-[20px] w-full">
+                {cellValue || ''}
             </div>
         </Expandable>
     );

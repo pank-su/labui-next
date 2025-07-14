@@ -5,6 +5,7 @@ import { User } from "@supabase/supabase-js";
 import { Tag, Tooltip } from "antd";
 import ExpandableTags from "../expandable-tags";
 import EditableTagsSelect from "../editable-tags-select";
+import Expandable from "../expandable";
 
 export interface TagType {
     id: number | null;
@@ -68,21 +69,23 @@ export default function TagsCell({
     }
 
     return (
-        <div 
+        <Expandable 
             onDoubleClick={() => user && handleStartEdit()}
-            className={`w-full h-full ${user ? "cursor-pointer" : ""}`}
+            isEditable={!!user}
         >
-            {(!tags || tags.length === 0) ? (
-                <div className="w-full h-full" />
-            ) : (
-                <ExpandableTags>
-                    {tags.map((tag) => (
-                        <Tooltip key={tag.id!} title={tag.description} color={tag.color ?? "blue"}>
-                            <Tag color={tag.color ?? "blue"}>{tag.name}</Tag>
-                        </Tooltip>
-                    ))}
-                </ExpandableTags>
-            )}
-        </div>
+            <div className="min-h-[20px] w-full">
+                {(!tags || tags.length === 0) ? (
+                <div className="min-h-[20px] w-full" />
+                ) : (
+                    <ExpandableTags>
+                        {tags.map((tag) => (
+                            <Tooltip key={tag.id!} title={tag.description} color={tag.color ?? "blue"}>
+                                <Tag color={tag.color ?? "blue"}>{tag.name}</Tag>
+                            </Tooltip>
+                        ))}
+                    </ExpandableTags>
+                )}
+            </div>
+        </Expandable>
     );
 }

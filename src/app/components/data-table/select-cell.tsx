@@ -17,6 +17,7 @@ interface SelectCellProps {
     onSave: (rowId: number, value: number | null) => Promise<void>;
     onCancel: () => void;
     placeholder?: string;
+    isEditable?: boolean;
 }
 
 export const SelectCell: React.FC<SelectCellProps> = ({
@@ -28,6 +29,7 @@ export const SelectCell: React.FC<SelectCellProps> = ({
                                                           onSave,
                                                           onCancel,
                                                           placeholder = "Выбрать...",
+                                                          isEditable = false,
                                                       }) => {
     const [edit, setEdit] = useState(false);
     const [currentValue, setCurrentValue] = useState<number | null>(value);
@@ -82,8 +84,10 @@ export const SelectCell: React.FC<SelectCellProps> = ({
     }
 
     return (
-        <Expandable onDoubleClick={() => setEdit(true)}>
-            {displayValue}
+        <Expandable onDoubleClick={() => isEditable && setEdit(true)} isEditable={isEditable}>
+            <div className="min-h-[20px] w-full">
+                {displayValue}
+            </div>
         </Expandable>
     );
 }
