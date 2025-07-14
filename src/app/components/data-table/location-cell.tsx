@@ -3,6 +3,7 @@
 import {LocationRow} from "../../(general)/models";
 import {useState} from "react";
 import {LocationDialog} from "./location-dialog";
+import Expandable from "../expandable";
 
 interface LocationCellProps {
     locationRow: LocationRow;
@@ -64,26 +65,23 @@ export const LocationCell: React.FC<LocationCellProps> = ({
 
 
     return (
-        <div
-            className={`w-full ${hasCoordinates ? '' : 'cursor-pointer'}`}
-            onDoubleClick={(e) => {
+        <>
+            <Expandable onDoubleClick={hasCoordinates ? undefined : (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 startEditing();
-            }}
-        >
-            {(value && value.trim() !== '') ? value : ' '}
-            <>
-                <LocationDialog
-                    visible={isEditing}
-                    locationRow={locationRow}
-                    countries={countries}
-                    regions={regions}
-                    onSave={handleDialogSave}
-                    onCancel={handleDialogCancel}
-                    isLoading={isLoading}
-                />
-            </>
-        </div>
+            }}>
+                {(value && value.trim() !== '') ? value : ' '}
+            </Expandable>
+            <LocationDialog
+                visible={isEditing}
+                locationRow={locationRow}
+                countries={countries}
+                regions={regions}
+                onSave={handleDialogSave}
+                onCancel={handleDialogCancel}
+                isLoading={isLoading}
+            />
+        </>
     );
 };

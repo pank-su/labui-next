@@ -1,6 +1,6 @@
 "use client"
 
-import ExpandableText from "@/app/components/expand-text"
+import Expandable from "@/app/components/expandable"
 import {date} from "@/utils/date"
 import {createColumnHelper, Row, RowData} from "@tanstack/react-table"
 import {Avatar, Tooltip} from "antd"
@@ -202,20 +202,22 @@ export default function getColumns(options: {
             const isEditing = !!(info.row.getValue("id") == editedGenomRow?.rowId && user)
 
             return (
-                <TopologyCell
-                    genomRow={isEditing ? editedGenomRow! : toGenomRow(info.row.original)}
-                    field={field}
-                    value={info.getValue()}
-                    isEditing={isEditing}
-                    options={options}
-                    isDisabled={isDisabled}
-                    onEdit={() => onEdit(info.row.original)}
-                    onChange={onFieldChange}
-                    showActions={field === 'kind' && isEditing}
-                    onSave={onSave}
-                    isLoading={loadingState}
-                    onCancel={onCancel}
-                />
+                <div>
+                    <TopologyCell
+                        genomRow={isEditing ? editedGenomRow! : toGenomRow(info.row.original)}
+                        field={field}
+                        value={info.getValue()}
+                        isEditing={isEditing}
+                        options={options}
+                        isDisabled={isDisabled}
+                        onEdit={() => onEdit(info.row.original)}
+                        onChange={onFieldChange}
+                        showActions={field === 'kind' && isEditing}
+                        onSave={onSave}
+                        isLoading={loadingState}
+                        onCancel={onCancel}
+                    />
+                </div>
             )
         }
 
@@ -226,18 +228,20 @@ export default function getColumns(options: {
             const value = isEditing ? coordinateRow[field] : info.getValue()
 
             return (
-                <CoordinateCell
-                    coordinateRow={coordinateRow}
-                    field={field}
-                    value={value}
-                    isEditing={isEditing}
-                    onEdit={() => onCoordinateEdit(toCoordinateRow(info.row.original))}
-                    onChange={onCoordinateChange}
-                    showActions={field === 'longitude' && isEditing}
-                    onSave={onCoordinateSave}
-                    onCancel={onCoordinateCancel}
-                    onMapSelect={onMapSelect}
-                />
+                <div className={user ? 'cursor-pointer' : ''}>
+                    <CoordinateCell
+                        coordinateRow={coordinateRow}
+                        field={field}
+                        value={value}
+                        isEditing={isEditing}
+                        onEdit={() => onCoordinateEdit(toCoordinateRow(info.row.original))}
+                        onChange={onCoordinateChange}
+                        showActions={field === 'longitude' && isEditing}
+                        onSave={onCoordinateSave}
+                        onCancel={onCoordinateCancel}
+                        onMapSelect={onMapSelect}
+                    />
+                </div>
             )
         }
 
@@ -294,7 +298,7 @@ export default function getColumns(options: {
 
 
         columnHelper.accessor('id', {
-            cell: info => <>{info.getValue()}</>,
+            cell: info => <Expandable>{info.getValue()}</Expandable>,
             header: "ID",
             size: 60,
             enableColumnFilter: true,
@@ -671,9 +675,9 @@ export default function getColumns(options: {
                     header: "Дата",
                     cell: info => {
                         const lastModified = info.getValue()
-                        return <>
+                        return <Expandable>
                             {formatLastModified(lastModified)}
-                        </>
+                        </Expandable>
                     },
                     size: 155,
                     meta: {

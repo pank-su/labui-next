@@ -1,6 +1,7 @@
 import {Button, Input, Space} from "antd";
 import {useEffect, useState} from "react";
 import {CheckOutlined, CloseOutlined} from "@ant-design/icons";
+import Expandable from "../expandable";
 
 interface DateCellProps {
     value: string; // Отформатированная строка даты
@@ -139,11 +140,8 @@ export const DataCell: React.FC<DateCellProps> = ({
     }
 
     return (
-        <div
-            className="cursor-pointer w-full"
-            onDoubleClick={() => !disabled && setEdit(true)}
-        >
+        <Expandable onDoubleClick={() => !disabled && setEdit(true)}>
             {value}
-        </div>
+        </Expandable>
     );
 };

@@ -1,6 +1,7 @@
 import {Button, Select, Space} from "antd";
 import {useEffect, useState} from "react";
 import {CheckOutlined} from "@ant-design/icons";
+import Expandable from "../expandable";
 
 interface SelectOption {
     value?: number | null;
@@ -50,12 +51,14 @@ export const SelectCell: React.FC<SelectCellProps> = ({
         return (
             <Space.Compact size="small" className="w-full">
                 <Select
-                    className="w-full"
+                    className="w-full min-w-0"
+                    style={{ width: '100%' }}
                     value={currentValue}
                     onChange={setCurrentValue}
                     options={options}
                     placeholder={placeholder}
                     allowClear
+                    dropdownStyle={{ zIndex: 1050 }}
                     onKeyDown={(e) => {
                         if (e.key === 'Escape') {
                             handleCancel();
@@ -75,11 +78,8 @@ export const SelectCell: React.FC<SelectCellProps> = ({
     }
 
     return (
-        <div
-            className="cursor-pointer w-full"
-            onDoubleClick={() => setEdit(true)}
-        >
+        <Expandable onDoubleClick={() => setEdit(true)}>
             {displayValue}
-        </div>
+        </Expandable>
     );
 }

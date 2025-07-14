@@ -5,7 +5,7 @@ import {User} from "@supabase/supabase-js";
 import {Button, Space} from "antd";
 import TextArea from "antd/es/input/TextArea";
 import {useState} from "react";
-import ExpandableText from "../expand-text";
+import Expandable from "../expandable";
 
 export function EditText({cellValue, onCancel, onSuccess}: {
     cellValue: string | null,
@@ -94,13 +94,15 @@ export function EditableCell({
             }}
         />
     ) : (
-        <ExpandableText onDoubleClick={(e) => {
+        <Expandable onDoubleClick={(e) => {
             if (user) {
                 handleStartEdit();
             }
             e.preventDefault();
         }}>
-            {cellValue}
-        </ExpandableText>
+            <div className={user ? 'cursor-pointer' : ''}>
+                {cellValue}
+            </div>
+        </Expandable>
     );
 }

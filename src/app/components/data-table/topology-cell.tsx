@@ -4,6 +4,7 @@ import {useState} from "react";
 import {CheckOutlined} from "@ant-design/icons";
 import {useInsertMutation} from "@supabase-cache-helpers/postgrest-react-query";
 import {useClient} from "@/utils/supabase/client";
+import Expandable from "../expandable";
 
 interface TopologyCellProps {
     genomRow: GenomRow;
@@ -251,11 +252,8 @@ export const TopologyCell: React.FC<TopologyCellProps> = ({
     }
 
     return (
-        <div
-            className="cursor-pointer w-full"
-            onDoubleClick={startEditing}
-        >
+        <Expandable onDoubleClick={startEditing}>
             {(value && value.trim() !== '') ? value : ' '}
-        </div>
+        </Expandable>
     );
 };

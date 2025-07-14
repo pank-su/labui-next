@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, MouseEventHandler } from "react";
 import OverflowIndicator from "./overflow-indicator";
 
-export default function ExpandableText({onDoubleClick, children}: {
+export default function Expandable({onDoubleClick, children}: {
     onDoubleClick?: MouseEventHandler<HTMLDivElement>,
     children: React.ReactNode,
 }) {

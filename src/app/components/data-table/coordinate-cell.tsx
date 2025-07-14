@@ -2,6 +2,7 @@ import {Button, Input, Space} from "antd";
 import {CoordinateRow} from "../../(general)/models";
 import {useState, useEffect, useRef} from "react";
 import {CheckOutlined, EnvironmentOutlined} from "@ant-design/icons";
+import Expandable from "../expandable";
 
 interface CoordinateCellProps {
     coordinateRow: CoordinateRow;
@@ -185,11 +186,8 @@ export const CoordinateCell: React.FC<CoordinateCellProps> = ({
     }
 
     return (
-        <div
-            className="cursor-pointer w-full"
-            onDoubleClick={startEditing}
-        >
+        <Expandable onDoubleClick={startEditing}>
             {formatValue(value) || ' '}
-        </div>
+        </Expandable>
     );
 };
