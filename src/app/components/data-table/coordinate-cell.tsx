@@ -60,7 +60,7 @@ export const CoordinateCell: React.FC<CoordinateCellProps> = ({
         }
         
         // Разрешаем частичный ввод: знак минус, точка, цифры с точкой
-        const partialPattern = /^-?(\d+\.?\d*|\.\d*)$/;
+        const partialPattern = /^-?(\d+\.?\d*|\.\d*|)$/;
         return partialPattern.test(inputValue);
     };
 
@@ -172,7 +172,7 @@ export const CoordinateCell: React.FC<CoordinateCellProps> = ({
                             <Button
                                 onClick={handleSave}
                                 icon={<CheckOutlined/>}
-                                disabled={!!tempValue && (!isValidCoordinate(tempValue, field) || tempValue.endsWith('.') || tempValue === '.' || tempValue === '-' || tempValue === '-.')}
+                                disabled={!!tempValue && (!isValidCoordinate(tempValue, field) || tempValue.endsWith('.') || tempValue === '.' || tempValue === '-.')}
                             />
                         </>
                     )}
