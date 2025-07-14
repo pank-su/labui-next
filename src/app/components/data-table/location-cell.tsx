@@ -65,7 +65,7 @@ export const LocationCell: React.FC<LocationCellProps> = ({
 
     return (
         <div
-            className={`w-full ${hasCoordinates ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
+            className={`w-full ${hasCoordinates ? '' : 'cursor-pointer'}`}
             onDoubleClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();

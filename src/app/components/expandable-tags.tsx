@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import OverflowIndicator from "./overflow-indicator";
 
 export default function ExpandableTags({ children }: { children: React.ReactNode }) {
     const [expanded, setExpanded] = useState(false);
@@ -35,11 +36,7 @@ export default function ExpandableTags({ children }: { children: React.ReactNode
                 <div className={`flex flex-wrap  ${expanded ? '' : 'flex-nowrap'}`}>
                     {children}
                 </div>
-                {!expanded && hasOverflow && (
-                    <div className="absolute right-0 top-0 bg-gradient-to-l from-white via-white to-transparent pl-4 text-gray-400 text-xs">
-                        ...
-                    </div>
-                )}
+                {!expanded && hasOverflow && <OverflowIndicator />}
             </div>
         </div>
     );
