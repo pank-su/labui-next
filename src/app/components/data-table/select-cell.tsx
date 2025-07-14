@@ -1,6 +1,6 @@
 import {Button, Select, Space} from "antd";
 import {useEffect, useState} from "react";
-import {CheckOutlined} from "@ant-design/icons";
+import {CheckOutlined, CloseOutlined} from "@ant-design/icons";
 import Expandable from "../expandable";
 
 interface SelectOption {
@@ -69,9 +69,13 @@ export const SelectCell: React.FC<SelectCellProps> = ({
                 />
 
                 <Button
+                    onClick={handleCancel}
+                    icon={<CloseOutlined/>}
+                    danger
+                />
+                <Button
                     onClick={handleSave}
                     icon={<CheckOutlined/>}
-                    type="primary"
                 />
             </Space.Compact>
         );

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button, Select, Space } from "antd";
-import { CheckOutlined } from "@ant-design/icons";
+import { CheckOutlined, CloseOutlined } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
 import { useClient } from "@/utils/supabase/client";
 import CreateTagDialog from "./create-tag-dialog";
@@ -74,7 +74,7 @@ export default function EditableTagsSelect({
 
     return (
         <>
-            <Space.Compact className="w-full">
+            <Space.Compact size="small" className="w-full">
                 <Select
                     mode="multiple"
                     value={selectedTags.map(t => t.id!)}
@@ -111,6 +111,11 @@ export default function EditableTagsSelect({
                     )}
                 />
                 <Button
+                    onClick={onCancel}
+                    icon={<CloseOutlined />}
+                    danger
+                />
+                <Button
                     onClick={async () => {
                         const tagIds = selectedTags.map(t => t.id!).filter(id => id !== null);
                         
@@ -126,7 +131,6 @@ export default function EditableTagsSelect({
                         
                         onSave(selectedTags);
                     }}
-                    size="small"
                     icon={<CheckOutlined />}
                 />
             </Space.Compact>

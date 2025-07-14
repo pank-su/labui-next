@@ -1,6 +1,6 @@
 "use-client"
 
-import {CheckOutlined} from "@ant-design/icons";
+import {CheckOutlined, CloseOutlined} from "@ant-design/icons";
 import {User} from "@supabase/supabase-js";
 import {Button, Space} from "antd";
 import TextArea from "antd/es/input/TextArea";
@@ -17,7 +17,7 @@ export function EditText({cellValue, onCancel, onSuccess}: {
 
     // Возможно стоит добавить popconfirm
     return (
-        <Space.Compact className="w-full">
+        <Space.Compact size="small" className="w-full">
             <TextArea
                 value={value ?? ""}
                 onChange={(e) => setValue(e.target.value)}
@@ -32,10 +32,15 @@ export function EditText({cellValue, onCancel, onSuccess}: {
                 }}
                 autoSize/>
             <Button
+                onClick={onCancel}
+                danger
+            >
+                <CloseOutlined/>
+            </Button>
+            <Button
                 onClick={() => {
                     onSuccess(value)
                 }}
-                size="small"
             >
                 <CheckOutlined/>
             </Button>

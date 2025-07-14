@@ -1,7 +1,7 @@
 import {Button, Input, Space} from "antd";
 import {CoordinateRow} from "../../(general)/models";
 import {useState, useEffect, useRef} from "react";
-import {CheckOutlined, EnvironmentOutlined} from "@ant-design/icons";
+import {CheckOutlined, CloseOutlined, EnvironmentOutlined} from "@ant-design/icons";
 import Expandable from "../expandable";
 
 interface CoordinateCellProps {
@@ -163,12 +163,18 @@ export const CoordinateCell: React.FC<CoordinateCellProps> = ({
                     />
                     
                     {showActions && (
-                        <Button
-                            onClick={handleSave}
-                            icon={<CheckOutlined/>}
-                            size="small"
-                            disabled={!!tempValue && (!isValidCoordinate(tempValue, field) || tempValue.endsWith('.') || tempValue === '.' || tempValue === '-' || tempValue === '-.')}
-                        />
+                        <>
+                            <Button
+                                onClick={onCancel}
+                                icon={<CloseOutlined/>}
+                                danger
+                            />
+                            <Button
+                                onClick={handleSave}
+                                icon={<CheckOutlined/>}
+                                disabled={!!tempValue && (!isValidCoordinate(tempValue, field) || tempValue.endsWith('.') || tempValue === '.' || tempValue === '-' || tempValue === '-.')}
+                            />
+                        </>
                     )}
                 </Space.Compact>
                 

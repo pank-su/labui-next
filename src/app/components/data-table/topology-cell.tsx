@@ -1,7 +1,7 @@
 import {Button, Input, Modal, Select, Space, Popconfirm, message} from "antd";
 import {GenomRow, Topology} from "../../(general)/models";
 import {useState} from "react";
-import {CheckOutlined} from "@ant-design/icons";
+import {CheckOutlined, CloseOutlined} from "@ant-design/icons";
 import {useInsertMutation} from "@supabase-cache-helpers/postgrest-react-query";
 import {useClient} from "@/utils/supabase/client";
 import Expandable from "../expandable";
@@ -133,7 +133,7 @@ export const TopologyCell: React.FC<TopologyCellProps> = ({
 
     if (isEditing) {
         return (
-            <Space.Compact size={"small"} className="w-full">
+            <Space.Compact size="small" className="w-full">
                 <Select
                     onKeyDown={(e) => {
                         if (e.key === 'Escape') {
@@ -188,16 +188,18 @@ export const TopologyCell: React.FC<TopologyCellProps> = ({
                 />
 
                 {showActions && (
-                    <Button
-                        onClick={onSave}
-                        icon={<CheckOutlined/>}
-                    />
-
-
-                )
-
-
-                }
+                    <>
+                        <Button
+                            onClick={onCancel}
+                            icon={<CloseOutlined/>}
+                            danger
+                        />
+                        <Button
+                            onClick={onSave}
+                            icon={<CheckOutlined/>}
+                        />
+                    </>
+                )}
                 <Modal
                     title={`Добавить новый ${getFieldNameRu(field)}`}
                     open={isAddNewModalVisible}

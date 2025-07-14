@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button, Select, Space } from "antd";
-import { CheckOutlined } from "@ant-design/icons";
+import { CheckOutlined, CloseOutlined } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
 import { useClient } from "@/utils/supabase/client";
 import CreateCollectorDialog from "./create-collector-dialog";
@@ -70,7 +70,7 @@ export default function EditableCollectorsSelect({
 
     return (
         <>
-        <Space.Compact className="w-full">
+        <Space.Compact size="small" className="w-full">
                 <Select
                     mode="multiple"
                     value={selectedCollectors.map(c => c.id!)}
@@ -101,6 +101,11 @@ export default function EditableCollectorsSelect({
                             </div>
                         </div>
                     )}
+                />
+                <Button
+                    onClick={onCancel}
+                    icon={<CloseOutlined />}
+                    danger
                 />
                 <Button
                     onClick={async () => {
