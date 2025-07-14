@@ -1,11 +1,11 @@
 "use client"
 
 import {Select, Skeleton} from "antd";
-import Navigation from "./navigation";
-import {Search} from "./search";
+import Navigation from "../components/navigation";
+import {Search} from "../components/search";
 import {Suspense} from "react";
-import AuthBtn from "./auth-btn";
-import ProfileAvatar from "./profile-avatar";
+import AuthBtn from "../auth/auth-btn";
+import ProfileAvatar from "../components/profile-avatar";
 import {usePathname} from "next/navigation";
 import {useUser} from "@/hooks/useUser";
 
@@ -32,7 +32,7 @@ export default function Header() {
                 options={options}
                 className="w-32"
                 styles={{popup: {root: {minWidth: "150px"}}}}
-                popupRender={(menu) => (
+                popupRender={(_) => (
                     <div>
                         {options.map((option) => (
                             <a

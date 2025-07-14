@@ -1,11 +1,11 @@
 "use client"
 
-import {Button, Card, Flex, notification} from "antd";
+import {Button, Modal, notification} from "antd";
 import {useState} from "react";
-import {useRouter} from "next/navigation";
 import {LoginButton} from "@telegram-auth/react";
-import {signInWithTelegramAction} from "./actions";
+import {signInWithTelegramAction} from "@/app/auth/actions";
 import {useClient} from "@/utils/supabase/client";
+import {useRouter} from "next/navigation";
 
 interface TelegramUser {
     id: number;
@@ -17,61 +17,81 @@ interface TelegramUser {
     hash: string;
 }
 
-function LoginForm() {
-    const [loading, setLoading] = useState(false)
+interface AuthDialogProps {
+    open: boolean;
+    onClose: () => void;
+}
+
+export default function AuthDialog({open, onClose}: AuthDialogProps) {
+    const [loading, setLoading] = useState(false);
     const [api, contextHolder] = notification.useNotification();
-    const router = useRouter()
-    const supabase = useClient()
+    const router = useRouter();
+    const supabase = useClient();
 
     const handleTelegramAuth = async (user: TelegramUser) => {
-        setLoading(true)
+        setLoading(true);
         try {
-            const actionResult = await signInWithTelegramAction(user)
+            const actionResult = await signInWithTelegramAction(user);
             if (actionResult.success && actionResult.session) {
-                // Устанавливаем сессию на клиенте
                 await supabase.auth.setSession({
                     access_token: actionResult.session.access_token,
                     refresh_token: actionResult.session.refresh_token
                 });
-                router.replace("/")
+                onClose();
+                router.refresh();
             } else {
                 api.error({
                     message: "Ошибка при входе",
                     description: actionResult.error || "Ошибка авторизации через Telegram"
-                })
+                });
             }
         } catch (error) {
-            api.error({message: "Ошибка при входе", description: "Произошла ошибка при авторизации"})
+            api.error({
+                message: "Ошибка при входе", 
+                description: "Произошла ошибка при авторизации"
+            });
         }
-        setLoading(false)
+        setLoading(false);
     };
 
     const handleTestAuth = async () => {
-        setLoading(true)
+        setLoading(true);
         try {
-            // Используем клиентский вход вместо server action
             const {error} = await supabase.auth.signInWithPassword({
                 email: "not@use.please",
                 password: "test123"
             });
 
             if (!error) {
-                router.replace("/")
+                onClose();
+                router.refresh();
             } else {
-                api.error({message: "Ошибка при входе", description: error.message || "Ошибка тестовой авторизации"})
+                api.error({
+                    message: "Ошибка при входе", 
+                    description: error.message || "Ошибка тестовой авторизации"
+                });
             }
         } catch (error) {
-            api.error({message: "Ошибка при входе", description: "Произошла ошибка при тестовой авторизации"})
+            api.error({
+                message: "Ошибка при входе", 
+                description: "Произошла ошибка при тестовой авторизации"
+            });
         }
-        setLoading(false)
+        setLoading(false);
     };
 
     return (
-
         <>
             {contextHolder}
-            <Card title="Авторизация" className="shadow" loading={loading}>
-                <div className="flex flex-col items-center gap-4">
+            <Modal
+                title="Авторизация"
+                open={open}
+                onCancel={onClose}
+                footer={null}
+                confirmLoading={loading}
+                destroyOnHidden
+            >
+                <div className="flex flex-col items-center gap-4 py-4">
                     <LoginButton
                         lang={"ru"}
                         botUsername="dbackuper_bot"
@@ -81,14 +101,7 @@ function LoginForm() {
                         Test Auth
                     </Button>
                 </div>
-            </Card>
-        </>)
-}
-
-export default function LoginPage() {
-    return (
-        <Flex className="h-screen" justify="center" align="center">
-            <LoginForm/>
-        </Flex>
-    )
+            </Modal>
+        </>
+    );
 }

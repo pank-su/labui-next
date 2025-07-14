@@ -20,9 +20,6 @@ export async function signInAction(formData: FormInput): Promise<SignInResult> {
     // Добавляем revalidatePath для обновления данных
     revalidatePath("/", "layout")
 
-    // Выполняем редирект на сервере
-    redirect("/")
-
     return {
         success: true,
         error: null

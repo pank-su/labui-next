@@ -1,7 +1,7 @@
 "use client"
 
 import styles from './styles.module.css'
-import Header from '../components/header'
+import Header from './header'
 import { theme } from 'antd'
 
 import '@ant-design/v5-patch-for-react-19';
