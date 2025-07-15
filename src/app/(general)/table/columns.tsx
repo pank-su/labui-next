@@ -15,6 +15,7 @@ import CollectorsCell from "../../components/data-table/collectors-cell"
 import TagsCell from "../../components/data-table/tags-cell"
 import {FilterDate} from "@/app/components/data-table/filters/date-filter";
 import {FilterGeo} from "@/app/components/data-table/filters/geo-filter";
+import AuditHistoryButton from "../../components/audit-history-button";
 
 
 const columnHelper = createColumnHelper<FormattedBasicView>()
@@ -708,11 +709,18 @@ export default function getColumns(options: {
                             )
                         })
 
-                        return avatars.length > 0 ? (
-                            <Avatar.Group max={{count: 5}}>
-                                {avatars}
-                            </Avatar.Group>
-                        ) : null
+                        return (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                                <div>
+                                    {avatars.length > 0 ? (
+                                        <Avatar.Group max={{count: 5}}>
+                                            {avatars}
+                                        </Avatar.Group>
+                                    ) : null}
+                                </div>
+                                <AuditHistoryButton recordId={info.row.getValue("id") as number} />
+                            </div>
+                        )
                     },
                     size: 120,
                     meta: {
