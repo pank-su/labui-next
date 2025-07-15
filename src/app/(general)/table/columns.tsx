@@ -678,9 +678,9 @@ export default function getColumns(options: {
                             {formatLastModified(lastModified)}
                         </Expandable>
                     },
-                    size: 155,
+                    size: 205,
                     meta: {
-                        filterVariant: "input"
+                        filterVariant: "date"
                     }
                 }),
                 columnHelper.accessor("edit_users", {
@@ -716,7 +716,7 @@ export default function getColumns(options: {
                     },
                     size: 120,
                     meta: {
-                        filterVariant: "input"
+                        filterVariant: "multiple-select"
                     }
                 })
             ]

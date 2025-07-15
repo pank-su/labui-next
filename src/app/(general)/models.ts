@@ -1,5 +1,4 @@
 import {CompositeTypes, Database, Tables} from "@/utils/supabase/gen-types";
-import GeoFilter from "@/app/components/data-table/filters/geo-filter";
 
 export type FormattedBasicView = Omit<Tables<"basic_view">, "collector_ids" | "tag_ids" | "edit_user_ids"> & {size?: number};
 
@@ -36,6 +35,9 @@ export type FormattedBasicViewFilters = {
     voucher_id?:string,
     tags?:string,
     collectors?:string,
+    edit?:string,
+    from_last_modified?:string,
+    to_last_modified?:string,
     sort_field?: string,
     sort_direction?: 'asc' | 'desc',
 

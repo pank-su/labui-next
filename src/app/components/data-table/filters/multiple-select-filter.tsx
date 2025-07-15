@@ -5,6 +5,7 @@ import { useFilterQuery } from "@/app/components/data-table/filters/utils";
 import { ReloadOutlined } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
 import { useClient } from "@/utils/supabase/client";
+import { values } from "@/app/(general)/queries";
 
 export default function MultipleSelectFilter({
                                                  column,
@@ -24,17 +25,19 @@ export default function MultipleSelectFilter({
         : column.id;
 
     const { data: uniqueValues } = useQuery(
-        {
-            queryKey: [columnId],
-            queryFn: async () => {
-                switch (columnId) {
-                    case "tags":
-                        return supabase.from("tags").select("name,id")
-                    case "collectors":
-                        return supabase.from("collector").select("name:last_name,id")
+        columnId === "edit"
+            ? values(supabase, tableName, "edit_users", undefined) // Не передаем фильтры для edit_users
+            : {
+                queryKey: [columnId],
+                queryFn: async () => {
+                    switch (columnId) {
+                        case "tags":
+                            return supabase.from("tags").select("name,id")
+                        case "collectors":
+                            return supabase.from("collector").select("name:last_name,id")
+                    }
                 }
             }
-        }
     );
 
     const options = useMemo(() => {
@@ -52,6 +55,12 @@ export default function MultipleSelectFilter({
                 .map((entry) => ({
                     label: entry.name || "",
                     value: String(entry.id || ""), // Приводим к строке
+                }));
+            } else if (columnId == "edit") {
+                return uniqueValues?.data
+                .map((entry: any) => ({
+                    label: entry.label || "",
+                    value: String(entry.value || ""), // Приводим к строке
                 }));
             }
         }

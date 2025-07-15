@@ -127,6 +127,32 @@ export function basicViewQuery(client: TypedSupabaseClient, filters: FormattedBa
         query = query.contains("collector_ids", collectors.map(Number));
     }
 
+    if (filters.edit) {
+        const editUsers = filters.edit.split(",")
+
+        query = query.contains("edit_user_ids", editUsers);
+    }
+
+    // Фильтрация по дате последнего изменения
+    if (filters.from_last_modified) {
+        // Преобразуем дату в формат ISO для базы данных
+        const fromDate = parseDate(filters.from_last_modified);
+
+        if (fromDate) {
+            const isoDate = new Date(fromDate.year, (fromDate.month || 1) - 1, fromDate.day || 1).toISOString();
+            query = query.gte("last_modified", isoDate);
+        }
+    }
+    
+    if (filters.to_last_modified) {
+        // Преобразуем дату в формат ISO для базы данных
+        const toDate = parseDate(filters.to_last_modified);
+        if (toDate) {
+            const isoDate = new Date(toDate.year, (toDate.month || 12) - 1, toDate.day || 31, 23, 59, 59).toISOString();
+            query = query.lte("last_modified", isoDate);
+        }
+    }
+
     const otherFields = []
 
     // Поиск
@@ -232,10 +258,41 @@ export function values(client: TypedSupabaseClient, tableName: string, columnId:
         queryFn: async () => {
             switch (tableName) {
                 case "basic_view":
-                    return basicViewQuery(client, filters as (FormattedBasicViewFilters | undefined)).select(`value:${columnId}, count()`).overrideTypes<{
-                        value: string | null, count: number
-
-                    }[]>();
+                    if (columnId === "edit_users") {
+                        // Для edit_users получаем все записи и обрабатываем на клиенте
+                        const result = await client.from("basic_view")
+                            .select("edit_users")
+                            .not("edit_users", "is", null);
+                        
+                        if (!result.data) return { data: [] };
+                        
+                        // Собираем всех уникальных пользователей
+                        const userMap = new Map();
+                        result.data.forEach((row: any) => {
+                            if (row.edit_users) {
+                                row.edit_users.forEach((user: any) => {
+                                    if (user.id) {
+                                        const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim();
+                                        const key = user.id;
+                                        if (!userMap.has(key)) {
+                                            userMap.set(key, {
+                                                value: user.id,
+                                                count: 0,
+                                                label: fullName || 'Пользователь'
+                                            });
+                                        }
+                                        userMap.get(key).count++;
+                                    }
+                                });
+                            }
+                        });
+                        
+                        return { data: Array.from(userMap.values()) };
+                    } else {
+                        return basicViewQuery(client, filters as (FormattedBasicViewFilters | undefined)).select(`value:${columnId}, count()`).overrideTypes<{
+                            value: string | null, count: number
+                        }[]>();
+                    }
 
             }
         },
