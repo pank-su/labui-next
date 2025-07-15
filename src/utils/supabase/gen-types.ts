@@ -3459,27 +3459,6 @@ export type Database = {
         }
         Relationships: []
       }
-      profiles: {
-        Row: {
-          avatar: string | null
-          first_name: string
-          id: string
-          last_name: string
-        }
-        Insert: {
-          avatar?: string | null
-          first_name?: string
-          id: string
-          last_name?: string
-        }
-        Update: {
-          avatar?: string | null
-          first_name?: string
-          id?: string
-          last_name?: string
-        }
-        Relationships: []
-      }
       region: {
         Row: {
           country_id: number
@@ -3602,12 +3581,11 @@ export type Database = {
         Row: {
           changed_at: string | null
           changed_data: Json | null
-          first_name: string | null
           id: number | null
-          last_name: string | null
           operation: string | null
           table_name: string | null
           user_id: string | null
+          user_info: Database["public"]["CompositeTypes"]["user_type"] | null
         }
         Relationships: []
       }
