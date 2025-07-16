@@ -30,7 +30,7 @@ export async function signInAction(formData: FormInput): Promise<SignInResult> {
 export async function signInWithTelegramAction(user: any): Promise<SignInResult> {
     console.log(user);
     try {
-        const response = await fetch('http://0.0.0.0:8080/', {
+        const response = await fetch(process.env.TELEGRAM_AUTH_URL!, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
