@@ -1,7 +1,7 @@
 import { Suspense } from "react";
-import CollectorsTable from "./table/collectors-table";
+import TagsTable from "./table/tags-table";
 
-export default async function Collectors({
+export default async function Tags({
     searchParams
 }: {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -10,7 +10,7 @@ export default async function Collectors({
     
     return (
         <Suspense>
-            <CollectorsTable params={params} />
+            <TagsTable params={params} />
         </Suspense>
     );
 }

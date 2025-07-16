@@ -13,7 +13,7 @@ import {useUser} from "@/hooks/useUser";
 const options = [
     {value: "", label: "Коллекция"},
     {value: "collectors", label: "Коллекторы"},
-    {value: "institutes", label: "Ваучерные институты"},
+    {value: "tags", label: "Теги"},
 ]
 
 export default function Header() {
