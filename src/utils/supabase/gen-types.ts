@@ -3215,9 +3215,26 @@ export type Database = {
         }
         Relationships: []
       }
+      biosample_sra_type: {
+        Row: {
+          id: number
+          name: string
+        }
+        Insert: {
+          id?: number
+          name: string
+        }
+        Update: {
+          id?: number
+          name?: string
+        }
+        Relationships: []
+      }
       collection: {
         Row: {
           age_id: number | null
+          biosample_sra_id: string | null
+          biosample_sra_type_id: number | null
           collect_id: string | null
           comment: string | null
           day: number | null
@@ -3235,6 +3252,8 @@ export type Database = {
         }
         Insert: {
           age_id?: number | null
+          biosample_sra_id?: string | null
+          biosample_sra_type_id?: number | null
           collect_id?: string | null
           comment?: string | null
           day?: number | null
@@ -3252,6 +3271,8 @@ export type Database = {
         }
         Update: {
           age_id?: number | null
+          biosample_sra_id?: string | null
+          biosample_sra_type_id?: number | null
           collect_id?: string | null
           comment?: string | null
           day?: number | null
@@ -3272,6 +3293,12 @@ export type Database = {
             foreignKeyName: "collection_age_id_fk"
             columns: ["age_id"]
             referencedRelation: "age"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collection_biosample_sra_type_fk"
+            columns: ["biosample_sra_type_id"]
+            referencedRelation: "biosample_sra_type"
             referencedColumns: ["id"]
           },
           {
@@ -3592,6 +3619,8 @@ export type Database = {
       basic_view: {
         Row: {
           age: string | null
+          biosample_sra_id: string | null
+          biosample_sra_type: string | null
           collect_id: string | null
           collector_ids: number[] | null
           collectors:
@@ -3627,6 +3656,7 @@ export type Database = {
       }
       csv_export_view: {
         Row: {
+          Biosample_SRA: string | null
           collect_id: string | null
           id: number | null
           NCBI_BioSample_ID: string | null
@@ -3699,6 +3729,12 @@ export type Database = {
       get_age_id: {
         Args: {
           age_name: string
+        }
+        Returns: number
+      }
+      get_biosample_sra_type_id: {
+        Args: {
+          sra_type_name: string
         }
         Returns: number
       }

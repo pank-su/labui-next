@@ -98,6 +98,7 @@ export default function getColumns(options: {
     countries: any[];
     regions: any[];
     voucherInstitutes: any[];
+    biosampleSraTypes: any[];
     isOrdersLoading: boolean;
     isFamiliesLoading: boolean;
     isGeneraLoading: boolean;
@@ -105,6 +106,7 @@ export default function getColumns(options: {
     isCountriesLoading: boolean;
     isRegionsLoading: boolean;
     isVoucherInstitutesLoading: boolean;
+    isBiosampleSraTypesLoading: boolean;
     onEdit: (row: FormattedBasicView) => void;
     onCoordinateEdit: (row: CoordinateRow) => void;
     onLocationEdit: (row: LocationRow) => void;
@@ -136,6 +138,7 @@ export default function getColumns(options: {
         countries,
         regions,
         voucherInstitutes,
+        biosampleSraTypes,
         isOrdersLoading,
         isFamiliesLoading,
         isGeneraLoading,
@@ -143,6 +146,7 @@ export default function getColumns(options: {
         isCountriesLoading,
         isRegionsLoading,
         isVoucherInstitutesLoading,
+        isBiosampleSraTypesLoading,
         onEdit,
         onCoordinateEdit,
         onLocationEdit,
@@ -675,6 +679,63 @@ export default function getColumns(options: {
             meta: {
                 filterVariant: "input"
             }
+        }),
+
+        columnHelper.group({
+            header: "BioSample SRA",
+            columns: [
+                columnHelper.accessor("biosample_sra_type", {
+                    header: "Тип",
+                    cell: info => {
+                        const rowId = info.row.getValue("id") as number;
+                        const isEditing = !!user;
+                        const value = info.getValue() as string | null;
+
+                        // Формируем опции для типов из загруженных данных
+                        const typeOptions = [
+                            {value: null, label: 'Не указано'},
+                            ...(biosampleSraTypes || []).map((type: any) => ({
+                                value: type.id,
+                                label: type.name
+                            }))
+                        ];
+
+                        // Находим текущее значение по имени типа
+                        const currentOption = biosampleSraTypes?.find((type: any) => type.name === value);
+
+                        return (
+                            <SelectCell
+                                value={currentOption?.id || null}
+                                displayValue={value || ''}
+                                options={typeOptions}
+                                rowId={rowId}
+                                isEditing={isEditing}
+                                isEditable={isEditing}
+                                onSave={async (rowId, value) => {
+                                    await update({
+                                        id: rowId,
+                                        biosample_sra_type_id: value
+                                    });
+                                }}
+                                onCancel={() => {
+                                }}
+                                placeholder="Выберите тип"
+                            />
+                        );
+                    },
+                    meta: {
+                        filterVariant: "select"
+                    },
+                    filterFn: selectFilter
+                }),
+                columnHelper.accessor("biosample_sra_id", {
+                    header: "ID",
+                    cell: createEditableCell("biosample_sra_id", (value, rowId) => ({id: rowId, biosample_sra_id: value})),
+                    meta: {
+                        filterVariant: "input"
+                    }
+                })
+            ]
         }),
 
         columnHelper.group({

@@ -15,7 +15,7 @@ import {
     useReactTable
 } from "@tanstack/react-table";
 import {useCallback, useEffect, useMemo, useRef, useState} from "react";
-import {basicView, basicViewQuery, geoBasicView, orders as loadOrders, voucherInstitutes as loadVoucherInstitutes} from "@/app/(general)/queries";
+import {basicView, basicViewQuery, geoBasicView, orders as loadOrders, voucherInstitutes as loadVoucherInstitutes, biosampleSraTypes as loadBiosampleSraTypes} from "@/app/(general)/queries";
 import {Database, Tables} from "@/utils/supabase/gen-types";
 import {SupabaseClient} from "@supabase/supabase-js";
 import getColumns from "@/app/(general)/table/columns";
@@ -235,6 +235,7 @@ export default function CollectionTable({params}: { params: { [key: string]: str
     const {data: orders, isLoading: isOrdersLoading} = useSuspenseQuery(loadOrders(supabase));
 
     const {data: voucherInstitutes, isLoading: isVoucherInstitutesLoading} = useSuspenseQuery(loadVoucherInstitutes(supabase));
+    const {data: biosampleSraTypes, isLoading: isBiosampleSraTypesLoading} = useSuspenseQuery(loadBiosampleSraTypes(supabase));
     const {data: families, isLoading: isFamiliesLoading} = useTableQuery(
         supabase.from("family").select("id,name").not('name', 'is', null)
             .eq('order_id', editedGenomRow?.order?.id || -1),
@@ -633,6 +634,20 @@ export default function CollectionTable({params}: { params: { [key: string]: str
         }
     })
 
+    useSubscription(supabase, "biosample_sra_type_updates", {
+        event: "*",
+        table: "biosample_sra_type",
+        schema: "public"
+    }, ["id"], {
+        callback: async (payload) => {
+            if (payload.eventType === "UPDATE" || payload.eventType === "INSERT" || payload.eventType === "DELETE") {
+                queryClient.invalidateQueries({queryKey: ["biosample_sra_types"]})
+                queryClient.invalidateQueries({queryKey: ["basic_view"]})
+                queryClient.invalidateQueries({queryKey: ["geo_basic_view"]})
+            }
+        }
+    })
+
     const columns = useMemo(() => getColumns({
         user,
         editedGenomRow,
@@ -645,6 +660,7 @@ export default function CollectionTable({params}: { params: { [key: string]: str
         countries: countries || [],
         regions: regions || [],
         voucherInstitutes: voucherInstitutes || [],
+        biosampleSraTypes: biosampleSraTypes || [],
         isOrdersLoading,
         isFamiliesLoading,
         isGeneraLoading,
@@ -652,6 +668,7 @@ export default function CollectionTable({params}: { params: { [key: string]: str
         isCountriesLoading,
         isRegionsLoading,
         isVoucherInstitutesLoading,
+        isBiosampleSraTypesLoading,
         onEdit: editing.handleEdit,
         onCoordinateEdit: editing.handleCoordinateEdit,
         onLocationEdit: editing.handleLocationEdit,
@@ -671,8 +688,8 @@ export default function CollectionTable({params}: { params: { [key: string]: str
         onMapSelect: handleMapSelect,
     }), [
         user, editedGenomRow, editing.editedCoordinateRow, editing.editedLocationRow,
-        orders, families, genera, kinds, countries, regions, voucherInstitutes,
-        isOrdersLoading, isFamiliesLoading, isGeneraLoading, isKindsLoading, isCountriesLoading, isRegionsLoading, isVoucherInstitutesLoading,
+        orders, families, genera, kinds, countries, regions, voucherInstitutes, biosampleSraTypes,
+        isOrdersLoading, isFamiliesLoading, isGeneraLoading, isKindsLoading, isCountriesLoading, isRegionsLoading, isVoucherInstitutesLoading, isBiosampleSraTypesLoading,
         editing.handleEdit, editing.handleCoordinateEdit, editing.handleLocationEdit,
         editing.handleFieldChange, editing.handleCoordinateChange, editing.handleLocationChange,
         handleSave, handleCoordinateSave, handleLocationSave,

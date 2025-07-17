@@ -17,7 +17,7 @@ export default function SelectFilter({column, tableName, filters}: { column: Col
     const columnId = column.id.includes("_") ? column.id.split("_")[0] : column.id;
 
 
-    const {data: uniqueValues} = useQuery(values(supabase, tableName, columnId === "voucher" ? column.id :  column.id.replace("_", "->>"), filters));
+    const {data: uniqueValues} = useQuery(values(supabase, tableName, columnId === "voucher" ? column.id : columnId === "biosample" ? column.id : column.id.replace("_", "->>"), filters));
 
     // const uniqueValues = column.getFacetedUniqueValues()
 

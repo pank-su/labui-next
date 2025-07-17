@@ -36,7 +36,7 @@ export const basicView = (client: TypedSupabaseClient, params: {
 
 // Создаём запрос c фильтроми к basic query
 export function basicViewQuery(client: TypedSupabaseClient, filters: FormattedBasicViewFilters | undefined) {
-    let query = client.from("basic_view").select("id,collect_id,order,family,genus,kind,age,sex,voucher_institute,voucher_id,latitude,longitude,country,region,geo_comment,day,month,year,comment,ncbi_biosample_id,collectors,tags,last_modified,last_modified_by,last_operation,edit_users", {count: "exact"})
+    let query = client.from("basic_view").select("id,collect_id,order,family,genus,kind,age,sex,voucher_institute,voucher_id,latitude,longitude,country,region,geo_comment,day,month,year,comment,ncbi_biosample_id,biosample_sra_type,biosample_sra_id,collectors,tags,last_modified,last_modified_by,last_operation,edit_users", {count: "exact"})
 
     if (isGeoFilters(filters)) {
 
@@ -67,7 +67,7 @@ export function basicViewQuery(client: TypedSupabaseClient, filters: FormattedBa
 
     })
 
-    const likeFields = ["collect_id", "voucher_id", "comment", "geo_comment", "ncbi_biosample_id"] as const;
+    const likeFields = ["collect_id", "voucher_id", "comment", "geo_comment", "ncbi_biosample_id", "biosample_sra_id"] as const;
     likeFields.forEach(field => {
         if (filters[field]) {
 
@@ -94,13 +94,15 @@ export function basicViewQuery(client: TypedSupabaseClient, filters: FormattedBa
     query = applyDateRangeFiltersToQuery(query, filters.from_date, filters.to_date)
 
     // Фильтры для значений с выбором
-    const selectFields = ["sex", "age", "country", "region", "voucher"] as const;
+    const selectFields = ["sex", "age", "country", "region", "voucher", "biosample"] as const;
 
     selectFields.forEach((field) => {
         if (filters[field]) {
             if (field == "voucher") {
                 query = query.eq("voucher_institute", filters[field])
 
+            } else if (field == "biosample") {
+                query = query.eq("biosample_sra_type", filters[field])
             } else {
                 query = query.eq(field, filters[field])
             }
@@ -246,6 +248,15 @@ export const voucherInstitutes = (client: TypedSupabaseClient) => queryOptions({
 
 async function loadVoucherInstitutes(client: TypedSupabaseClient) {
     return (await client.from("voucher_institute").select("id,name")).data
+}
+
+export const biosampleSraTypes = (client: TypedSupabaseClient) => queryOptions({
+    queryKey: ["biosample_sra_types"],
+    queryFn: async () => loadBiosampleSraTypes(client)
+})
+
+async function loadBiosampleSraTypes(client: TypedSupabaseClient) {
+    return (await client.from("biosample_sra_type").select("id,name")).data
 }
 
 
