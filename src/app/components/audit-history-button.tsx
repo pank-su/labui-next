@@ -1,7 +1,7 @@
 "use client"
 
 import { Button, Modal, Timeline, Avatar, Tooltip, Spin, Alert, Tag } from 'antd'
-import { RightOutlined, UserOutlined, EditOutlined, DeleteOutlined, PlusOutlined, LinkOutlined } from '@ant-design/icons'
+import { RightOutlined, UserOutlined, EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons'
 import { useState } from 'react'
 import { useClient } from '@/utils/supabase/client'
 import { Database } from '@/utils/supabase/gen-types'
@@ -55,7 +55,14 @@ export default function AuditHistoryButton({ recordId, size = 'small' }: AuditHi
       ]
       
       return allLogs
-        .filter(log => log.operation !== 'DELETE')
+        .filter(log => {
+          // Включаем DELETE операции для связанных таблиц
+          if (log.operation === 'DELETE' && (log.table_name === 'collector_to_collection' || log.table_name === 'tags_to_collection')) {
+            return true
+          }
+          // Исключаем DELETE операции для основной таблицы collection
+          return log.operation !== 'DELETE' || log.table_name !== 'collection'
+        })
         .sort((a, b) => new Date(b.changed_at || 0).getTime() - new Date(a.changed_at || 0).getTime())
     },
     enabled: isModalOpen,
@@ -68,10 +75,13 @@ export default function AuditHistoryButton({ recordId, size = 'small' }: AuditHi
       case 'UPDATE':
         return <EditOutlined style={{ color: '#1890ff' }} />
       case 'DELETE':
+        if (tableName === 'collector_to_collection' || tableName === 'tags_to_collection') {
+          return <EditOutlined style={{ color: '#1890ff' }} />
+        }
         return <DeleteOutlined style={{ color: '#ff4d4f' }} />
       case 'INSERT':
         if (tableName === 'collector_to_collection' || tableName === 'tags_to_collection') {
-          return <LinkOutlined style={{ color: '#52c41a' }} />
+          return <EditOutlined style={{ color: '#1890ff' }} />
         }
         return <PlusOutlined style={{ color: '#52c41a' }} />
       default:
@@ -84,10 +94,13 @@ export default function AuditHistoryButton({ recordId, size = 'small' }: AuditHi
       case 'UPDATE':
         return 'Обновление'
       case 'DELETE':
+        if (tableName === 'collector_to_collection' || tableName === 'tags_to_collection') {
+          return 'Обновление'
+        }
         return 'Удаление'
       case 'INSERT':
         if (tableName === 'collector_to_collection' || tableName === 'tags_to_collection') {
-          return 'Добавление'
+          return 'Обновление'
         }
         return 'Создание'
       default:
@@ -241,6 +254,19 @@ export default function AuditHistoryButton({ recordId, size = 'small' }: AuditHi
       return <div style={{ color: '#666', fontStyle: 'italic' }}>Запись создана</div>
     }
     
+    if (operation === 'DELETE') {
+      if (tableName === 'collector_to_collection') {
+        const collectorId = changedData.old?.collector_id || changedData.data?.collector_id
+        const displayValue = collectorId ? getFieldDisplayValue('collector_id', collectorId) : 'Неизвестный коллектор'
+        return <div style={{ color: '#666', fontStyle: 'italic' }}>Удален коллектор: {displayValue}</div>
+      } else if (tableName === 'tags_to_collection') {
+        const tagId = changedData.old?.tag_id || changedData.data?.tag_id
+        const displayValue = tagId ? getFieldDisplayValue('tag_id', tagId) : 'Неизвестный тег'
+        return <div style={{ color: '#666', fontStyle: 'italic' }}>Удален тег: {displayValue}</div>
+      }
+      return <div style={{ color: '#666', fontStyle: 'italic' }}>Запись удалена</div>
+    }
+    
     const { changed_fields, old: oldData } = changedData
     
     if (!changed_fields || typeof changed_fields !== 'object') return 'Нет данных'
@@ -299,10 +325,10 @@ export default function AuditHistoryButton({ recordId, size = 'small' }: AuditHi
   }
 
   const groupedLogs = auditLogs.reduce((acc, log) => {
-    const isRelatedTableInsert = log.operation === 'INSERT' && 
+    const isRelatedTableOperation = (log.operation === 'INSERT' || log.operation === 'DELETE') && 
       (log.table_name === 'collector_to_collection' || log.table_name === 'tags_to_collection')
     
-    if (isRelatedTableInsert) {
+    if (isRelatedTableOperation) {
       // Проверяем, можно ли группировать с предыдущим элементом
       const lastGroup = acc[acc.length - 1]
       if (lastGroup && lastGroup.type === 'group' && 
@@ -338,8 +364,8 @@ export default function AuditHistoryButton({ recordId, size = 'small' }: AuditHi
           // Группа связанных операций
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-              <LinkOutlined style={{ color: '#52c41a' }} />
-              <strong>Добавление</strong>
+              <EditOutlined style={{ color: '#1890ff' }} />
+              <strong>Обновление</strong>
               <span style={{ color: '#666' }}>от {getUserDisplayName(item.user_info)}</span>
             </div>
             <div style={{ color: '#666', fontSize: '12px', marginBottom: '8px' }}>
@@ -353,67 +379,161 @@ export default function AuditHistoryButton({ recordId, size = 'small' }: AuditHi
                 
                 const result = []
                 
+                // Обработка коллекторов
                 if (collectorLogs.length > 0) {
-                  const collectors = collectorLogs
-                    .map((log: any) => {
-                      const collectorId = log.changed_data.new?.collector_id || log.changed_data.data?.collector_id
-                      if (!collectorId || !referenceData) return null
-                      
-                      const collector = referenceData.collectors.find((c: any) => c.id === collectorId)
-                      if (!collector) return null
-                      
-                      const surname = collector.last_name || ""
-                      const firstInitial = collector.first_name ? collector.first_name.charAt(0) + "." : ""
-                      const secondInitial = collector.second_name ? collector.second_name.charAt(0) + "." : ""
-                      const displayName = `${surname} ${firstInitial}${secondInitial}`.trim()
-                      
-                      return { id: collectorId, name: displayName }
-                    })
-                    .filter((item: any): item is { id: number, name: string } => item !== null)
-                    .filter((item: any, index: number, array: any[]) => array.findIndex((c: any) => c.id === item.id) === index) // убираем дубликаты
+                  const addedCollectors = collectorLogs.filter((log: any) => log.operation === 'INSERT')
+                  const removedCollectors = collectorLogs.filter((log: any) => log.operation === 'DELETE')
                   
-                  result.push(
-                    <div key="collectors" style={{ marginBottom: tagLogs.length > 0 ? '8px' : '0' }}>
-                      <div style={{ marginBottom: '4px' }}>
-                        {collectors.length === 1 ? 'Добавлен коллектор:' : 'Добавлены коллекторы:'}
+                  const getCollectorInfo = (log: any) => {
+                    const collectorId = log.changed_data.new?.collector_id || log.changed_data.old?.collector_id || log.changed_data.data?.collector_id
+                    if (!collectorId || !referenceData) return null
+                    
+                    const collector = referenceData.collectors.find((c: any) => c.id === collectorId)
+                    if (!collector) return null
+                    
+                    const surname = collector.last_name || ""
+                    const firstInitial = collector.first_name ? collector.first_name.charAt(0) + "." : ""
+                    const secondInitial = collector.second_name ? collector.second_name.charAt(0) + "." : ""
+                    const displayName = `${surname} ${firstInitial}${secondInitial}`.trim()
+                    
+                    return { id: collectorId, name: displayName }
+                  }
+                  
+                  const addedCollectorsList = addedCollectors.map(getCollectorInfo).filter(Boolean)
+                  const removedCollectorsList = removedCollectors.map(getCollectorInfo).filter(Boolean)
+                  
+                  if (addedCollectorsList.length > 0 && removedCollectorsList.length > 0) {
+                    // Есть и добавленные и удаленные - показываем "было -> стало"
+                    result.push(
+                      <div key="collectors" style={{ marginBottom: tagLogs.length > 0 ? '8px' : '0' }}>
+                        <div style={{ marginBottom: '4px' }}>Коллекторы:</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                            {removedCollectorsList.map((collector: any) => (
+                              <Tag key={`old-${collector.id}`} className="text-xs" style={{ textDecoration: 'line-through', opacity: 0.6 }}>
+                                {collector.name}
+                              </Tag>
+                            ))}
+                          </div>
+                          <span style={{ color: '#666' }}>→</span>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                            {addedCollectorsList.map((collector: any) => (
+                              <Tag key={`new-${collector.id}`} className="text-xs" style={{ backgroundColor: '#f6ffed', borderColor: '#b7eb8f' }}>
+                                {collector.name}
+                              </Tag>
+                            ))}
+                          </div>
+                        </div>
                       </div>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                        {collectors.map((collector: any) => (
-                          <Tag key={collector.id} className="text-xs">
-                            {collector.name}
-                          </Tag>
-                        ))}
+                    )
+                  } else if (addedCollectorsList.length > 0) {
+                    // Только добавленные
+                    result.push(
+                      <div key="collectors" style={{ marginBottom: tagLogs.length > 0 ? '8px' : '0' }}>
+                        <div style={{ marginBottom: '4px' }}>
+                          {addedCollectorsList.length === 1 ? 'Добавлен коллектор:' : 'Добавлены коллекторы:'}
+                        </div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                          {addedCollectorsList.map((collector: any) => (
+                            <Tag key={collector.id} className="text-xs" style={{ backgroundColor: '#f6ffed', borderColor: '#b7eb8f' }}>
+                              {collector.name}
+                            </Tag>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )
+                    )
+                  } else if (removedCollectorsList.length > 0) {
+                    // Только удаленные
+                    result.push(
+                      <div key="collectors" style={{ marginBottom: tagLogs.length > 0 ? '8px' : '0' }}>
+                        <div style={{ marginBottom: '4px' }}>
+                          {removedCollectorsList.length === 1 ? 'Удален коллектор:' : 'Удалены коллекторы:'}
+                        </div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                          {removedCollectorsList.map((collector: any) => (
+                            <Tag key={collector.id} className="text-xs" style={{ textDecoration: 'line-through', opacity: 0.6 }}>
+                              {collector.name}
+                            </Tag>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  }
                 }
                 
+                // Обработка тегов
                 if (tagLogs.length > 0) {
-                  const tags = tagLogs
-                    .map((log: any) => {
-                      const tagId = log.changed_data.new?.tag_id || log.changed_data.data?.tag_id
-                      if (!tagId || !referenceData) return null
-                      
-                      const tag = referenceData.tags.find((t: any) => t.id === tagId)
-                      return tag ? { id: tagId, name: tag.name, color: tag.color || 'blue' } : null
-                    })
-                    .filter((item: any): item is { id: number, name: string, color: string } => item !== null)
-                    .filter((item: any, index: number, array: any[]) => array.findIndex((t: any) => t.id === item.id) === index) // убираем дубликаты
+                  const addedTags = tagLogs.filter((log: any) => log.operation === 'INSERT')
+                  const removedTags = tagLogs.filter((log: any) => log.operation === 'DELETE')
                   
-                  result.push(
-                    <div key="tags">
-                      <div style={{ marginBottom: '4px' }}>
-                        {tags.length === 1 ? 'Добавлен тег:' : 'Добавлены теги:'}
+                  const getTagInfo = (log: any) => {
+                    const tagId = log.changed_data.new?.tag_id || log.changed_data.old?.tag_id || log.changed_data.data?.tag_id
+                    if (!tagId || !referenceData) return null
+                    
+                    const tag = referenceData.tags.find((t: any) => t.id === tagId)
+                    return tag ? { id: tagId, name: tag.name, color: tag.color || 'blue' } : null
+                  }
+                  
+                  const addedTagsList = addedTags.map(getTagInfo).filter(Boolean)
+                  const removedTagsList = removedTags.map(getTagInfo).filter(Boolean)
+                  
+                  if (addedTagsList.length > 0 && removedTagsList.length > 0) {
+                    // Есть и добавленные и удаленные - показываем "было -> стало"
+                    result.push(
+                      <div key="tags">
+                        <div style={{ marginBottom: '4px' }}>Теги:</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                            {removedTagsList.map((tag: any) => (
+                              <Tag key={`old-${tag.id}`} color={tag.color} style={{ textDecoration: 'line-through', opacity: 0.6 }}>
+                                {tag.name}
+                              </Tag>
+                            ))}
+                          </div>
+                          <span style={{ color: '#666' }}>→</span>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                            {addedTagsList.map((tag: any) => (
+                              <Tag key={`new-${tag.id}`} color={tag.color} style={{ boxShadow: '0 0 0 2px #b7eb8f' }}>
+                                {tag.name}
+                              </Tag>
+                            ))}
+                          </div>
+                        </div>
                       </div>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                        {tags.map((tag: any) => (
-                          <Tag key={tag.id} color={tag.color}>
-                            {tag.name}
-                          </Tag>
-                        ))}
+                    )
+                  } else if (addedTagsList.length > 0) {
+                    // Только добавленные
+                    result.push(
+                      <div key="tags">
+                        <div style={{ marginBottom: '4px' }}>
+                          {addedTagsList.length === 1 ? 'Добавлен тег:' : 'Добавлены теги:'}
+                        </div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                          {addedTagsList.map((tag: any) => (
+                            <Tag key={tag.id} color={tag.color} style={{ boxShadow: '0 0 0 2px #b7eb8f' }}>
+                              {tag.name}
+                            </Tag>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )
+                    )
+                  } else if (removedTagsList.length > 0) {
+                    // Только удаленные
+                    result.push(
+                      <div key="tags">
+                        <div style={{ marginBottom: '4px' }}>
+                          {removedTagsList.length === 1 ? 'Удален тег:' : 'Удалены теги:'}
+                        </div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                          {removedTagsList.map((tag: any) => (
+                            <Tag key={tag.id} color={tag.color} style={{ textDecoration: 'line-through', opacity: 0.6 }}>
+                              {tag.name}
+                            </Tag>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  }
                 }
                 
                 return result
