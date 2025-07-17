@@ -60,13 +60,15 @@ export default function EditableTagsSelect({
         label: (
             <div className="flex items-center gap-2">
                 <div 
-                    className="w-3 h-3 rounded-full"
+                    className="w-3 h-3 rounded-full flex-shrink-0"
                     style={{ backgroundColor: tag.color || "#1677ff" }}
                 />
-                <span>{tag.name}</span>
-                {tag.description && (
-                    <span className="text-gray-400 text-xs">({tag.description})</span>
-                )}
+                <div className="flex-1 min-w-0">
+                    <span>{tag.name}</span>
+                    {tag.description && (
+                        <span className="text-gray-400 text-xs ml-1">({tag.description})</span>
+                    )}
+                </div>
             </div>
         ),
         value: tag.id!
@@ -74,16 +76,17 @@ export default function EditableTagsSelect({
 
     return (
         <>
-            <Space.Compact size="small" className="w-full">
+            <div className="flex w-full min-w-0">
                 <Select
                     mode="multiple"
                     value={selectedTags.map(t => t.id!)}
                     onChange={handleSelectChange}
                     options={options}
                     placeholder="Выберите теги..."
-                    className="w-full"
+                    className="flex-1 min-w-0"
                     loading={isLoading}
                     showSearch
+                    size="small"
                     filterOption={(input, option) => {
                         if (!input) return true;
                         const tag = allTags?.find(t => t.id === option?.value);
@@ -110,30 +113,34 @@ export default function EditableTagsSelect({
                         </div>
                     )}
                 />
-                <Button
-                    onClick={onCancel}
-                    icon={<CloseOutlined />}
-                    danger
-                />
-                <Button
-                    onClick={async () => {
-                        const tagIds = selectedTags.map(t => t.id!).filter(id => id !== null);
-                        
-                        const { error } = await supabase.rpc('update_collection_tags', {
-                            target_collection_id: collectionId,
-                            new_tag_ids: tagIds
-                        });
-                        
-                        if (error) {
-                            console.error('Error updating tags:', error);
-                            return;
-                        }
-                        
-                        onSave(selectedTags);
-                    }}
-                    icon={<CheckOutlined />}
-                />
-            </Space.Compact>
+                <div className="flex gap-1 ml-1 flex-shrink-0">
+                    <Button
+                        onClick={onCancel}
+                        icon={<CloseOutlined />}
+                        danger
+                        size="small"
+                    />
+                    <Button
+                        onClick={async () => {
+                            const tagIds = selectedTags.map(t => t.id!).filter(id => id !== null);
+                            
+                            const { error } = await supabase.rpc('update_collection_tags', {
+                                target_collection_id: collectionId,
+                                new_tag_ids: tagIds
+                            });
+                            
+                            if (error) {
+                                console.error('Error updating tags:', error);
+                                return;
+                            }
+                            
+                            onSave(selectedTags);
+                        }}
+                        icon={<CheckOutlined />}
+                        size="small"
+                    />
+                </div>
+            </div>
 
             
             <CreateTagDialog
