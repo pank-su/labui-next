@@ -8,7 +8,7 @@
         "@ant-design/v5-patch-for-react-19": "^1.0.3",
         "@supabase-cache-helpers/postgrest-react-query": "^1.13.4",
         "@supabase/ssr": "0.6.1",
-        "@supabase/supabase-js": "2.50.1-next.5",
+        "@supabase/supabase-js": "2.51.0",
         "@tanstack/react-query": "^5.83.0",
         "@tanstack/react-query-devtools": "^5.83.0",
         "@tanstack/react-table": "^8.21.3",
@@ -16,12 +16,12 @@
         "@telegram-auth/react": "^1.0.4",
         "@types/react-map-gl": "^6.1.7",
         "@types/supercluster": "^7.1.3",
-        "antd": "^5.26.4",
+        "antd": "^5.26.5",
         "autoprefixer": "10.4.20",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "dayjs": "^1.11.13",
-        "framer-motion": "^12.23.3",
+        "framer-motion": "^12.23.6",
         "lucide-react": "^0.475.0",
         "maplibre-gl": "^5.6.1",
         "next": "15.3.3",
@@ -197,21 +197,21 @@
 
     "@supabase-cache-helpers/postgrest-react-query": ["@supabase-cache-helpers/postgrest-react-query@1.13.4", "", { "dependencies": { "@supabase-cache-helpers/postgrest-core": "0.12.1", "flat": "6.0.1" }, "peerDependencies": { "@supabase/postgrest-js": "^1.19.4", "@tanstack/react-query": "^4.0.0 || ^5.0.0", "react": "^16.11.0 || ^17.0.0 || ^18.0.0 || ^19.0.0" } }, "sha512-gwtL7aTdbo1MW3h9WK5v/w/U9ug461f0p8U/1y+MD1DZP9hWtrNdcsjBtl3R3XIKekFJx81kVambnPE5hgJFMg=="],
 
-    "@supabase/auth-js": ["@supabase/auth-js@2.70.0", "", { "dependencies": { "@supabase/node-fetch": "^2.6.14" } }, "sha512-BaAK/tOAZFJtzF1sE3gJ2FwTjLf4ky3PSvcvLGEgEmO4BSBkwWKu8l67rLLIBZPDnCyV7Owk2uPyKHa0kj5QGg=="],
+    "@supabase/auth-js": ["@supabase/auth-js@2.71.0", "", { "dependencies": { "@supabase/node-fetch": "^2.6.14" } }, "sha512-OMYNbhGa1Cj4stalJq0VoHm5l7Sj/xY0j9CiYEQCikbQmtiDG3c27EIFA4OD+NxuoHTZmjaW8VJlS3SP+yasEA=="],
 
-    "@supabase/functions-js": ["@supabase/functions-js@2.4.4", "", { "dependencies": { "@supabase/node-fetch": "^2.6.14" } }, "sha512-WL2p6r4AXNGwop7iwvul2BvOtuJ1YQy8EbOd0dhG1oN1q8el/BIRSFCFnWAMM/vJJlHWLi4ad22sKbKr9mvjoA=="],
+    "@supabase/functions-js": ["@supabase/functions-js@2.4.5", "", { "dependencies": { "@supabase/node-fetch": "^2.6.14" } }, "sha512-v5GSqb9zbosquTo6gBwIiq7W9eQ7rE5QazsK/ezNiQXdCbY+bH8D9qEaBIkhVvX4ZRW5rP03gEfw5yw9tiq4EQ=="],
 
     "@supabase/node-fetch": ["@supabase/node-fetch@2.6.15", "", { "dependencies": { "whatwg-url": "^5.0.0" } }, "sha512-1ibVeYUacxWYi9i0cf5efil6adJ9WRyZBLivgjs+AUpewx1F3xPi7gLgaASI2SmIQxPoCEjAsLAzKPgMJVgOUQ=="],
 
     "@supabase/postgrest-js": ["@supabase/postgrest-js@1.19.4", "", { "dependencies": { "@supabase/node-fetch": "^2.6.14" } }, "sha512-O4soKqKtZIW3olqmbXXbKugUtByD2jPa8kL2m2c1oozAO11uCcGrRhkZL0kVxjBLrXHE0mdSkFsMj7jDSfyNpw=="],
 
-    "@supabase/realtime-js": ["@supabase/realtime-js@2.11.11-next.5", "", { "dependencies": { "@supabase/node-fetch": "^2.6.13", "@types/phoenix": "^1.6.6", "isows": "^1.0.7" } }, "sha512-ZccHnL9gS09QaprBxR49wHx3MF7pLTN5avrTciy6Shv+xivTlSmx250pQMNGc4rhS//TS86Vdq9WbzwfYWJuYA=="],
+    "@supabase/realtime-js": ["@supabase/realtime-js@2.11.15", "", { "dependencies": { "@supabase/node-fetch": "^2.6.13", "@types/phoenix": "^1.6.6", "@types/ws": "^8.18.1", "isows": "^1.0.7", "ws": "^8.18.2" } }, "sha512-HQKRnwAqdVqJW/P9TjKVK+/ETpW4yQ8tyDPPtRMKOH4Uh3vQD74vmj353CYs8+YwVBKubeUOOEpI9CT8mT4obw=="],
 
     "@supabase/ssr": ["@supabase/ssr@0.6.1", "", { "dependencies": { "cookie": "^1.0.1" }, "peerDependencies": { "@supabase/supabase-js": "^2.43.4" } }, "sha512-QtQgEMvaDzr77Mk3vZ3jWg2/y+D8tExYF7vcJT+wQ8ysuvOeGGjYbZlvj5bHYsj/SpC0bihcisnwPrM4Gp5G4g=="],
 
     "@supabase/storage-js": ["@supabase/storage-js@2.7.1", "", { "dependencies": { "@supabase/node-fetch": "^2.6.14" } }, "sha512-asYHcyDR1fKqrMpytAS1zjyEfvxuOIp1CIXX7ji4lHHcJKqyk+sLl/Vxgm4sN6u8zvuUtae9e4kDxQP2qrwWBA=="],
 
-    "@supabase/supabase-js": ["@supabase/supabase-js@2.50.1-next.5", "", { "dependencies": { "@supabase/auth-js": "2.70.0", "@supabase/functions-js": "2.4.4", "@supabase/node-fetch": "2.6.15", "@supabase/postgrest-js": "1.19.4", "@supabase/realtime-js": "next", "@supabase/storage-js": "2.7.1" } }, "sha512-wk2f1aDYXB36zVY79Y2eJoyEo3k8GAok748RgEwlaMa2UeSrBEM7C0YgCjnwrXm8ASjM/Wjrcyt0SiO83ihM9A=="],
+    "@supabase/supabase-js": ["@supabase/supabase-js@2.51.0", "", { "dependencies": { "@supabase/auth-js": "2.71.0", "@supabase/functions-js": "2.4.5", "@supabase/node-fetch": "2.6.15", "@supabase/postgrest-js": "1.19.4", "@supabase/realtime-js": "2.11.15", "@supabase/storage-js": "2.7.1" } }, "sha512-jG70XoNFcX3z0h/No0t1Aoc3zoHPtMQk5zaM5v3+sCJ/v5Z3qyoHYkGIg1JUycINPsuuAASZ4ZS43YO6H5wMoA=="],
 
     "@swc/counter": ["@swc/counter@0.1.3", "", {}, "sha512-e2BR4lsJkkRlKZ/qCHPw9ZaSxc0MVUd7gtbtaB7aMvHeJVYe8sOB8DBZkP2DtISHGSku9sCK6T6cnY0CtXrOCQ=="],
 
@@ -262,6 +262,8 @@
     "@types/supercluster": ["@types/supercluster@7.1.3", "", { "dependencies": { "@types/geojson": "*" } }, "sha512-Z0pOY34GDFl3Q6hUFYf3HkTwKEE02e7QgtJppBt+beEAxnyOpJua+voGFvxINBHa06GwLFFym7gRPY2SiKIfIA=="],
 
     "@types/viewport-mercator-project": ["@types/viewport-mercator-project@6.1.6", "", { "dependencies": { "gl-matrix": "^3.2.0" } }, "sha512-uWrbqhRXFeiT6CAvRjf0BkQKRkKED+ofrPhglKpUktQML3463dEPiA4iwe7cZQs6m49Zo/g03rL7ChMLiE5Z8w=="],
+
+    "@types/ws": ["@types/ws@8.18.1", "", { "dependencies": { "@types/node": "*" } }, "sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg=="],
 
     "@vis.gl/react-mapbox": ["@vis.gl/react-mapbox@8.0.4", "", { "peerDependencies": { "mapbox-gl": ">=3.5.0", "react": ">=16.3.0", "react-dom": ">=16.3.0" }, "optionalPeers": ["mapbox-gl"] }, "sha512-NFk0vsWcNzSs0YCsVdt2100Zli9QWR+pje8DacpLkkGEAXFaJsFtI1oKD0Hatiate4/iAIW39SQHhgfhbeEPfQ=="],
 
