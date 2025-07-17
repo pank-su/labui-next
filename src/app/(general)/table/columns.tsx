@@ -668,6 +668,15 @@ export default function getColumns(options: {
             }
         }),
 
+        columnHelper.accessor("ncbi_biosample_id", {
+            header: "NCBI BioSample ID",
+            cell: createEditableCell("ncbi_biosample_id", (value, rowId) => ({id: rowId, ncbi_biosample_id: value})),
+            size: 200,
+            meta: {
+                filterVariant: "input"
+            }
+        }),
+
         columnHelper.group({
             header: "Последнее изменение",
             columns: [

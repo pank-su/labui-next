@@ -33,6 +33,7 @@ export type FormattedBasicViewFilters = {
     comment?: string,
     geo_comment?:string,
     voucher_id?:string,
+    ncbi_biosample_id?:string,
     tags?:string,
     collectors?:string,
     edit?:string,

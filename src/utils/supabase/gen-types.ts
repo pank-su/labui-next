@@ -3221,11 +3221,11 @@ export type Database = {
           collect_id: string | null
           comment: string | null
           day: number | null
-          gen_bank_id: string | null
           geo_comment: string | null
           id: number
           kind_id: number | null
           month: number | null
+          ncbi_biosample_id: string | null
           point: unknown | null
           region_id: number | null
           sex_id: number | null
@@ -3238,11 +3238,11 @@ export type Database = {
           collect_id?: string | null
           comment?: string | null
           day?: number | null
-          gen_bank_id?: string | null
           geo_comment?: string | null
           id?: number
           kind_id?: number | null
           month?: number | null
+          ncbi_biosample_id?: string | null
           point?: unknown | null
           region_id?: number | null
           sex_id?: number | null
@@ -3255,11 +3255,11 @@ export type Database = {
           collect_id?: string | null
           comment?: string | null
           day?: number | null
-          gen_bank_id?: string | null
           geo_comment?: string | null
           id?: number
           kind_id?: number | null
           month?: number | null
+          ncbi_biosample_id?: string | null
           point?: unknown | null
           region_id?: number | null
           sex_id?: number | null
@@ -3613,6 +3613,7 @@ export type Database = {
           latitude: number | null
           longitude: number | null
           month: number | null
+          ncbi_biosample_id: string | null
           order: Database["public"]["CompositeTypes"]["topology_type"] | null
           region: string | null
           sex: string | null
@@ -3628,6 +3629,7 @@ export type Database = {
         Row: {
           collect_id: string | null
           id: number | null
+          NCBI_BioSample_ID: string | null
           Ваучер_ID: string | null
           Вид: string | null
           Возраст: string | null
