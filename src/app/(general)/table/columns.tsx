@@ -469,7 +469,7 @@ export default function getColumns(options: {
                 );
             },
             header: "Возраст",
-            size: 130,
+            size: 160,
             meta: {
                 filterVariant: "select"
             },
@@ -511,7 +511,7 @@ export default function getColumns(options: {
                 );
             },
             header: "Пол",
-            size: 105,
+            size: 135,
             meta: {
                 filterVariant: "select"
             },
