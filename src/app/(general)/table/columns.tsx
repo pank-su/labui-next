@@ -681,6 +681,15 @@ export default function getColumns(options: {
             }
         }),
 
+        columnHelper.accessor("ncbi_accession_number", {
+            header: "NCBI Accession Number",
+            cell: createEditableCell("ncbi_accession_number", (value, rowId) => ({id: rowId, ncbi_accession_number: value})),
+            size: 200,
+            meta: {
+                filterVariant: "input"
+            }
+        }),
+
         columnHelper.group({
             header: "BioSample SRA",
             columns: [

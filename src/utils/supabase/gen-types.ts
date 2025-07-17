@@ -3242,6 +3242,7 @@ export type Database = {
           id: number
           kind_id: number | null
           month: number | null
+          ncbi_accession_number: string | null
           ncbi_biosample_id: string | null
           point: unknown | null
           region_id: number | null
@@ -3261,6 +3262,7 @@ export type Database = {
           id?: number
           kind_id?: number | null
           month?: number | null
+          ncbi_accession_number?: string | null
           ncbi_biosample_id?: string | null
           point?: unknown | null
           region_id?: number | null
@@ -3280,6 +3282,7 @@ export type Database = {
           id?: number
           kind_id?: number | null
           month?: number | null
+          ncbi_accession_number?: string | null
           ncbi_biosample_id?: string | null
           point?: unknown | null
           region_id?: number | null
@@ -3642,6 +3645,7 @@ export type Database = {
           latitude: number | null
           longitude: number | null
           month: number | null
+          ncbi_accession_number: string | null
           ncbi_biosample_id: string | null
           order: Database["public"]["CompositeTypes"]["topology_type"] | null
           region: string | null
@@ -3659,6 +3663,7 @@ export type Database = {
           Biosample_SRA: string | null
           collect_id: string | null
           id: number | null
+          NCBI_Accession_Number: string | null
           NCBI_BioSample_ID: string | null
           Ваучер_ID: string | null
           Вид: string | null
